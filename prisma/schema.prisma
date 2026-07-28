@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum OpportunityType {
+  INTERNSHIP
+  NEW_GRAD
+  SCHOLARSHIP
+  FELLOWSHIP
+  HACKATHON
+  RESEARCH
+}
+
+enum ApplicationStatus {
+  SAVED
+  APPLIED
+  INTERVIEWING
+  OFFERED
+  REJECTED
+}
+
+enum NotificationType {
+  SYSTEM
+  ALERT
+  APPLICATION_DEADLINE
+  MATCH_ACCURACY
+}
+
+enum RemoteType {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  clerkId            String             @unique
+  email              String             @unique
+  role               Role               @default(USER)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  profile            Profile?
+  savedOpportunities SavedOpportunity[]
+  applications       Application[]
+  notifications      Notification[]
+  emailPreference    EmailPreference?
+}
+
+model Profile {
+  id             String   @id @default(uuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName      String?
+  lastName       String?
+  avatarUrl      String?
+  resumeUrl      String?
+  githubUrl      String?
+  linkedinUrl    String?
+  portfolioUrl   String?
+  skills         String[]
+  graduationYear Int?
+  major          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Company {
+  id            String        @id @default(uuid())
+  name          String        @unique
+  logoUrl       String?
+  websiteUrl    String?
+  industry      String?
+  description   String?
+  opportunities Opportunity[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([name])
+}
+
+model Opportunity {
+  id             String             @id @default(uuid())
+  title          String
+  type           OpportunityType
+  companyId      String
+  company        Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  description    String?
+  requirements   String?
+  location       String
+  remoteType     RemoteType
+  salaryRange    String?
+  benefits       String?
+  applicationUrl String
+  deadline       DateTime?
+  isActive       Boolean            @default(true)
+  savedByUsers   SavedOpportunity[]
+  applications   Application[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([deadline])
+  @@index([createdAt])
+  @@index([location])
+  @@index([type])
+}
+
+model SavedOpportunity {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  savedAt       DateTime    @default(now())
+
+  @@unique([userId, opportunityId])
+}
+
+model Application {
+  id            String            @id @default(uuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunityId String
+  opportunity   Opportunity       @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  status        ApplicationStatus @default(SAVED)
+  notes         String?
+  appliedAt     DateTime          @default(now())
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  @@unique([userId, opportunityId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  @@index([createdAt])
+}
+
+model EmailPreference {
+  id                String   @id @default(uuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weeklyDigest      Boolean  @default(true)
+  instantAlerts     Boolean  @default(true)
+  deadlineReminders Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
