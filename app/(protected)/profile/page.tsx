@@ -175,7 +175,7 @@ export default function ProfilePage() {
                 <button
                   type="submit"
                   disabled={savingProfile}
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700/80 text-xs font-semibold text-white rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                  className="btn-secondary focus-ring py-2 text-xs"
                 >
                   {savingProfile ? (
                     <>
@@ -281,7 +281,7 @@ export default function ProfilePage() {
               </div>
               <button
                 onClick={() => setShowDeleteModal(true)}
-                className="px-3.5 py-2 rounded-lg bg-danger hover:bg-red-600 text-xs font-bold text-white transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-md shadow-danger/10"
+                className="px-3.5 py-2 rounded-lg bg-danger hover:bg-red-600 text-xs font-bold text-white transition-all shrink-0 flex items-center justify-center gap-1.5 shadow-md shadow-danger/15 focus-ring"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span>Delete Account</span>
@@ -303,10 +303,10 @@ export default function ProfilePage() {
             <p className="text-text-muted leading-relaxed mb-4">
               You are about to delete your InternScope AI account. This action is irreversible. All your resume matches, saved internships, and applications will be deleted immediately.
             </p>
-            <div className="pt-2 flex justify-end gap-3">
+             <div className="pt-2 flex justify-end gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="px-4 py-2 border border-zinc-800 rounded-lg font-semibold hover:bg-zinc-850 text-white transition-colors"
+                className="btn-secondary focus-ring py-2 text-xs"
               >
                 Cancel
               </button>
@@ -315,7 +315,7 @@ export default function ProfilePage() {
                   alert('Account deletion request registered (UI-Only Simulator). In a production environment, this triggers a call to Clerk SDK to delete user.');
                   setShowDeleteModal(false);
                 }}
-                className="px-4 py-2 bg-danger hover:bg-red-600 text-white rounded-lg font-semibold transition-all shadow-md shadow-danger/15"
+                className="px-4 py-2 bg-danger hover:bg-red-600 text-white rounded-lg font-semibold transition-all shadow-md shadow-danger/15 focus-ring text-xs"
               >
                 Confirm Delete
               </button>

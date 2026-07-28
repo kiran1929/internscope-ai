@@ -64,13 +64,13 @@ export const Header: React.FC<HeaderProps> = ({ onViewDemo }) => {
           <div className="hidden md:flex items-center gap-4">
             <button
               onClick={onViewDemo}
-              className="px-4 py-2 text-sm font-medium text-white hover:text-primary transition-colors duration-200"
+              className="btn-ghost focus-ring"
             >
               View Demo
             </button>
             <button
               onClick={onViewDemo}
-              className="relative group overflow-hidden px-4 py-2 rounded-lg bg-primary hover:bg-blue-700 text-sm font-semibold text-white transition-all duration-200 flex items-center gap-1.5 shadow-md shadow-primary/20 hover:shadow-primary/35"
+              className="btn-primary focus-ring"
             >
               <span>Get Started</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
@@ -114,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({ onViewDemo }) => {
                   setIsMobileMenuOpen(false);
                   onViewDemo();
                 }}
-                className="w-full py-3 rounded-lg border border-zinc-850 hover:bg-zinc-800 text-base font-medium text-white transition-colors"
+                className="w-full btn-secondary focus-ring py-2.5 text-sm"
               >
                 View Demo
               </button>
@@ -123,10 +123,10 @@ export const Header: React.FC<HeaderProps> = ({ onViewDemo }) => {
                   setIsMobileMenuOpen(false);
                   onViewDemo();
                 }}
-                className="w-full py-3 rounded-lg bg-primary hover:bg-blue-700 text-base font-semibold text-white transition-colors flex items-center justify-center gap-2"
+                className="w-full btn-primary focus-ring py-2.5 text-sm flex items-center justify-center gap-1.5"
               >
                 <span>Get Started</span>
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>

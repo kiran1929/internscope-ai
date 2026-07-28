@@ -105,7 +105,7 @@ export const DashboardSettings: React.FC = () => {
               <div className="pt-2 flex justify-end">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700/80 text-xs font-semibold text-white rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                  className="btn-secondary focus-ring py-2 text-xs"
                 >
                   {profileSaved ? (
                     <>
@@ -137,7 +137,7 @@ export const DashboardSettings: React.FC = () => {
                       type="button"
                       onClick={() => setInterval(val)}
                       className={cn(
-                        'py-2 border rounded-lg font-semibold text-center transition-colors',
+                        'py-2 border rounded-lg font-semibold text-center transition-all focus-ring',
                         interval === val
                           ? 'border-primary text-primary bg-primary/5'
                           : 'border-zinc-800 bg-zinc-900/40 text-text-muted hover:text-white'
@@ -158,9 +158,10 @@ export const DashboardSettings: React.FC = () => {
                   type="button"
                   onClick={() => setAutoArchive(!autoArchive)}
                   className={cn(
-                    'w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none shrink-0 relative',
+                    'w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none focus-ring shrink-0 relative',
                     autoArchive ? 'bg-primary' : 'bg-zinc-800'
                   )}
+                  aria-label="Toggle auto-archive closed positions"
                 >
                   <div
                     className={cn(
@@ -174,7 +175,7 @@ export const DashboardSettings: React.FC = () => {
               <div className="pt-2 flex justify-end">
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700/80 text-xs font-semibold text-white rounded-lg transition-colors flex items-center justify-center gap-1.5"
+                  className="btn-secondary focus-ring py-2 text-xs"
                 >
                   {scraperSaved ? (
                     <>

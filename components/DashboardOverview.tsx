@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Company, Internship, Application, Activity } from '@/types';
 import { CompanyLogo } from './CompanyLogo';
+import { Counter } from './Counter';
 import { cn } from '@/lib/utils';
 import { DashboardTab } from './Sidebar';
 
@@ -70,18 +71,21 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           return (
             <div
               key={kpi.label}
-              className="bg-[#18181B] border border-zinc-800/80 rounded-xl p-5 hover:border-zinc-700/80 transition-all duration-200 shadow-sm"
+              className="bg-[#18181B] border border-zinc-850 rounded-xl p-5 hover:border-zinc-700 hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)] transition-all duration-300 relative overflow-hidden group select-none"
             >
-              <div className="flex justify-between items-start">
+              <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-750/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="flex justify-between items-start relative z-10">
                 <span className="text-xs font-semibold text-text-muted">{kpi.label}</span>
-                <div className={cn('p-2 rounded-lg', kpi.bg)}>
+                <div className={cn('p-2 rounded-lg transition-transform duration-300 group-hover:scale-105', kpi.bg)}>
                   <Icon className={cn('w-4 h-4', kpi.color)} />
                 </div>
               </div>
-              <div className="mt-4 flex items-baseline gap-2">
-                <span className="text-3xl font-bold font-display text-white">{kpi.value}</span>
+              <div className="mt-4 flex items-baseline gap-2 relative z-10">
+                <span className="text-3xl font-bold font-display text-white">
+                  <Counter value={kpi.value} />
+                </span>
               </div>
-              <div className="mt-2 flex items-center gap-1">
+              <div className="mt-2 flex items-center gap-1 relative z-10">
                 <TrendingUp className="w-3.5 h-3.5 text-success shrink-0" />
                 <span className="text-[10px] text-text-muted font-medium">{kpi.trend}</span>
               </div>
@@ -283,15 +287,17 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                           href={role.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-1.5 rounded bg-zinc-800 text-text-muted hover:text-white hover:bg-zinc-700 transition-colors"
+                          className="p-1.5 rounded-lg bg-zinc-850 text-text-muted hover:text-white hover:bg-zinc-800 transition-all focus-ring"
                           title="Apply Externally"
+                          aria-label={`Apply Externally to ${role.role} at ${role.companyName}`}
                         >
                           <Eye className="w-3.5 h-3.5" />
                         </a>
                         <button
                           onClick={() => onTrackInternship(role)}
-                          className="p-1.5 rounded bg-primary/20 text-primary hover:bg-primary hover:text-white transition-colors"
+                          className="p-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all focus-ring"
                           title="Track Application"
+                          aria-label={`Track Application for ${role.role} at ${role.companyName}`}
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
@@ -351,9 +357,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               {/* Add Custom Application button */}
               <button
                 onClick={() => onNavigate('applications')}
-                className="w-full py-2.5 px-3 rounded-lg border border-zinc-850 hover:bg-zinc-900 text-xs font-semibold text-white transition-all flex items-center justify-center gap-2 group"
+                className="w-full btn-secondary focus-ring text-xs py-2"
+                aria-label="Track Custom Application"
               >
-                <Plus className="w-4 h-4 text-text-muted group-hover:text-white transition-colors" />
+                <Plus className="w-3.5 h-3.5" />
                 <span>Track Custom Application</span>
               </button>
             </div>

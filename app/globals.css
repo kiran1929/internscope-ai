@@ -79,3 +79,117 @@ body {
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(63, 63, 70, 0.2);
 }
+
+/* Premium Button System */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #ffffff !important;
+  background-color: var(--primary);
+  border: 1px solid rgba(37, 99, 235, 0.4);
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+  cursor: pointer;
+}
+.btn-primary:hover {
+  background-color: #1d4ed8;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+  transform: translateY(-0.5px);
+}
+.btn-primary:active {
+  transform: translateY(0.5px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 500;
+  font-size: 12.5px;
+  color: #FAFAFA !important;
+  background-color: #18181B;
+  border: 1px solid #27272A;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+.btn-secondary:hover {
+  background-color: #27272A;
+  border-color: #3F3F46;
+  color: #ffffff !important;
+  transform: translateY(-0.5px);
+}
+.btn-secondary:active {
+  transform: translateY(0.5px);
+}
+
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 500;
+  font-size: 12.5px;
+  color: #A1A1AA !important;
+  background-color: transparent;
+  border: 1px solid #27272A;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+.btn-outline:hover {
+  background-color: #18181B;
+  border-color: #3F3F46;
+  color: #FAFAFA !important;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-weight: 500;
+  font-size: 12.5px;
+  color: #A1A1AA !important;
+  background-color: transparent;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+.btn-ghost:hover {
+  background-color: rgba(24, 24, 27, 0.5);
+  color: #FAFAFA !important;
+}
+
+/* Accessibility Focus Ring Styles */
+.focus-ring {
+  outline: none;
+  transition: box-shadow 0.2s ease-in-out;
+}
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px var(--primary);
+}
+
+/* Premium card hover glows */
+.card-interactive {
+  background-color: #18181B;
+  border: 1px solid rgba(39, 39, 42, 0.7);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-interactive:hover {
+  border-color: rgba(63, 63, 70, 0.9);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  transform: translateY(-1px);
+}
+

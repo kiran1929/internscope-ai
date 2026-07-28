@@ -78,7 +78,7 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
 
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 rounded-lg bg-primary hover:bg-blue-700 text-xs font-semibold text-white transition-all duration-200 flex items-center justify-center gap-1.5 shadow-md shadow-primary/15"
+          className="btn-primary focus-ring"
         >
           <Plus className="w-4 h-4" />
           <span>Add Custom Application</span>
@@ -110,7 +110,7 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
                       <div
                         key={app.id}
                         className={cn(
-                          'bg-[#18181B] border rounded-lg p-3.5 space-y-3 hover:border-zinc-700 transition-all duration-150',
+                          'bg-[#18181B] border rounded-xl p-3.5 space-y-3 hover:border-zinc-700/80 hover:shadow-[0_4px_16px_rgba(0,0,0,0.3)] hover:-translate-y-0.5 transition-all duration-200',
                           column.border
                         )}
                       >
@@ -275,13 +275,13 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-zinc-800 rounded-lg font-semibold hover:bg-zinc-850 transition-colors"
+                  className="btn-secondary focus-ring py-2"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary hover:bg-blue-700 text-white rounded-lg font-semibold transition-all shadow-md shadow-primary/10"
+                  className="btn-primary focus-ring py-2"
                 >
                   Create Entry
                 </button>

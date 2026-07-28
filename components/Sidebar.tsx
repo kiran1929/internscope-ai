@@ -99,13 +99,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.id}
               onClick={() => setActiveTab(item.id)}
               className={cn(
-                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative',
+                'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative border border-transparent focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:border-transparent',
                 isActive
-                  ? 'bg-primary text-white shadow-lg shadow-primary/10'
-                  : 'text-text-muted hover:text-white hover:bg-zinc-900'
+                  ? 'bg-zinc-900/80 border-zinc-800 text-white shadow-[0_1px_3px_rgba(0,0,0,0.4)]'
+                  : 'text-text-muted hover:text-white hover:bg-zinc-900/40'
               )}
             >
-              <Icon className={cn('w-4 h-4 shrink-0 transition-transform group-hover:scale-105', isActive ? 'text-white' : 'text-text-muted group-hover:text-white')} />
+              {isActive && (
+                <span className="absolute left-1 w-[3px] h-4 bg-primary rounded-full" />
+              )}
+              <Icon className={cn('w-4 h-4 shrink-0 transition-transform group-hover:scale-105', isActive ? 'text-primary' : 'text-text-muted group-hover:text-white')} />
               {!isCollapsed && (
                 <span className="truncate">{item.label}</span>
               )}
