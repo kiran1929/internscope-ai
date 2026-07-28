@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# InternScope AI 🚀
 
-## Getting Started
+InternScope AI is a premium, AI-powered internship tracking platform designed to help student developers monitor engineering opportunities from top technology hubs, analyze resume alignment, receive custom email reports, and coordinate application pipelines.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🎨 Design Philosophy & Colors
+The UI combines design tokens from **Linear**, **Vercel**, **Apple**, and **Stripe**:
+- **Background:** `#09090B` (Clean Dark Slate)
+- **Sidebar & Drawers:** `#111113` (Contrast Isolation)
+- **Card Background:** `#18181B` (Elevation Borders)
+- **Accent Blue:** `#2563EB` (Electric Blue highlight)
+- **Subtle Borders:** `#27272A` (Minimal separation)
+- **Typography:** Display headlines use **Outfit**; operational workspace text uses **Inter** (loaded via Next.js Google Fonts API).
+
+---
+
+## 📂 Project Architecture & Folders
+```
+internship-tracker/
+├── app/                  # Next.js App Router Pages and Layouts
+│   ├── (protected)/      # Shared Sidebar/Navbar container for private paths
+│   ├── sign-in/          # Clerk custom login form
+│   ├── sign-up/          # Clerk custom signup form
+│   ├── 401/ | 403/       # Custom Auth Error status pages
+│   ├── globals.css       # Core custom animations, scrollbars & glassmorphism
+│   ├── layout.tsx        # Root layout loading ClerkProvider & display fonts
+│   └── page.tsx          # Responsive landing marketing page
+├── components/           # Reusable UI & view sub-panels (Kanban, tables)
+├── constants/            # Mock dataset definitions (roles, companies, FAQS)
+├── docs/                 # Technical documentation & phase logs
+│   └── phase-2.md        # Authentication & RBAC implementation details
+├── lib/                  # Helper utilities (Tailwind merges, RBAC hasRole checks)
+├── providers/            # Shared React Contexts (Dashboard state)
+├── types/                # Strict TypeScript declaration types
+└── middleware.ts         # Clerk path guarding middleware
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🔒 Authentication & Role Access
+InternScope AI secures candidate dashboards via **Clerk Authentication**:
+- **OAuth Connections:** Supports Google Login and GitHub Login out-of-the-box.
+- **Form Login:** Email + Password entry with verification codes.
+- **Protected Routes:** Middleware secures `/dashboard`, `/settings`, `/profile`, `/applications`, `/saved`, and `/email-reports`, redirecting unauthorized users automatically.
+- **RBAC Design:** Pre-wired for roles (`USER`, `ADMIN`, `SUPER_ADMIN`) with permission mappings to easily secure custom views in Phase 3.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🛠️ Local Development & Scripts
 
-To learn more about Next.js, take a look at the following resources:
+### 1. Configure Credentials
+Create a `.env.local` file in the root folder with the following variables:
+```env
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Start the Development Server
+Install dependencies and run the server:
+```bash
+npm install
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view the landing page. Clicking "Get Started" or "View Demo" will guide you through the authentication flow to the dashboard.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 3. Verify Code Quality & Type Checks
+```bash
+# Run ESLint validation
+npm run lint
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Compile Next.js build
+npm run build
+```
