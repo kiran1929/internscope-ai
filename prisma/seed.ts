@@ -11,7 +11,7 @@ import {
   Company,
   Opportunity,
   Prisma,
-} from '../lib/generated/prisma/client.js';
+} from '../lib/generated/prisma/client';
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);

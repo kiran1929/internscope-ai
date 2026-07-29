@@ -1,6 +1,6 @@
-import { prisma } from '../db.js';
-import { ApplicationStatus, Prisma } from '../generated/prisma/client.js';
-import { getPaginationOptions, buildPaginatedResult, PaginationParams } from '../db-utils.js';
+import { prisma } from '../db';
+import { ApplicationStatus, Prisma } from '../generated/prisma/client';
+import { getPaginationOptions, buildPaginatedResult, PaginationParams } from '../db-utils';
 
 export interface ApplicationFilterParams extends PaginationParams {
   status?: ApplicationStatus;

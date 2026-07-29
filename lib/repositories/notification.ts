@@ -1,6 +1,6 @@
-import { prisma } from '../db.js';
-import { NotificationType } from '../generated/prisma/client.js';
-import { getPaginationOptions, buildPaginatedResult, PaginationParams } from '../db-utils.js';
+import { prisma } from '../db';
+import { NotificationType } from '../generated/prisma/client';
+import { getPaginationOptions, buildPaginatedResult, PaginationParams } from '../db-utils';
 
 export interface NotificationFilterParams extends PaginationParams {
   isRead?: boolean;

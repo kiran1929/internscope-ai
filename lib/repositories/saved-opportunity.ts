@@ -1,5 +1,5 @@
-import { prisma } from '../db.js';
-import { getPaginationOptions, buildPaginatedResult, PaginationParams } from '../db-utils.js';
+import { prisma } from '../db';
+import { getPaginationOptions, buildPaginatedResult, PaginationParams } from '../db-utils';
 
 export class SavedOpportunityRepository {
   static async findByUserAndOpportunity(userId: string, opportunityId: string) {

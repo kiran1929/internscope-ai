@@ -1,6 +1,6 @@
-import { prisma } from '../db.js';
-import { OpportunityType, RemoteType, Prisma } from '../generated/prisma/client.js';
-import { getPaginationOptions, buildPaginatedResult, buildSearchFilter, PaginationParams } from '../db-utils.js';
+import { prisma } from '../db';
+import { OpportunityType, RemoteType, Prisma } from '../generated/prisma/client';
+import { getPaginationOptions, buildPaginatedResult, buildSearchFilter, PaginationParams } from '../db-utils';
 
 export interface OpportunityFilterParams extends PaginationParams {
   search?: string;

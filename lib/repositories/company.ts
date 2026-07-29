@@ -1,6 +1,6 @@
-import { prisma } from '../db.js';
-import { Prisma } from '../generated/prisma/client.js';
-import { getPaginationOptions, buildPaginatedResult, buildSearchFilter, PaginationParams } from '../db-utils.js';
+import { prisma } from '../db';
+import { Prisma } from '../generated/prisma/client';
+import { getPaginationOptions, buildPaginatedResult, buildSearchFilter, PaginationParams } from '../db-utils';
 
 export interface CompanyFilterParams extends PaginationParams {
   search?: string;

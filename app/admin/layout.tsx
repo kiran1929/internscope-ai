@@ -1,0 +1,53 @@
+import React from 'react';
+import { currentUser } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+import { UserRepository } from '@/lib/repositories/user';
+import { prisma } from '@/lib/db';
+import { DashboardStateProvider } from '@/providers/DashboardStateProvider';
+import { AdminLayoutContent } from './AdminLayoutContent';
+import { Role } from '@/lib/generated/prisma/client';
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const clerkUser = await currentUser();
+  
+  if (!clerkUser) {
+    redirect('/sign-in');
+  }
+
+  // Find user in database by clerkId
+  let dbUser = await UserRepository.findByClerkId(clerkUser.id);
+
+  // Fallback: If not found, check by email (to link local Clerk logins to seeded user profiles)
+  if (!dbUser) {
+    const email = clerkUser.emailAddresses[0]?.emailAddress;
+    if (email) {
+      dbUser = await UserRepository.findByEmail(email);
+      if (dbUser && !dbUser.clerkId) {
+        // Associate the Clerk user ID with this pre-seeded database record
+        dbUser = await prisma.user.update({
+          where: { id: dbUser.id },
+          data: { clerkId: clerkUser.id },
+          include: {
+            profile: true,
+            emailPreference: true,
+          },
+        });
+      }
+    }
+  }
+
+  // Authorize: Only permit ADMIN or SUPER_ADMIN access to CMS
+  if (!dbUser || (dbUser.role !== Role.ADMIN && dbUser.role !== Role.SUPER_ADMIN)) {
+    redirect('/403');
+  }
+
+  return (
+    <DashboardStateProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </DashboardStateProvider>
+  );
+}

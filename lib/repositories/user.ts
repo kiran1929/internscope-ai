@@ -1,5 +1,5 @@
-import { prisma } from '../db.js';
-import { Role, Prisma } from '../generated/prisma/client.js';
+import { prisma } from '../db';
+import { Role, Prisma } from '../generated/prisma/client';
 
 export class UserRepository {
   static async findById(id: string) {
