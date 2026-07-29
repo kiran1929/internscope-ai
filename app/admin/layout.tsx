@@ -5,7 +5,7 @@ import { UserRepository } from '@/lib/repositories/user';
 import { prisma } from '@/lib/db';
 import { DashboardStateProvider } from '@/providers/DashboardStateProvider';
 import { AdminLayoutContent } from './AdminLayoutContent';
-import { Role } from '@/lib/generated/prisma/client';
+import { Role } from '@/lib/generated/prisma/enums';
 
 export default async function AdminLayout({
   children,

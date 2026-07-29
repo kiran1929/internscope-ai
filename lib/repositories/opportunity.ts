@@ -1,15 +1,15 @@
 import { prisma } from '../db';
 import { OpportunityType, RemoteType, Prisma } from '../generated/prisma/client';
-import { getPaginationOptions, buildPaginatedResult, buildSearchFilter, PaginationParams } from '../db-utils';
+import { getPaginationOptions, buildPaginatedResult, PaginationParams } from '../db-utils';
 
 export interface OpportunityFilterParams extends PaginationParams {
   search?: string;
   type?: OpportunityType;
   remoteType?: RemoteType;
-  location?: string;
-  activeOnly?: boolean;
-  sortBy?: 'deadline' | 'createdAt' | 'title';
-  sortOrder?: 'asc' | 'desc';
+  isActive?: boolean; // published/draft
+  isArchived?: boolean;
+  companyId?: string;
+  sortBy?: 'newest' | 'oldest' | 'deadline' | 'company' | 'title';
 }
 
 export class OpportunityRepository {
@@ -24,30 +24,48 @@ export class OpportunityRepository {
 
   static async findMany(params?: OpportunityFilterParams) {
     const { page, limit, skip, take } = getPaginationOptions(params);
-    
-    // Search filter
-    const searchFilter = buildSearchFilter(params?.search, ['title', 'description', 'requirements']);
 
     // Build query where parameters
     const where: Prisma.OpportunityWhereInput = {
-      ...searchFilter,
       ...(params?.type && { type: params.type }),
       ...(params?.remoteType && { remoteType: params.remoteType }),
-      ...(params?.location && {
-        location: {
-          contains: params.location,
-          mode: 'insensitive',
-        },
-      }),
-      ...(params?.activeOnly !== undefined && { isActive: params.activeOnly }),
+      ...(params?.isActive !== undefined && { isActive: params.isActive }),
+      ...(params?.isArchived !== undefined ? { isArchived: params.isArchived } : { isArchived: false }), // default exclude archived
+      ...(params?.companyId && { companyId: params.companyId }),
     };
 
+    // Server-side search: Title, Company Name, Location, Tags
+    if (params?.search) {
+      const q = params.search;
+      where.OR = [
+        { title: { contains: q, mode: 'insensitive' } },
+        { location: { contains: q, mode: 'insensitive' } },
+        { tags: { hasSome: [q] } },
+        { company: { name: { contains: q, mode: 'insensitive' } } },
+      ];
+    }
+
     // Build sort order
-    const sortBy = params?.sortBy || 'createdAt';
-    const sortOrder = params?.sortOrder || 'desc';
-    const orderBy: Prisma.OpportunityOrderByWithRelationInput = {
-      [sortBy]: sortOrder,
-    };
+    let orderBy: Prisma.OpportunityOrderByWithRelationInput = { createdAt: 'desc' };
+    if (params?.sortBy) {
+      switch (params.sortBy) {
+        case 'newest':
+          orderBy = { createdAt: 'desc' };
+          break;
+        case 'oldest':
+          orderBy = { createdAt: 'asc' };
+          break;
+        case 'deadline':
+          orderBy = { deadline: 'asc' };
+          break;
+        case 'company':
+          orderBy = { company: { name: 'asc' } };
+          break;
+        case 'title':
+          orderBy = { title: 'asc' };
+          break;
+      }
+    }
 
     const [data, total] = await Promise.all([
       prisma.opportunity.findMany({
@@ -65,7 +83,13 @@ export class OpportunityRepository {
     return buildPaginatedResult(data, total, page, limit);
   }
 
-  static async create(data: Prisma.OpportunityCreateWithoutCompanyInput & { companyId: string }) {
+  static async create(
+    data: Prisma.OpportunityCreateWithoutCompanyInput & {
+      companyId: string;
+      tags?: string[];
+      isArchived?: boolean;
+    }
+  ) {
     return prisma.opportunity.create({
       data: {
         title: data.title,
@@ -79,6 +103,8 @@ export class OpportunityRepository {
         applicationUrl: data.applicationUrl,
         deadline: data.deadline,
         isActive: data.isActive !== undefined ? data.isActive : true,
+        isArchived: data.isArchived !== undefined ? data.isArchived : false,
+        tags: data.tags || [],
         company: {
           connect: { id: data.companyId },
         },

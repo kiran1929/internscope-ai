@@ -108,6 +108,8 @@ model Opportunity {
   applicationUrl String
   deadline       DateTime?
   isActive       Boolean            @default(true)
+  isArchived     Boolean            @default(false)
+  tags           String[]           @default([])
   savedByUsers   SavedOpportunity[]
   applications   Application[]
   createdAt      DateTime           @default(now())
@@ -117,6 +119,7 @@ model Opportunity {
   @@index([createdAt])
   @@index([location])
   @@index([type])
+  @@index([isArchived])
 }
 
 model SavedOpportunity {

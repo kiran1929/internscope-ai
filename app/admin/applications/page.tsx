@@ -2,7 +2,7 @@ import React from 'react';
 import { prisma } from '@/lib/db';
 import { AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ApplicationStatus } from '@/lib/generated/prisma/client';
+import { ApplicationStatus } from '@/lib/generated/prisma/enums';
 
 export const dynamic = 'force-dynamic';
 

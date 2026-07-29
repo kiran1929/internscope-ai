@@ -10,7 +10,7 @@ import {
   Calendar,
   Sparkles
 } from 'lucide-react';
-import { ApplicationStatus } from '@/lib/generated/prisma/client';
+import { ApplicationStatus } from '@/lib/generated/prisma/enums';
 
 export const dynamic = 'force-dynamic';
 
