@@ -84,13 +84,30 @@ model Company {
   name          String        @unique
   logoUrl       String?
   websiteUrl    String?
+  careerPageUrl String?
   industry      String?
   description   String?
+  country       String?
+  state         String?
+  city          String?
+  companySize   String?       @default("1-10")
+  foundedYear   Int?
+  linkedinUrl   String?
+  twitterUrl    String?
+  githubUrl     String?
+  isVerified    Boolean       @default(false)
+  hiringStatus  String        @default("HIRING") // e.g. "HIRING", "NOT_HIRING", "FREEZE"
+  isArchived    Boolean       @default(false)
+  tags          String[]      @default([])
   opportunities Opportunity[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
   @@index([name])
+  @@index([websiteUrl])
+  @@index([linkedinUrl])
+  @@index([careerPageUrl])
+  @@index([isArchived])
 }
 
 model Opportunity {
