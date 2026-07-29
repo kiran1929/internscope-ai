@@ -59,6 +59,7 @@ model User {
   applications       Application[]
   notifications      Notification[]
   emailPreference    EmailPreference?
+  isActive           Boolean            @default(true)
 }
 
 model Profile {
