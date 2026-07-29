@@ -85,7 +85,7 @@ export default async function UserProfilePage(props: PageProps) {
     }
   ];
 
-  user.applications.forEach((app: any) => {
+  user.applications.forEach((app) => {
     timelineEvents.push({
       id: app.id,
       title: `Applied: ${app.opportunity.title}`,
@@ -307,7 +307,7 @@ export default async function UserProfilePage(props: PageProps) {
 
             <div className="space-y-3">
               {user.applications.length > 0 ? (
-                user.applications.map((app: any) => (
+                user.applications.map((app) => (
                   <div
                     key={app.id}
                     className="p-3 bg-zinc-950/40 rounded-lg border border-zinc-900 hover:border-zinc-850 transition-all flex items-center justify-between gap-4"
@@ -352,7 +352,7 @@ export default async function UserProfilePage(props: PageProps) {
 
             <div className="space-y-3">
               {user.savedOpportunities.length > 0 ? (
-                user.savedOpportunities.map((item: any) => (
+                user.savedOpportunities.map((item) => (
                   <div
                     key={item.opportunityId}
                     className="p-3 bg-zinc-950/40 rounded-lg border border-zinc-900 hover:border-zinc-850 transition-all flex items-center justify-between gap-4"
