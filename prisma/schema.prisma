@@ -191,3 +191,34 @@ model EmailPreference {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 }
+
+enum JobStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model IngestionJob {
+  id               String    @id @default(uuid())
+  provider         String    // "greenhouse", "lever", "ashby", "all"
+  status           JobStatus @default(RUNNING)
+  triggerId        String?   // Trigger.dev run ID if available
+  startedAt        DateTime  @default(now())
+  finishedAt       DateTime?
+  durationMs       Int?
+  fetchedCount     Int       @default(0)
+  importedCount    Int       @default(0)
+  duplicateCount   Int       @default(0)
+  failedCount      Int       @default(0)
+  validationErrors Json?     // Array/Object of validation failures
+  error            String?   // Stack trace / error message if FAILED
+  logs             Json?     // Array of structured runtime logs
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([provider])
+  @@index([status])
+  @@index([createdAt])
+}
+
