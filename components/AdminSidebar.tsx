@@ -9,7 +9,8 @@ import {
   Users,
   Settings as SettingsIcon,
   ChevronLeft,
-  ArrowLeft
+  ArrowLeft,
+  FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -21,6 +22,7 @@ export type AdminTab =
   | 'companies'
   | 'users'
   | 'applications'
+  | 'resumes'
   | 'settings';
 
 interface AdminSidebarProps {
@@ -50,6 +52,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     if (pathname.startsWith('/admin/companies')) return 'companies';
     if (pathname.startsWith('/admin/users')) return 'users';
     if (pathname.startsWith('/admin/applications')) return 'applications';
+    if (pathname.startsWith('/admin/resumes')) return 'resumes';
     if (pathname.startsWith('/admin/settings')) return 'settings';
     return 'overview';
   };
@@ -62,6 +65,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'companies', label: 'Manage Companies', icon: Building, href: '/admin/companies' },
     { id: 'users', label: 'Manage Users', icon: Users, href: '/admin/users' },
     { id: 'applications', label: 'User Applications', icon: Briefcase, href: '/admin/applications' },
+    { id: 'resumes', label: 'Resume Analytics', icon: FileText, href: '/admin/resumes' },
     { id: 'settings', label: 'System Settings', icon: SettingsIcon, href: '/admin/settings' },
   ];
 

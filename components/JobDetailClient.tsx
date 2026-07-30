@@ -15,7 +15,9 @@ import {
   Plus,
   Loader2,
   CheckCircle,
-  FileText
+  FileText,
+  Sparkles,
+  AlertTriangle
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -66,6 +68,20 @@ interface JobDetailClientProps {
       name: string;
     };
   }[];
+  jobMatch?: {
+    overallScore: number;
+    skillScore: number;
+    techScore: number;
+    experienceScore: number;
+    locationScore: number;
+    employmentTypeScore: number;
+    missingSkills: string[];
+    missingTechnologies: string[];
+    niceToHaveSkills: string[];
+    strengthAreas: string[];
+    improvementSuggestions: string[];
+    matchExplanation: string | null;
+  } | null;
 }
 
 export default function JobDetailClient({
@@ -74,6 +90,7 @@ export default function JobDetailClient({
   hasApplied,
   currentStatus,
   relatedJobs,
+  jobMatch,
 }: JobDetailClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -207,6 +224,91 @@ export default function JobDetailClient({
         
         {/* Left 2 columns: Description & details */}
         <div className="lg:col-span-2 space-y-6">
+          {/* AI Match Insights */}
+          {jobMatch && (
+            <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-sm">
+              <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-amber-500" /> AI Resume Match Insights
+                </h3>
+                <span className="text-xs font-mono font-bold text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded">
+                  {jobMatch.overallScore}% Overall Match
+                </span>
+              </div>
+
+              <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                {jobMatch.matchExplanation}
+              </p>
+
+              {/* Sub Scores Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2 text-center text-[10px] font-mono text-zinc-400">
+                <div className="bg-zinc-950 p-2 rounded border border-zinc-900">
+                  <span className="text-zinc-500 block">Skills:</span>
+                  <span className="text-zinc-200 font-bold">{jobMatch.skillScore}%</span>
+                </div>
+                <div className="bg-zinc-950 p-2 rounded border border-zinc-900">
+                  <span className="text-zinc-500 block">Tech Stack:</span>
+                  <span className="text-zinc-200 font-bold">{jobMatch.techScore}%</span>
+                </div>
+                <div className="bg-zinc-950 p-2 rounded border border-zinc-900">
+                  <span className="text-zinc-500 block">Experience:</span>
+                  <span className="text-zinc-200 font-bold">{jobMatch.experienceScore}%</span>
+                </div>
+                <div className="bg-zinc-950 p-2 rounded border border-zinc-900">
+                  <span className="text-zinc-500 block">Location:</span>
+                  <span className="text-zinc-200 font-bold">{jobMatch.locationScore}%</span>
+                </div>
+                <div className="bg-zinc-950 p-2 rounded border border-zinc-900">
+                  <span className="text-zinc-500 block">Work Mode:</span>
+                  <span className="text-zinc-200 font-bold">{jobMatch.employmentTypeScore}%</span>
+                </div>
+              </div>
+
+              {/* Missing Skills & Tech Stack */}
+              {(jobMatch.missingSkills.length > 0 || jobMatch.missingTechnologies.length > 0) && (
+                <div className="space-y-2 border-t border-zinc-900 pt-3 text-xs">
+                  <span className="text-zinc-450 block font-semibold">Missing Requirements (Gaps):</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {jobMatch.missingSkills.map((s) => (
+                      <span key={s} className="text-[9px] bg-red-500/5 text-red-400 border border-red-500/10 px-2.5 py-0.5 rounded">
+                        {s}
+                      </span>
+                    ))}
+                    {jobMatch.missingTechnologies.map((t) => (
+                      <span key={t} className="text-[9px] bg-red-500/5 text-red-400 border border-red-500/10 px-2.5 py-0.5 rounded">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Strengths */}
+              {jobMatch.strengthAreas.length > 0 && (
+                <div className="space-y-2 border-t border-zinc-900 pt-3 text-xs">
+                  <span className="text-zinc-450 block font-semibold">Strengths:</span>
+                  <ul className="list-disc pl-4 space-y-1 text-[10px] text-emerald-400">
+                    {jobMatch.strengthAreas.map((st, sidx) => (
+                      <li key={sidx} className="font-sans leading-relaxed">{st}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Suggestions */}
+              {jobMatch.improvementSuggestions.length > 0 && (
+                <div className="space-y-2 border-t border-zinc-900 pt-3 text-xs">
+                  <span className="text-zinc-450 block font-semibold">Actionable Recommendations:</span>
+                  <ul className="list-disc pl-4 space-y-1 text-[10px] text-amber-500">
+                    {jobMatch.improvementSuggestions.map((sug, suidx) => (
+                      <li key={suidx} className="font-sans leading-relaxed">{sug}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Metadata Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-[#111113] border border-zinc-850 p-4 rounded-xl space-y-1">

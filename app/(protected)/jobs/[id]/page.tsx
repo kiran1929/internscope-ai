@@ -64,6 +64,24 @@ export default async function JobDetailPage({ params }: PageProps) {
     },
   });
 
+  // 5. Fetch job matching analytics if user has a parsed resume
+  const latestResume = await prisma.resume.findFirst({
+    where: { userId: user.id, isParsed: true },
+    orderBy: { version: 'desc' },
+  });
+
+  let jobMatch = null;
+  if (latestResume) {
+    jobMatch = await prisma.jobMatch.findUnique({
+      where: {
+        resumeId_opportunityId: {
+          resumeId: latestResume.id,
+          opportunityId: id,
+        },
+      },
+    });
+  }
+
   // Map to client formats
   const mappedJob = {
     id: job.id,
@@ -104,6 +122,7 @@ export default async function JobDetailPage({ params }: PageProps) {
       hasApplied={!!appRecord}
       currentStatus={appRecord?.status.toString()}
       relatedJobs={relatedJobs}
+      jobMatch={jobMatch}
     />
   );
 }

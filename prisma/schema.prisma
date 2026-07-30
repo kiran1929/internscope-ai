@@ -61,6 +61,10 @@ model User {
   notifications      Notification[]
   emailPreference    EmailPreference?
   isActive           Boolean            @default(true)
+  resumes            Resume[]
+  careerAnalysis     CareerAnalysis?
+  careerSnapshots    CareerSnapshot[]
+  careerInsights     CareerInsight[]
 }
 
 model Profile {
@@ -140,6 +144,7 @@ model Opportunity {
   savedByUsers   SavedOpportunity[]
   applications   Application[]
   enrichment     OpportunityEnrichment?
+  matches        JobMatch[]
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
@@ -280,6 +285,169 @@ model SearchLog {
   @@index([createdAt])
   @@index([query])
 }
+
+model Resume {
+  id               String     @id @default(uuid())
+  userId           String
+  fileName         String
+  filePath         String
+  fileSize         Int
+  mimeType         String
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  version          Int        @default(1)
+  rawText          String?    // DB text representation
+  isParsed         Boolean    @default(false)
+  parsedAt         DateTime?
+  parsingError     String?
+  parserVersion    String?
+  aiProvider       String?
+  confidenceScore  Float?
+  processingTimeMs Int?
+  tokensConsumed   Int?
+  structuredData   Json?      // Parsed sections JSON payload
+  qualityScore     Float?     // Quality evaluation score
+  qualityFeedback  Json?      // Actionable feedback JSON array
+  
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matches          JobMatch[]
+  careerAnalyses   CareerAnalysis[]
+  careerSnapshots  CareerSnapshot[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model JobMatch {
+  id                     String      @id @default(uuid())
+  resumeId               String
+  opportunityId          String
+  overallScore           Float       // Overall matching score (0-100)
+  skillScore             Float
+  techScore              Float
+  experienceScore        Float
+  locationScore          Float
+  employmentTypeScore    Float
+  missingSkills          String[]    @default([])
+  missingTechnologies    String[]    @default([])
+  niceToHaveSkills       String[]    @default([])
+  strengthAreas          String[]    @default([])
+  improvementSuggestions String[]    @default([])
+  matchExplanation       String?
+  createdAt              DateTime    @default(now())
+
+  resume                 Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  opportunity            Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([resumeId, opportunityId])
+  @@index([resumeId])
+  @@index([opportunityId])
+}
+
+model CareerAnalysis {
+  id                 String            @id @default(uuid())
+  userId             String            @unique
+  resumeId           String
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  
+  // AI Career Analysis fields
+  summary            String?           
+  strengths          String[]          @default([])
+  weaknesses         String[]          @default([])
+  suitableRoles      String[]          @default([])
+  careerPaths        Json?             // Array of suggested paths
+  hiringIndustries   String[]          @default([])
+  estimatedReadiness Float?
+  
+  // Skill Gap Analysis fields
+  missingSkills      String[]          @default([])
+  missingTechnologies String[]         @default([])
+  frequentSkills     String[]          @default([])
+  criticalGaps       String[]          @default([])
+  strengthAreas      String[]          @default([])
+  
+  // Interview Readiness fields
+  interviewReadinessScore Float?
+  technicalReadiness     Float?
+  behavioralReadiness    Float?
+  portfolioStrength      Float?
+  projectQuality         Float?
+  communicationReadiness Float?
+
+  // Career Score fields
+  careerScore        Float?
+  resumeQualityScore Float?
+  jobMatchAvg        Float?
+  skillCoverageScore Float?
+  projectQualityScore Float?
+  experienceScore    Float?
+  consistencyScore   Float?
+
+  // Observability metadata
+  provider           String?
+  model              String?
+  tokensUsed         Int               @default(0)
+  latencyMs          Int               @default(0)
+  estimatedCost      Float             @default(0.0)
+  
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume             Resume            @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  roadmaps           LearningRoadmap[]
+
+  @@index([userId])
+  @@index([resumeId])
+}
+
+model CareerSnapshot {
+  id                 String   @id @default(uuid())
+  userId             String
+  resumeId           String
+  careerScore        Float
+  overallMatchScore  Float
+  resumeQualityScore Float
+  analysisData       Json     // Stores the full serialized snapshot payload
+  createdAt          DateTime @default(now())
+  
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume             Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([createdAt])
+}
+
+model LearningRoadmap {
+  id               String   @id @default(uuid())
+  careerAnalysisId String
+  skillName        String
+  steps            Json     // Steps sequence JSON array (step name, details, key lessons)
+  estimatedHours   Int
+  difficulty       String   // Beginner, Intermediate, Advanced
+  prerequisites    String[] @default([])
+  expectedImpact   String?  
+  learningOrder    Int
+  
+  analysis         CareerAnalysis @relation(fields: [careerAnalysisId], references: [id], onDelete: Cascade)
+
+  @@index([careerAnalysisId])
+}
+
+model CareerInsight {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  content   String   
+  type      String   // milestone, warning, recommendation
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+
 
 
 
