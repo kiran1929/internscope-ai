@@ -130,6 +130,7 @@ model Opportunity {
   tags           String[]           @default([])
   savedByUsers   SavedOpportunity[]
   applications   Application[]
+  enrichment     OpportunityEnrichment?
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
@@ -221,4 +222,42 @@ model IngestionJob {
   @@index([status])
   @@index([createdAt])
 }
+
+enum EnrichmentStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model OpportunityEnrichment {
+  id              String           @id @default(uuid())
+  opportunityId   String           @unique
+  opportunity     Opportunity      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  status          EnrichmentStatus @default(RUNNING)
+  skills          String[]         @default([]) // Extracted skills
+  techStack       Json?            // Frontend, Backend, Database, Cloud, DevOps, Mobile, AI, DataEngineering
+  experienceLevel String?          // Intern, Entry Level, Junior, Mid Level, Senior, Lead, Manager
+  employmentType  String?          // Internship, Full-Time, Part-Time, Contract, Freelance
+  remoteType      String?          // Remote, Hybrid, Onsite, Unknown
+  salaryMin       Float?
+  salaryMax       Float?
+  salaryCurrency  String?          // USD, EUR, etc.
+  salaryPeriod    String?          // HOURLY, MONTHLY, ANNUAL
+  tags            String[]         @default([]) // Tags
+  qualityScore    Float            @default(0.0)
+  reasoning       String?          // Reasoning metadata
+  provider        String           // Gemini, OpenAI, Anthropic, Mock
+  model           String           // Model name used
+  tokensUsed      Int              @default(0)
+  latencyMs       Int              @default(0)
+  estimatedCost   Float            @default(0.0)
+  error           String?          // Error message if failed
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([status])
+  @@index([qualityScore])
+  @@index([createdAt])
+}
+
 

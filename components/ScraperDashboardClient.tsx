@@ -17,7 +17,7 @@ import {
   XCircle,
   Eye
 } from 'lucide-react';
-import { triggerSyncAction, retrySyncAction } from '@/app/actions/scraper';
+import { triggerSyncAction, retrySyncAction, triggerEnrichmentAction } from '@/app/actions/scraper';
 import { JobStatus } from '@/lib/generated/prisma/enums';
 import type { IngestionJob } from '@/lib/generated/prisma/client';
 import { toast } from 'sonner';
@@ -37,21 +37,59 @@ interface ValidationErrorItem {
   errors: string[];
 }
 
+interface EnrichmentStats {
+  total: number;
+  pending: number;
+  running: number;
+  completed: number;
+  failed: number;
+  avgLatencyMs: number;
+  avgConfidence: number;
+  totalTokens: number;
+  totalCost: number;
+}
+
 interface ScraperDashboardClientProps {
   providers: ProviderInfo[];
   runningJobs: IngestionJob[];
   history: IngestionJob[];
+  enrichmentStats: EnrichmentStats;
+  confidenceDistribution: {
+    '0.90+': number;
+    '0.80-0.89': number;
+    '0.70-0.79': number;
+    '<0.70': number;
+  };
+  activeAIProvider: {
+    name: string;
+    model: string;
+  };
 }
 
 export default function ScraperDashboardClient({
   providers,
   runningJobs,
   history,
+  enrichmentStats,
+  confidenceDistribution,
+  activeAIProvider,
 }: ScraperDashboardClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [selectedJob, setSelectedJob] = useState<IngestionJob | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleEnrich = () => {
+    startTransition(async () => {
+      const res = await triggerEnrichmentAction();
+      if (res.success) {
+        toast.success('AI Data Enrichment pipeline started successfully.');
+        router.refresh();
+      } else {
+        toast.error(`Failed to start enrichment: ${res.error}`);
+      }
+    });
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -222,6 +260,106 @@ export default function ScraperDashboardClient({
           </table>
         </div>
       </div>
+
+      {/* AI Career Intelligence Enrichment Monitor & Controls */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Stats and Distribution */}
+        <div className="lg:col-span-2 bg-[#111113] border border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">AI Opportunity Enrichment</h3>
+              <p className="text-[10px] text-zinc-500 mt-0.5">Enrich raw listings with skills, tech stacks, salaries, and classifications.</p>
+            </div>
+            <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded font-bold uppercase">
+              Model: {activeAIProvider.name} ({activeAIProvider.model})
+            </span>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-zinc-950 p-3.5 rounded-lg border border-zinc-900 space-y-1">
+              <span className="text-[9px] uppercase font-bold text-zinc-500">Enriched Count</span>
+              <p className="text-lg font-extrabold text-emerald-400">{enrichmentStats.completed} / {enrichmentStats.total}</p>
+            </div>
+
+            <div className="bg-zinc-950 p-3.5 rounded-lg border border-zinc-900 space-y-1">
+              <span className="text-[9px] uppercase font-bold text-zinc-500">Pending Enrichment</span>
+              <p className="text-lg font-extrabold text-amber-500">{enrichmentStats.pending}</p>
+            </div>
+
+            <div className="bg-zinc-950 p-3.5 rounded-lg border border-zinc-900 space-y-1">
+              <span className="text-[9px] uppercase font-bold text-zinc-500">Failed Enrichment</span>
+              <p className="text-lg font-extrabold text-red-500">{enrichmentStats.failed}</p>
+            </div>
+
+            <div className="bg-zinc-950 p-3.5 rounded-lg border border-zinc-900 space-y-1">
+              <span className="text-[9px] uppercase font-bold text-zinc-500">Avg Enrichment Time</span>
+              <p className="text-lg font-extrabold text-zinc-200">
+                {enrichmentStats.avgLatencyMs ? `${(enrichmentStats.avgLatencyMs / 1000).toFixed(1)}s` : '---'}
+              </p>
+            </div>
+          </div>
+
+          {/* Tokens & Cost */}
+          <div className="grid grid-cols-3 gap-4 pt-1">
+            <div className="text-center">
+              <span className="text-[8px] uppercase font-bold text-zinc-500 block">Total Tokens Used</span>
+              <span className="text-xs font-semibold text-zinc-300 font-mono">{enrichmentStats.totalTokens.toLocaleString()}</span>
+            </div>
+            <div className="text-center border-x border-zinc-900">
+              <span className="text-[8px] uppercase font-bold text-zinc-500 block">Estimated AI Cost</span>
+              <span className="text-xs font-bold text-emerald-400 font-mono">${enrichmentStats.totalCost.toFixed(4)}</span>
+            </div>
+            <div className="text-center">
+              <span className="text-[8px] uppercase font-bold text-zinc-500 block">Avg Confidence</span>
+              <span className="text-xs font-bold text-zinc-300 font-mono">{(enrichmentStats.avgConfidence * 100).toFixed(1)}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right 1 Col: Control panel / Confidence Bins */}
+        <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-5">
+          <div className="border-b border-zinc-900 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Confidence Distribution</h3>
+            <p className="text-[10px] text-zinc-500 mt-0.5">Classification score bins.</p>
+          </div>
+
+          {/* Progress Bins */}
+          <div className="space-y-2 text-[10px]">
+            {Object.entries(confidenceDistribution).map(([bin, count]) => {
+              const total = Object.values(confidenceDistribution).reduce((acc, c) => acc + c, 0) || 1;
+              const percent = Math.round((count / total) * 100);
+              return (
+                <div key={bin} className="space-y-1">
+                  <div className="flex justify-between text-zinc-400 font-mono">
+                    <span>{bin}</span>
+                    <span>{count} ({percent}%)</span>
+                  </div>
+                  <div className="w-full bg-zinc-950 rounded-full h-1.5 overflow-hidden border border-zinc-900">
+                    <div
+                      className="bg-primary h-full rounded-full transition-all"
+                      style={{ width: `${percent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Trigger Enrichment controls */}
+          <div className="pt-2">
+            <button
+              onClick={handleEnrich}
+              disabled={isPending || enrichmentStats.pending === 0}
+              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs font-bold text-primary transition-all disabled:opacity-50 hover:cursor-pointer"
+            >
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Run AI Enrichment Pipeline ({enrichmentStats.pending} pending)</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
 
       {/* Running/Active Tasks */}
       {runningJobs.length > 0 && (

@@ -1,6 +1,7 @@
 import { JobRepository } from '../repositories/job';
 import { JobStatus, Prisma } from '../generated/prisma/client';
 import { IngestionPipeline } from './pipeline';
+import { EnrichmentEngine } from '../ai/enrichment-engine';
 import { GreenhouseConnector } from './connectors/greenhouse';
 import { LeverConnector } from './connectors/lever';
 import { AshbyConnector } from './connectors/ashby';
@@ -152,9 +153,25 @@ export class IngestionQueue {
           importedCount: summary.totalPersisted,
           duplicateCount: summary.totalDuplicates,
           failedCount: summary.totalFailed,
-          validationErrors: validationFailures as Prisma.InputJsonValue,
+          validationErrors: summary.records
+            .filter((r) => r.validation && !r.validation.isValid)
+            .map((r) => ({
+              title: r.parsed?.title || 'Unknown Opportunity',
+              errors: r.validation?.errors || [],
+            })) as Prisma.InputJsonValue,
           logs: executionLogs as Prisma.InputJsonValue,
         });
+
+        // Trigger AI Enrichment asynchronously in the background for any pending items
+        (async () => {
+          try {
+            console.log('[Queue] Triggering post-ingestion AI data enrichment task...');
+            const enrichResult = await EnrichmentEngine.enrichAllPending(50, 1000);
+            console.log(`[Queue] Post-ingestion enrichment complete. Success: ${enrichResult.success}, Failed: ${enrichResult.failed}`);
+          } catch (enrichErr) {
+            console.error('[Queue] Post-ingestion AI enrichment failed to trigger:', enrichErr);
+          }
+        })();
 
       } catch (err) {
         const endTime = Date.now();

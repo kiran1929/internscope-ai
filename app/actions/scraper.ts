@@ -6,6 +6,7 @@ import { Role } from '@/lib/generated/prisma/enums';
 import { IngestionQueue } from '@/lib/ingestion/queue';
 import { JobRepository } from '@/lib/repositories/job';
 import { revalidatePath } from 'next/cache';
+import { EnrichmentEngine } from '@/lib/ai/enrichment-engine';
 
 async function checkAdminAuth() {
   const session = await auth();
@@ -59,6 +60,27 @@ export async function getSyncHistoryAction() {
     const history = await JobRepository.getHistory();
     return { success: true, history };
   } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+export async function triggerEnrichmentAction() {
+  try {
+    await checkAdminAuth();
+    (async () => {
+      try {
+        await EnrichmentEngine.enrichAllPending(30, 1000);
+      } catch (err) {
+        console.error('Manual enrichment run failed:', err);
+      }
+    })();
+    revalidatePath('/admin/scraper');
+    return { success: true };
+  } catch (error) {
+    console.error('Trigger enrichment error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : String(error),

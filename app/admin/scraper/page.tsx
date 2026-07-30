@@ -4,6 +4,8 @@ import { UserRepository } from '@/lib/repositories/user';
 import { redirect } from 'next/navigation';
 import { Role } from '@/lib/generated/prisma/enums';
 import { JobRepository } from '@/lib/repositories/job';
+import { EnrichmentRepository } from '@/lib/repositories/enrichment';
+import { AIProviderFactory } from '@/lib/ai/providers';
 import ScraperDashboardClient from '@/components/ScraperDashboardClient';
 
 export const dynamic = 'force-dynamic';
@@ -44,7 +46,7 @@ async function checkProviderStatus(url: string): Promise<'Online' | 'Offline'> {
 export default async function ScraperDashboardPage() {
   await getAdminUser();
 
-  // Perform parallel live connection health checks and database history lookups
+  // Perform parallel live connection health checks, database history lookups, and enrichment analytics
   const [
     greenhouseStatus,
     leverStatus,
@@ -57,6 +59,8 @@ export default async function ScraperDashboardPage() {
     nextGreenhouse,
     nextLever,
     nextAshby,
+    enrichmentStats,
+    confidenceDistribution,
   ] = await Promise.all([
     checkProviderStatus('https://boards-api.greenhouse.io/v1/boards/stripe/jobs'),
     checkProviderStatus('https://api.lever.co/v0/postings/spotify?mode=json'),
@@ -69,7 +73,15 @@ export default async function ScraperDashboardPage() {
     JobRepository.getNextScheduledSync('greenhouse'),
     JobRepository.getNextScheduledSync('lever'),
     JobRepository.getNextScheduledSync('ashby'),
+    EnrichmentRepository.getEnrichmentStats(),
+    EnrichmentRepository.getConfidenceDistribution(),
   ]);
+
+  const activeProvider = AIProviderFactory.getProvider();
+  const activeAIProvider = {
+    name: activeProvider.name,
+    model: activeProvider.modelName,
+  };
 
   const formatLastSyncString = (finishedAt: Date | null) => {
     if (!finishedAt) return 'Never synced';
@@ -112,6 +124,9 @@ export default async function ScraperDashboardPage() {
         providers={providers}
         runningJobs={runningJobs}
         history={history}
+        enrichmentStats={enrichmentStats}
+        confidenceDistribution={confidenceDistribution}
+        activeAIProvider={activeAIProvider}
       />
     </div>
   );
