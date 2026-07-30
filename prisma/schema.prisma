@@ -66,6 +66,8 @@ model User {
   careerSnapshots    CareerSnapshot[]
   careerInsights     CareerInsight[]
   interviewSessions  InterviewSession[]
+  resumeOptimizations ResumeOptimization[]
+  coverLetters       CoverLetter[]
 }
 
 model Profile {
@@ -147,6 +149,8 @@ model Opportunity {
   enrichment     OpportunityEnrichment?
   matches        JobMatch[]
   interviewSessions InterviewSession[]
+  resumeOptimizations ResumeOptimization[]
+  coverLetters       CoverLetter[]
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
@@ -315,6 +319,7 @@ model Resume {
   matches          JobMatch[]
   careerAnalyses   CareerAnalysis[]
   careerSnapshots  CareerSnapshot[]
+  resumeOptimizations ResumeOptimization[]
 
   @@index([userId])
   @@index([createdAt])
@@ -556,6 +561,104 @@ model InterviewSummary {
   
   session            InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
+
+model ResumeOptimization {
+  id              String                      @id @default(uuid())
+  userId          String
+  resumeId        String
+  opportunityId   String?
+  title           String
+  atsScore        Float?
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+
+  user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resume          Resume                      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  opportunity     Opportunity?                @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  sections        ResumeOptimizationSection[]
+  atsAnalysis     ATSAnalysis?
+
+  @@index([userId])
+  @@index([resumeId])
+  @@index([opportunityId])
+  @@index([createdAt])
+}
+
+model ResumeOptimizationSection {
+  id               String             @id @default(uuid())
+  optimizationId   String
+  sectionType      String             // Summary, Experience, Projects, Skills, Education, Certifications, Achievements
+  originalContent  String             
+  optimizedContent String             
+  bulletRewrites   Json?              // JSON Array of [{original: string, suggested: string, explanation: string}]
+  createdAt        DateTime           @default(now())
+  
+  optimization     ResumeOptimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
+
+  @@index([optimizationId])
+}
+
+model ATSAnalysis {
+  id                     String             @id @default(uuid())
+  optimizationId         String             @unique
+  atsScore               Float
+  keywordMatchScore      Float
+  missingKeywords        String[]
+  weakBullets            String[]
+  strongBullets          String[]
+  missingSkills          String[]
+  suggestedProjects      String[]
+  suggestedCertifications String[]
+  formattingIssues       String[]
+  improvementChecklist   String[]
+  
+  // Observability metadata
+  provider               String?
+  model                  String?
+  latencyMs              Int                @default(0)
+  tokensUsed             Int                @default(0)
+  estimatedCost          Float              @default(0.0)
+  
+  optimization           ResumeOptimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
+}
+
+model CoverLetter {
+  id              String                @id @default(uuid())
+  userId          String
+  opportunityId   String?
+  title           String
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity     Opportunity?          @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  versions        CoverLetterVersion[]
+
+  @@index([userId])
+  @@index([opportunityId])
+  @@index([createdAt])
+}
+
+model CoverLetterVersion {
+  id             String       @id @default(uuid())
+  coverLetterId  String
+  version        Int
+  content        String       
+  style          String       // Professional, Concise, Enthusiastic, Startup, Corporate
+  createdAt      DateTime     @default(now())
+  
+  // Observability metadata
+  provider       String?
+  model          String?
+  latencyMs      Int          @default(0)
+  tokensUsed     Int          @default(0)
+  estimatedCost  Float        @default(0.0)
+  
+  coverLetter    CoverLetter  @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
+
+  @@index([coverLetterId])
+}
+
 
 
 

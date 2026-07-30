@@ -20,6 +20,9 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
 
   // Map the current path to the DashboardTab type
   const getActiveTabFromPath = (path: string): DashboardTab => {
+    if (path.includes('/resume/optimize')) return 'resume-optimize';
+    if (path.includes('/cover-letter')) return 'cover-letter';
+    
     const segments = path.split('/').filter(Boolean);
     const lastSegment = segments[segments.length - 1];
     
@@ -34,6 +37,8 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
     setMobileSidebarOpen(false);
     if (tab === 'overview') {
       router.push('/dashboard');
+    } else if (tab === 'resume-optimize') {
+      router.push('/resume/optimize');
     } else {
       router.push(`/${tab}`);
     }

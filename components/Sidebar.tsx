@@ -25,6 +25,8 @@ export type DashboardTab =
   | 'saved'
   | 'applications'
   | 'resume'
+  | 'resume-optimize'
+  | 'cover-letter'
   | 'interview'
   | 'email-reports'
   | 'analytics'
@@ -58,6 +60,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'saved', label: 'Saved Positions', icon: Bookmark },
     { id: 'applications', label: 'Applications', icon: Briefcase },
     { id: 'resume', label: 'Resume Intel', icon: FileText },
+    { id: 'resume-optimize', label: 'ATS Optimizer', icon: Sparkles },
+    { id: 'cover-letter', label: 'Cover Letters', icon: Mail },
     { id: 'interview', label: 'Interview Prep', icon: Award },
     { id: 'email-reports', label: 'Email Reports', icon: Mail },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
