@@ -65,6 +65,7 @@ model User {
   careerAnalysis     CareerAnalysis?
   careerSnapshots    CareerSnapshot[]
   careerInsights     CareerInsight[]
+  interviewSessions  InterviewSession[]
 }
 
 model Profile {
@@ -145,6 +146,7 @@ model Opportunity {
   applications   Application[]
   enrichment     OpportunityEnrichment?
   matches        JobMatch[]
+  interviewSessions InterviewSession[]
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
 
@@ -446,6 +448,115 @@ model CareerInsight {
   @@index([userId])
   @@index([createdAt])
 }
+
+model InterviewSession {
+  id                  String             @id @default(uuid())
+  userId              String
+  opportunityId       String?
+  title               String
+  status              String             // PENDING, IN_PROGRESS, COMPLETED, FAILED
+  sessionLength       Int                // 5, 10, custom
+  difficulty          String             // Easy, Medium, Hard
+  categories          String[]           // Technical, Behavioral, etc.
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  
+  // Scores
+  overallScore        Float?
+  technicalScore      Float?
+  behavioralScore     Float?
+  communicationScore  Float?
+  confidenceScore     Float?
+  
+  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity         Opportunity?       @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  questions           InterviewQuestion[]
+  summary             InterviewSummary?
+
+  @@index([userId])
+  @@index([opportunityId])
+  @@index([createdAt])
+}
+
+model InterviewQuestion {
+  id             String             @id @default(uuid())
+  sessionId      String
+  category       String             // Technical, Behavioral, etc.
+  text           String             
+  difficulty     String
+  sampleAnswer   String?            
+  order          Int
+  createdAt      DateTime           @default(now())
+  
+  session        InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  answer         InterviewAnswer?
+  evaluation     InterviewEvaluation?
+
+  @@index([sessionId])
+}
+
+model InterviewAnswer {
+  id          String            @id @default(uuid())
+  questionId  String            @unique
+  userAnswer  String            
+  createdAt   DateTime          @default(now())
+  
+  question    InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model InterviewEvaluation {
+  id                   String            @id @default(uuid())
+  questionId           String            @unique
+  score                Float             // Overall question answer score
+  
+  // Sub-scores
+  technicalAccuracy    Float
+  communication        Float
+  completeness         Float
+  problemSolving       Float
+  confidence           Float
+  structure            Float
+  
+  strengths            String[]          @default([])
+  weaknesses           String[]          @default([])
+  improvedAnswer       String?           
+  
+  // STAR coaching details
+  starMethodFollowed   Boolean           @default(false)
+  starSituation        String?           
+  starTask             String?           
+  starAction           String?           
+  starResult           String?           
+  starCoachingFeedback String?           
+  
+  // Observability metadata
+  provider             String?
+  model                String?
+  latencyMs            Int               @default(0)
+  tokensUsed           Int               @default(0)
+  
+  question             InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model InterviewSummary {
+  id                 String           @id @default(uuid())
+  sessionId          String           @unique
+  
+  overallFeedback    String           
+  keyStrengths       String[]         @default([])
+  keyWeaknesses      String[]         @default([])
+  recommendedPractice String[]        @default([])
+  
+  // Observability metadata
+  provider           String?
+  model              String?
+  latencyMs          Int              @default(0)
+  tokensUsed         Int              @default(0)
+  estimatedCost      Float            @default(0.0)
+  
+  session            InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
 
 
 
