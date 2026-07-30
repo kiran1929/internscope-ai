@@ -32,6 +32,7 @@ enum ApplicationStatus {
   INTERVIEWING
   OFFERED
   REJECTED
+  ACCEPTED
 }
 
 enum NotificationType {
@@ -76,6 +77,14 @@ model Profile {
   skills         String[]
   graduationYear Int?
   major          String?
+  headline       String?
+  bio            String?
+  preferredTechnologies String[]
+  preferredLocations    String[]
+  employmentPreferences String[]
+  remotePreferences     String[]
+  salaryExpectations    String?
+  experienceLevel       String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
