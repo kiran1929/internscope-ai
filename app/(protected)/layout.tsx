@@ -22,6 +22,7 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
   const getActiveTabFromPath = (path: string): DashboardTab => {
     if (path.includes('/resume/optimize')) return 'resume-optimize';
     if (path.includes('/cover-letter')) return 'cover-letter';
+    if (path.includes('/copilot')) return 'copilot';
     
     const segments = path.split('/').filter(Boolean);
     const lastSegment = segments[segments.length - 1];

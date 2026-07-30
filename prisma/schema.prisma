@@ -68,6 +68,10 @@ model User {
   interviewSessions  InterviewSession[]
   resumeOptimizations ResumeOptimization[]
   coverLetters       CoverLetter[]
+  careerGoals        CareerGoal[]
+  copilotConversations CopilotConversation[]
+  weeklyCareerReports WeeklyCareerReport[]
+  aiActionLogs       AIActionLog[]
 }
 
 model Profile {
@@ -658,6 +662,101 @@ model CoverLetterVersion {
 
   @@index([coverLetterId])
 }
+
+model CareerGoal {
+  id                 String             @id @default(uuid())
+  userId             String
+  title              String             // Backend Internship, Google STEP, etc.
+  targetDate         DateTime?
+  status             String             // IN_PROGRESS, COMPLETED, ABANDONED
+  progress           Float              @default(0.0)
+  missingSkills      String[]
+  estimatedReadiness Float?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+   
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CopilotConversation {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+   
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  CopilotMessage[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model CopilotMessage {
+  id             String              @id @default(uuid())
+  conversationId String
+  sender         String              // USER, ASSISTANT, SYSTEM
+  content        String              
+  createdAt      DateTime            @default(now())
+   
+  // Observability metadata
+  provider       String?
+  model          String?
+  latencyMs      Int                 @default(0)
+  tokensUsed     Int                 @default(0)
+  estimatedCost  Float               @default(0.0)
+  contextSize    Int                 @default(0)
+   
+  conversation   CopilotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([createdAt])
+}
+
+model WeeklyCareerReport {
+  id                   String           @id @default(uuid())
+  userId               String
+  startDate            DateTime
+  endDate              DateTime
+   
+  careerScoreDelta     Float            @default(0.0)
+  resumeImprovements   String[]
+  interviewProgress    String           
+  newMatchingJobsCount Int              @default(0)
+  skillsLearned        String[]
+  recommendations      String[]
+   
+  // Observability metadata
+  provider             String?
+  model                String?
+  latencyMs            Int              @default(0)
+  tokensUsed           Int              @default(0)
+  estimatedCost        Float            @default(0.0)
+   
+  createdAt            DateTime         @default(now())
+   
+  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AIActionLog {
+  id         String   @id @default(uuid())
+  userId     String
+  actionType String   // GENERATE_INTERVIEW_PLAN, GENERATE_COVER_LETTER, RECALCULATE_ATS, etc.
+  status     String   // SUCCESS, FAILED
+  metadata   Json?
+  createdAt  DateTime @default(now())
+   
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
 
 
 

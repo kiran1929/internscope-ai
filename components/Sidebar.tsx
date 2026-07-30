@@ -14,7 +14,8 @@ import {
   ChevronRight,
   Sparkles,
   FileText,
-  Award
+  Award,
+  Brain
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +29,7 @@ export type DashboardTab =
   | 'resume-optimize'
   | 'cover-letter'
   | 'interview'
+  | 'copilot'
   | 'email-reports'
   | 'analytics'
   | 'settings';
@@ -63,6 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'resume-optimize', label: 'ATS Optimizer', icon: Sparkles },
     { id: 'cover-letter', label: 'Cover Letters', icon: Mail },
     { id: 'interview', label: 'Interview Prep', icon: Award },
+    { id: 'copilot', label: 'AI Copilot', icon: Brain },
     { id: 'email-reports', label: 'Email Reports', icon: Mail },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
