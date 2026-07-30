@@ -260,4 +260,17 @@ model OpportunityEnrichment {
   @@index([createdAt])
 }
 
+model SearchLog {
+  id           String   @id @default(uuid())
+  query        String
+  filters      Json?    // Stores the filters applied during search
+  resultsCount Int      @default(0)
+  userId       String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([query])
+}
+
+
 

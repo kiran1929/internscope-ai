@@ -4,6 +4,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { UserRepository } from '@/lib/repositories/user';
 import { redirect } from 'next/navigation';
 import { Role } from '@/lib/generated/prisma/enums';
+import { SearchService } from '@/lib/search/search-service';
 import {
   Users,
   Building,
@@ -64,7 +65,13 @@ export default async function AdminAnalyticsPage() {
     prisma.application.count({ where: { status: 'REJECTED' } }),
   ]);
 
-  // Demo / Placeholder charts data for timeline representations
+  // 2. Fetch telemetry stats and trend analytics from SearchService
+  const [searchStats, trendAnalytics] = await Promise.all([
+    SearchService.getSearchStats(),
+    SearchService.getTrendAnalytics(),
+  ]);
+
+  // Demo / Placeholder charts data for user growth timeline representation
   const userGrowth = [
     { label: 'Week 1', value: 12 },
     { label: 'Week 2', value: 24 },
@@ -74,53 +81,44 @@ export default async function AdminAnalyticsPage() {
     { label: 'Week 6', value: 210 },
   ];
 
-  const appSubmissions = [
-    { label: 'Mon', value: 5 },
-    { label: 'Tue', value: 12 },
-    { label: 'Wed', value: 25 },
-    { label: 'Thu', value: 18 },
-    { label: 'Fri', value: 30 },
-    { label: 'Sat', value: 8 },
-    { label: 'Sun', value: 14 },
-  ];
+  // Daily Indexed Positions from SearchService
+  const appSubmissions = searchStats.dailyIndexed;
 
-  const oppsByType = [
-    { label: 'Software Engineer', value: 45, percentage: 45 },
-    { label: 'Frontend Developer', value: 25, percentage: 25 },
-    { label: 'Backend Engineer', value: 20, percentage: 20 },
-    { label: 'Data Science', value: 10, percentage: 10 },
-  ];
+  // Top skills count to compute percentage
+  const totalSkillsCount = trendAnalytics.topSkills.reduce((acc, s) => acc + s.count, 0) || 1;
+  const oppsByType = trendAnalytics.topSkills.map((s) => ({
+    label: s.name,
+    value: s.count,
+    percentage: Math.round((s.count / totalSkillsCount) * 100),
+  }));
 
-  const oppsByLocation = [
-    { label: 'San Francisco, CA', count: 32 },
-    { label: 'New York, NY', count: 18 },
-    { label: 'Seattle, WA', count: 14 },
-    { label: 'Remote', count: 28 },
-  ];
+  const oppsByLocation = trendAnalytics.mostCommonLocations.map((l) => ({
+    label: l.name,
+    count: l.count,
+  }));
 
-  const companiesByIndustry = [
-    { label: 'Technology', count: 42 },
-    { label: 'Finance', count: 15 },
-    { label: 'Healthcare', count: 8 },
-    { label: 'E-commerce', count: 12 },
-  ];
+  const companiesByIndustry = trendAnalytics.hiringCompanies.map((c) => ({
+    label: c.name,
+    count: c.count,
+  }));
 
   const totalStatus = savedCount + appliedCount + interviewingCount + offeredCount + rejectedCount || 1;
 
   const appStatusDist = [
-    { label: 'Saved', count: savedCount, color: 'bg-zinc-650 bg-zinc-600', pct: Math.round((savedCount / totalStatus) * 100) },
+    { label: 'Saved', count: savedCount, color: 'bg-zinc-600', pct: Math.round((savedCount / totalStatus) * 100) },
     { label: 'Applied', count: appliedCount, color: 'bg-blue-500', pct: Math.round((appliedCount / totalStatus) * 100) },
     { label: 'Interview', count: interviewingCount, color: 'bg-amber-500', pct: Math.round((interviewingCount / totalStatus) * 100) },
     { label: 'Offered', count: offeredCount, color: 'bg-emerald-500', pct: Math.round((offeredCount / totalStatus) * 100) },
     { label: 'Rejected', count: rejectedCount, color: 'bg-red-500', pct: Math.round((rejectedCount / totalStatus) * 100) },
   ];
 
-  // Stats configs
+  // KPI Stats Cards (Extended to 5 cards)
   const cards = [
     { label: 'Total Users', value: totalUsers, desc: `${activeUsers} Active Profiles`, icon: Users, color: 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5' },
     { label: 'Tracked Companies', value: totalCompanies, desc: 'Top Technology firms', icon: Building, color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5' },
     { label: 'Total Positions', value: totalOpportunities, desc: `${publishedCount} Published index`, icon: Compass, color: 'text-primary border-primary/20 bg-primary/5' },
-    { label: 'Applications Logged', value: totalApplications, desc: 'Students submissions', icon: Briefcase, color: 'text-amber-400 border-amber-500/20 bg-amber-500/5' },
+    { label: 'Applications Logged', value: totalApplications, desc: 'Student submissions', icon: Briefcase, color: 'text-amber-400 border-amber-500/20 bg-amber-500/5' },
+    { label: 'Search Telemetry', value: searchStats.totalSearches, desc: `${trendAnalytics.remotePercentage}% Remote postings`, icon: TrendingUp, color: 'text-pink-400 border-pink-500/20 bg-pink-500/5' },
   ];
 
   const publicationBreakdown = [
@@ -142,7 +140,7 @@ export default async function AdminAnalyticsPage() {
       </div>
 
       {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {cards.map((card) => {
           const Icon = card.icon;
           return (
@@ -269,7 +267,7 @@ export default async function AdminAnalyticsPage() {
         <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-5 space-y-4">
           <div className="flex items-center gap-2 border-b border-zinc-900 pb-3">
             <TrendingUp className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Daily Applications Index</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Daily Indexed Positions</h3>
           </div>
 
           <div className="h-48 flex items-end gap-3 pt-4 justify-between font-mono text-[9px] text-text-muted">
@@ -284,6 +282,66 @@ export default async function AdminAnalyticsPage() {
                     style={{ height: `${heightPct}%` }}
                   />
                   <span>{s.label}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Search & Technology Analytics Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Most Searched Keywords & Skills */}
+        <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-5 space-y-4">
+          <div className="flex items-center gap-2 border-b border-zinc-900 pb-3">
+            <Compass className="w-4 h-4 text-primary" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Trending Search Queries</h3>
+          </div>
+
+          <div className="space-y-3 font-mono text-[11px] text-zinc-300">
+            {searchStats.trendingQueries.length === 0 ? (
+              <p className="text-xs text-zinc-500 py-4 text-center">No search queries tracked yet.</p>
+            ) : (
+              searchStats.trendingQueries.map((item, idx) => (
+                <div key={item.query} className="flex items-center justify-between text-xs py-1">
+                  <span className="text-zinc-200 font-bold flex items-center gap-2">
+                    <span className="text-zinc-600 font-mono">#{idx + 1}</span>
+                    <span>{item.query}</span>
+                  </span>
+                  <span className="text-primary font-bold px-2 py-0.5 rounded border border-primary/20 bg-primary/5 font-mono">
+                    {item.count} searches
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Salary Distribution Bins */}
+        <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-5 space-y-4">
+          <div className="flex items-center gap-2 border-b border-zinc-900 pb-3">
+            <PieChart className="w-4 h-4 text-emerald-400" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Enriched Salary Distribution</h3>
+          </div>
+
+          <div className="space-y-4">
+            {Object.entries(trendAnalytics.salaryDistribution).map(([bin, count]) => {
+              const totalSalaries = Object.values(trendAnalytics.salaryDistribution).reduce((acc, c) => acc + c, 0) || 1;
+              const pct = Math.round((count / totalSalaries) * 100);
+              return (
+                <div key={bin} className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="text-text-muted">{bin}</span>
+                    <span className="text-white font-bold font-mono">
+                      {count} ({pct}%)
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-zinc-950 rounded-full overflow-hidden border border-zinc-900">
+                    <div
+                      className="h-full bg-emerald-500 rounded-full transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
               );
             })}
