@@ -123,23 +123,35 @@ export async function createCareerGoalAction(params: {
   try {
     const user = await getAuthenticatedUser();
 
-    // Compute mock missing skills based on title keywords
-    const missingSkills: string[] = [];
+    const profile = await prisma.profile.findUnique({
+      where: { userId: user.id },
+    });
+    const candidateSkills = profile?.skills || [];
     const titleLower = params.title.toLowerCase();
+
+    // Map targets skills based on target goals
+    const targetSkills: string[] = [];
     if (titleLower.includes('backend')) {
-      missingSkills.push('Docker', 'GraphQL', 'Kubernetes');
+      targetSkills.push('Node.js', 'PostgreSQL', 'Docker', 'GraphQL', 'Prisma', 'Redis');
     } else if (titleLower.includes('frontend')) {
-      missingSkills.push('TailwindCSS', 'TypeScript', 'Next.js');
+      targetSkills.push('React', 'TypeScript', 'Next.js', 'TailwindCSS', 'CSS');
     } else {
-      missingSkills.push('Systems Design', 'CI/CD Pipelines');
+      targetSkills.push('TypeScript', 'Node.js', 'Git', 'Docker');
     }
+
+    const missingSkills = targetSkills.filter(
+      s => !candidateSkills.some(cs => cs.toLowerCase() === s.toLowerCase())
+    );
+
+    const matchingCount = targetSkills.length - missingSkills.length;
+    const progress = targetSkills.length > 0 ? (matchingCount / targetSkills.length) * 100 : 50.0;
 
     const goal = await prisma.careerGoal.create({
       data: {
         userId: user.id,
         title: params.title,
         status: 'IN_PROGRESS',
-        progress: 20.0,
+        progress,
         missingSkills,
         targetDate: params.targetDateStr ? new Date(params.targetDateStr) : null,
       },

@@ -14,7 +14,8 @@ import {
   Palette,
   Save,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  CheckCircle
 } from 'lucide-react';
 import {
   generalSettingsSchema,
@@ -247,11 +248,11 @@ export const SettingsForm: React.FC = () => {
             </form>
 
             <div className="flex items-start gap-3 bg-zinc-900/40 border border-zinc-850 p-4 rounded-xl">
-              <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-white">SMTP Configuration Locked</p>
+                <p className="text-xs font-semibold text-white">System Email Service Active</p>
                 <p className="text-[10px] text-text-muted leading-relaxed">
-                  Email transmission interfaces are currently in mock mode for Phase 2. Resend transactional templates integrations will be unlocked in later implementation phases.
+                  Email transmission is fully online. Outbox notifications are sent using the configured RESEND_API_KEY environment variable.
                 </p>
               </div>
             </div>

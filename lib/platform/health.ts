@@ -52,6 +52,14 @@ export class HealthMonitor {
       services.redis.status = 'DOWN';
     }
 
+    // 2.5 Check AI provider and Trigger.dev connectivity
+    if (!process.env.GEMINI_API_KEY) {
+      services.aiProviders.status = 'DOWN';
+    }
+    if (!process.env.TRIGGER_API_KEY) {
+      services.triggerDev.status = 'DOWN';
+    }
+
     // 3. Query system audit failure logs
     const recentFailures = await prisma.systemAuditLog.findMany({
       where: { status: 'FAILURE' },
