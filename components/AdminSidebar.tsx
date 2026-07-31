@@ -10,7 +10,10 @@ import {
   Settings as SettingsIcon,
   ChevronLeft,
   ArrowLeft,
-  FileText
+  FileText,
+  Cpu,
+  MessageSquare,
+  Mail
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -23,7 +26,10 @@ export type AdminTab =
   | 'users'
   | 'applications'
   | 'resumes'
-  | 'settings';
+  | 'settings'
+  | 'system'
+  | 'feedback'
+  | 'invitations';
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -54,6 +60,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     if (pathname.startsWith('/admin/applications')) return 'applications';
     if (pathname.startsWith('/admin/resumes')) return 'resumes';
     if (pathname.startsWith('/admin/settings')) return 'settings';
+    if (pathname.startsWith('/admin/system')) return 'system';
+    if (pathname.startsWith('/admin/feedback')) return 'feedback';
+    if (pathname.startsWith('/admin/invitations')) return 'invitations';
     return 'overview';
   };
 
@@ -67,6 +76,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'applications', label: 'User Applications', icon: Briefcase, href: '/admin/applications' },
     { id: 'resumes', label: 'Resume Analytics', icon: FileText, href: '/admin/resumes' },
     { id: 'settings', label: 'System Settings', icon: SettingsIcon, href: '/admin/settings' },
+    { id: 'system', label: 'System Health', icon: Cpu, href: '/admin/system' },
+    { id: 'feedback', label: 'Feedback Moderation', icon: MessageSquare, href: '/admin/feedback' },
+    { id: 'invitations', label: 'Beta Invites', icon: Mail, href: '/admin/invitations' },
   ];
 
   return (

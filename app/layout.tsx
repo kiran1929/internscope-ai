@@ -29,6 +29,8 @@ export const metadata: Metadata = {
   },
 };
 
+import CookieConsent from "@/components/CookieConsent";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,6 +45,7 @@ export default function RootLayout({
         <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary">
           {children}
           <Toaster position="top-right" theme="dark" richColors />
+          <CookieConsent />
         </body>
       </html>
     </ClerkProvider>

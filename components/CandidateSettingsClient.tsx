@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { User, Shield, Check, Sparkles, Mail, Eye, Moon, Sun, Loader2 } from 'lucide-react';
+import { User, Shield, Check, Sparkles, Mail, Eye, Moon, Sun, Loader2, Download, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { updateEmailPreferenceAction } from '@/app/actions/candidate';
+import { exportAccountDataAction, requestDataDeletionAction } from '@/app/actions/compliance';
+import CandidateFeedbackClient from './CandidateFeedbackClient';
 
 interface EmailPreference {
   weeklyDigest: boolean;
@@ -44,6 +46,41 @@ export default function CandidateSettingsClient({
         router.refresh();
       } else {
         toast.error(`Error: ${res.error}`);
+      }
+    });
+  };
+
+  const handleExportData = () => {
+    startTransition(async () => {
+      const res = await exportAccountDataAction();
+      if (res.success && res.dataString) {
+        const blob = new Blob([res.dataString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'internscope-account-export.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success('Account data exported successfully.');
+      } else {
+        toast.error(`Export failed: ${res.error}`);
+      }
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    if (!confirm('CAUTION: Are you sure you want to permanently delete your InternScope AI account and all stored data? This action is irreversible.')) {
+      return;
+    }
+    startTransition(async () => {
+      const res = await requestDataDeletionAction();
+      if (res.success) {
+        toast.success('Your account and associated data have been permanently deleted.');
+        router.push('/');
+      } else {
+        toast.error(`Deletion failed: ${res.error}`);
       }
     });
   };
@@ -197,14 +234,14 @@ export default function CandidateSettingsClient({
             </div>
           </div>
 
-          {/* Privacy Controls */}
-          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
+          {/* Privacy & Compliance Controls */}
+          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-5">
             <div className="flex items-center gap-2 border-b border-zinc-900 pb-2">
               <Shield className="w-4 h-4 text-emerald-400" />
               <h3 className="text-xs font-bold uppercase tracking-wider text-white">Data privacy & logs</h3>
             </div>
 
-            <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center justify-between text-xs pb-3 border-b border-zinc-900/60">
               <div>
                 <span className="font-semibold text-zinc-200 block">AI Matching Privacy Mode</span>
                 <span className="text-[10px] text-zinc-500 mt-0.5 block">Anonymize query history log metrics when analyzing match metrics.</span>
@@ -223,32 +260,64 @@ export default function CandidateSettingsClient({
                 />
               </button>
             </div>
+
+            {/* GDPR Exports & Deletions */}
+            <div className="space-y-4 pt-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block">GDPR & CCPA Rights Workspace</span>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportData}
+                  disabled={isPending}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-zinc-950 border border-zinc-850 hover:bg-zinc-900 rounded-lg text-[10px] font-bold text-zinc-200"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Export Account Data (JSON)</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={handleDeleteAccount}
+                  disabled={isPending}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-red-950/20 border border-red-500/20 hover:bg-red-950/30 rounded-lg text-[10px] font-bold text-red-400"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete Profile permanently</span>
+                </button>
+              </div>
+            </div>
           </div>
 
         </div>
 
-        {/* Right Column: Account tier info */}
-        <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Subscription Tier</h3>
+        {/* Right Column: Account tier info + Beta Feedback */}
+        <div className="space-y-6">
+          
+          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-sm">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Subscription Tier</h3>
+            </div>
+
+            <div className="bg-gradient-to-br from-amber-500/10 to-amber-700/5 border border-amber-500/20 rounded-xl p-4 space-y-3 text-xs">
+              <div>
+                <span className="text-xs font-bold text-amber-500 uppercase tracking-wider block">PRO PLAN ACTIVE</span>
+                <span className="text-lg font-black text-white font-mono mt-0.5 block">$8 / month</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-relaxed">
+                Provides tailwind matches, instant SMS summaries, automated resumes upload matching, and unlimited background trackers.
+              </p>
+              <button
+                className="w-full py-2 bg-amber-500 hover:bg-amber-600 font-bold text-zinc-950 rounded-lg text-xs transition-all shadow-md"
+                onClick={() => toast.success('Premium Pro subscriber verified.')}
+              >
+                Subscription Active
+              </button>
+            </div>
           </div>
 
-          <div className="bg-gradient-to-br from-amber-500/10 to-amber-700/5 border border-amber-500/20 rounded-xl p-4 space-y-3 text-xs">
-            <div>
-              <span className="text-xs font-bold text-amber-500 uppercase tracking-wider block">PRO PLAN ACTIVE</span>
-              <span className="text-lg font-black text-white font-mono mt-0.5 block">$8 / month</span>
-            </div>
-            <p className="text-[10px] text-zinc-400 leading-relaxed">
-              Provides tailwind matches, instant SMS summaries, automated resumes upload matching, and unlimited background trackers.
-            </p>
-            <button
-              className="w-full py-2 bg-amber-500 hover:bg-amber-600 font-bold text-zinc-950 rounded-lg text-xs transition-all shadow-md"
-              onClick={() => toast.success('Premium Pro subscriber verified.')}
-            >
-              Subscription Active
-            </button>
-          </div>
+          <CandidateFeedbackClient />
+
         </div>
 
       </div>
