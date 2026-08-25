@@ -45,6 +45,10 @@ interface UserProfileFormClientProps {
       portfolioUrl: string | null;
       employmentPreferences?: string[];
       remotePreferences?: string[];
+      university?: string | null;
+      degree?: string | null;
+      branch?: string | null;
+      cgpa?: number | null;
     } | null;
   };
 }
@@ -139,6 +143,10 @@ export default function UserProfileFormClient({ user }: UserProfileFormClientPro
         remotePreferences: remotePrefs,
         salaryExpectations: formData.get('salaryExpectations') as string,
         experienceLevel: formData.get('experienceLevel') as string,
+        university: formData.get('university') as string,
+        degree: formData.get('degree') as string,
+        branch: formData.get('branch') as string,
+        cgpa: formData.get('cgpa') ? parseFloat(formData.get('cgpa') as string) : undefined,
       });
 
       if (res.success) {
@@ -479,6 +487,63 @@ export default function UserProfileFormClient({ user }: UserProfileFormClientPro
               </div>
             </div>
 
+          </div>
+
+          {/* Section D: Education Details */}
+          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
+            <div className="flex items-center gap-2 border-b border-zinc-900 pb-2">
+              <FileText className="w-4 h-4 text-purple-400" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Education Coordinates</h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-semibold text-zinc-400">University / College</label>
+                <input
+                  type="text"
+                  name="university"
+                  placeholder="e.g. Stanford University"
+                  defaultValue={user.profile?.university || ''}
+                  className="w-full bg-zinc-950 border border-zinc-850 rounded-lg p-2 text-white outline-none focus:border-primary placeholder-zinc-650"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-zinc-400">Degree Program</label>
+                <input
+                  type="text"
+                  name="degree"
+                  placeholder="e.g. Bachelor of Science"
+                  defaultValue={user.profile?.degree || ''}
+                  className="w-full bg-zinc-950 border border-zinc-850 rounded-lg p-2 text-white outline-none focus:border-primary placeholder-zinc-650"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1">
+                <label className="font-semibold text-zinc-400">Major / Branch</label>
+                <input
+                  type="text"
+                  name="branch"
+                  placeholder="e.g. Computer Science"
+                  defaultValue={user.profile?.branch || ''}
+                  className="w-full bg-zinc-950 border border-zinc-850 rounded-lg p-2 text-white outline-none focus:border-primary placeholder-zinc-650"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-semibold text-zinc-400">Cumulative GPA / Score</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  name="cgpa"
+                  placeholder="e.g. 3.85 or 9.2"
+                  defaultValue={user.profile?.cgpa || ''}
+                  className="w-full bg-zinc-950 border border-zinc-850 rounded-lg p-2 text-white outline-none focus:border-primary placeholder-zinc-650"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Section C: Social Profiles */}

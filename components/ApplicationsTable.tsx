@@ -166,8 +166,8 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ data }) =>
 
           let badgeColor = 'border-zinc-800 bg-zinc-900 text-zinc-300';
           if (status === ApplicationStatus.APPLIED) badgeColor = 'border-blue-500/20 bg-blue-500/5 text-blue-400';
-          if (status === ApplicationStatus.INTERVIEWING) badgeColor = 'border-amber-500/20 bg-amber-500/5 text-amber-400';
-          if (status === ApplicationStatus.OFFERED) badgeColor = 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400';
+          if (status === ApplicationStatus.INTERVIEW) badgeColor = 'border-amber-500/20 bg-amber-500/5 text-amber-400';
+          if (status === ApplicationStatus.OFFER) badgeColor = 'border-emerald-500/20 bg-emerald-500/5 text-emerald-400';
           if (status === ApplicationStatus.REJECTED) badgeColor = 'border-red-500/20 bg-red-500/5 text-red-400';
 
           return (

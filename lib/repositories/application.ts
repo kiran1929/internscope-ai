@@ -164,7 +164,7 @@ export class ApplicationRepository {
       data: {
         user: { connect: { id: data.userId } },
         opportunity: { connect: { id: data.opportunityId } },
-        status: data.status || ApplicationStatus.SAVED,
+        status: data.status || ApplicationStatus.DISCOVERED,
         notes: data.notes,
         appliedAt: data.appliedAt || new Date(),
       },

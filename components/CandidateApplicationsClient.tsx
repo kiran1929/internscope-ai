@@ -37,25 +37,30 @@ export default function CandidateApplicationsClient({
 
   // Active edit application modal state
   const [editingApp, setEditingApp] = useState<ApplicationItem | null>(null);
-  const [editStatus, setEditStatus] = useState<CandidateApplicationStatus>('SAVED');
+  const [editStatus, setEditStatus] = useState<CandidateApplicationStatus>('DISCOVERED');
   const [editNotes, setEditNotes] = useState('');
 
   // Tracking columns config
   const columns: { id: CandidateApplicationStatus; label: string; color: string; border: string }[] = [
-    { id: 'SAVED', label: 'Interested', color: 'bg-zinc-800/40 text-zinc-400', border: 'border-zinc-900' },
+    { id: 'DISCOVERED', label: 'Discovered', color: 'bg-zinc-800/40 text-zinc-400', border: 'border-zinc-900' },
+    { id: 'SHORTLISTED', label: 'Shortlisted', color: 'bg-blue-500/10 text-blue-400', border: 'border-blue-500/20' },
+    { id: 'PREPARING', label: 'Preparing', color: 'bg-purple-500/10 text-purple-400', border: 'border-purple-500/20' },
     { id: 'APPLIED', label: 'Applied', color: 'bg-indigo-500/10 text-indigo-400', border: 'border-indigo-500/20' },
-    { id: 'INTERVIEWING', label: 'Interviewing', color: 'bg-primary/10 text-primary', border: 'border-primary/20' },
-    { id: 'OFFERED', label: 'Offer Received', color: 'bg-emerald-500/10 text-emerald-400', border: 'border-emerald-500/20' },
+    { id: 'OA', label: 'OA / Test', color: 'bg-amber-500/10 text-amber-400', border: 'border-amber-500/20' },
+    { id: 'INTERVIEW', label: 'Interview', color: 'bg-primary/10 text-primary', border: 'border-primary/20' },
+    { id: 'OFFER', label: 'Offer', color: 'bg-emerald-500/10 text-emerald-400', border: 'border-emerald-500/20' },
     { id: 'REJECTED', label: 'Rejected', color: 'bg-red-500/10 text-red-400', border: 'border-red-500/20' },
-    { id: 'ACCEPTED', label: 'Accepted', color: 'bg-teal-500/10 text-teal-400', border: 'border-teal-500/20' },
+    { id: 'WITHDRAWN', label: 'Withdrawn', color: 'bg-zinc-700/30 text-zinc-500', border: 'border-zinc-800' }
   ];
 
   const getNextStatus = (current: string): CandidateApplicationStatus | null => {
     switch (current) {
-      case 'SAVED': return 'APPLIED';
-      case 'APPLIED': return 'INTERVIEWING';
-      case 'INTERVIEWING': return 'OFFERED';
-      case 'OFFERED': return 'ACCEPTED';
+      case 'DISCOVERED': return 'SHORTLISTED';
+      case 'SHORTLISTED': return 'PREPARING';
+      case 'PREPARING': return 'APPLIED';
+      case 'APPLIED': return 'OA';
+      case 'OA': return 'INTERVIEW';
+      case 'INTERVIEW': return 'OFFER';
       default: return null;
     }
   };
@@ -235,12 +240,15 @@ export default function CandidateApplicationsClient({
                 onChange={(e) => setEditStatus(e.target.value as CandidateApplicationStatus)}
                 className="w-full bg-zinc-950 border border-zinc-850 rounded-lg p-2 text-white outline-none focus:border-primary"
               >
-                <option value="SAVED">Interested (Saved)</option>
-                <option value="APPLIED">Applied (Submitted)</option>
-                <option value="INTERVIEWING">Interviewing</option>
-                <option value="OFFERED">Offer Received</option>
+                <option value="DISCOVERED">Discovered</option>
+                <option value="SHORTLISTED">Shortlisted</option>
+                <option value="PREPARING">Preparing</option>
+                <option value="APPLIED">Applied</option>
+                <option value="OA">OA / Test</option>
+                <option value="INTERVIEW">Interviewing</option>
+                <option value="OFFER">Offer</option>
                 <option value="REJECTED">Rejected</option>
-                <option value="ACCEPTED">Accepted</option>
+                <option value="WITHDRAWN">Withdrawn</option>
               </select>
             </div>
 

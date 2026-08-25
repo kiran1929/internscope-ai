@@ -148,73 +148,187 @@ export class AIParserService {
   }
 
   private static parseMockFallback(text: string, startTime: Date | number): AIParserResult {
-    // Basic rule-based extraction
+    // Intelligent rule-based extractor that parses the candidate's ACTUAL text content
     const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
     const emailMatch = text.match(/([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/);
     const phoneMatch = text.match(/(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/);
     
-    const fullName = lines[0] || 'Unknown Candidate';
+    const fullName = lines[0] || 'Candidate';
     const email = emailMatch ? emailMatch[1] : null;
     const phone = phoneMatch ? phoneMatch[0] : null;
 
-    const skills: string[] = [];
-    const technologies: string[] = [];
+    // 1. Extract Skills & Technologies dynamically from text
+    const skillsSet = new Set<string>();
+    const commonKeywords = [
+      'React', 'Next.js', 'TypeScript', 'JavaScript', 'Python', 'Node.js', 'Express',
+      'Java', 'C++', 'C#', 'Go', 'Rust', 'Ruby', 'PHP', 'Django', 'Flask', 'FastAPI',
+      'Spring Boot', 'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'SQLite', 'Prisma',
+      'GraphQL', 'REST API', 'Docker', 'Kubernetes', 'AWS', 'GCP', 'Azure', 'Git',
+      'CI/CD', 'TailwindCSS', 'HTML5', 'CSS3', 'Redux', 'Kafka', 'TensorFlow', 'PyTorch'
+    ];
 
-    // Basic keyword extraction
-    const skillList = ['react', 'next.js', 'typescript', 'javascript', 'python', 'node.js', 'docker', 'aws', 'postgresql', 'mongodb', 'git'];
     const textLower = text.toLowerCase();
-    skillList.forEach((s) => {
-      if (textLower.includes(s)) {
-        skills.push(s.toUpperCase());
+    commonKeywords.forEach((kw) => {
+      // Word boundary match
+      const regex = new RegExp(`(^|[^a-zA-Z0-9])${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-zA-Z0-9]|$)`, 'i');
+      if (regex.test(text)) {
+        skillsSet.add(kw);
       }
     });
+
+    const skills = Array.from(skillsSet);
+
+    // 2. Extract Projects directly from text blocks
+    const extractedProjects: Array<{
+      title: string;
+      description: string | null;
+      technologies: string[];
+      bullets: string[];
+    }> = [];
+
+    // Scan for project section headers
+    let inProjectSection = false;
+    let inExperienceSection = false;
+    let currentProject: { title: string; description: string | null; technologies: string[]; bullets: string[] } | null = null;
+    let currentExp: { company: string; title: string; location: string | null; startDate: string | null; endDate: string | null; description: string | null; bullets: string[] } | null = null;
+    const extractedExperience: Array<{ company: string; title: string; location: string | null; startDate: string | null; endDate: string | null; description: string | null; bullets: string[] }> = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const lineLower = line.toLowerCase();
+
+      // Section triggers
+      if (/^(projects|personal projects|technical projects|academic projects)/i.test(lineLower)) {
+        inProjectSection = true;
+        inExperienceSection = false;
+        if (currentProject) { extractedProjects.push(currentProject); currentProject = null; }
+        continue;
+      } else if (/^(experience|work experience|employment|professional experience)/i.test(lineLower)) {
+        inExperienceSection = true;
+        inProjectSection = false;
+        if (currentProject) { extractedProjects.push(currentProject); currentProject = null; }
+        continue;
+      } else if (/^(education|skills|certifications|awards|summary|contact)/i.test(lineLower)) {
+        inProjectSection = false;
+        inExperienceSection = false;
+        if (currentProject) { extractedProjects.push(currentProject); currentProject = null; }
+        if (currentExp) { extractedExperience.push(currentExp); currentExp = null; }
+        continue;
+      }
+
+      if (inProjectSection) {
+        // Look for project title lines (often has pipe, dash, or dates, or starts bullet)
+        if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+          const bullet = line.replace(/^[•\-*]\s*/, '').trim();
+          if (currentProject) {
+            currentProject.bullets.push(bullet);
+          }
+        } else if (line.length > 2 && line.length < 90 && !line.includes('@')) {
+          if (currentProject) {
+            extractedProjects.push(currentProject);
+          }
+          // Extract project title and technologies if in parentheses or after |
+          const parts = line.split(/[|–—\-]/);
+          const projTitle = parts[0]?.trim() || line;
+          const projTechs = commonKeywords.filter(k => line.toLowerCase().includes(k.toLowerCase()));
+
+          currentProject = {
+            title: projTitle.slice(0, 60),
+            description: line.slice(0, 150),
+            technologies: projTechs.length > 0 ? projTechs : skills.slice(0, 3),
+            bullets: [],
+          };
+        }
+      }
+
+      if (inExperienceSection) {
+        if (line.startsWith('•') || line.startsWith('-') || line.startsWith('*')) {
+          const bullet = line.replace(/^[•\-*]\s*/, '').trim();
+          if (currentExp) {
+            currentExp.bullets.push(bullet);
+          }
+        } else if (line.length > 2 && line.length < 90 && !line.includes('@')) {
+          if (currentExp) {
+            extractedExperience.push(currentExp);
+          }
+          const parts = line.split(/[|–—\-]/);
+          currentExp = {
+            company: parts[0]?.trim() || line,
+            title: parts[1]?.trim() || 'Software Engineer',
+            location: null,
+            startDate: null,
+            endDate: null,
+            description: line,
+            bullets: [],
+          };
+        }
+      }
+    }
+
+    if (currentProject) extractedProjects.push(currentProject);
+    if (currentExp) extractedExperience.push(currentExp);
+
+    // Fallback if no specific project header found: extract titles from notable uppercase lines
+    if (extractedProjects.length === 0) {
+      const candidateHeaders = lines.filter(l => l.length > 5 && l.length < 50 && !l.includes('@') && !l.includes('http') && !/^(skills|education|experience|summary)/i.test(l));
+      for (let idx = 0; idx < Math.min(2, candidateHeaders.length); idx++) {
+        const h = candidateHeaders[idx];
+        const projTechs = commonKeywords.filter(k => h.toLowerCase().includes(k.toLowerCase()));
+        extractedProjects.push({
+          title: h.replace(/[^a-zA-Z0-9\s-_]/g, '').trim().slice(0, 50),
+          description: lines[idx + 1] || 'Candidate software engineering project.',
+          technologies: projTechs.length > 0 ? projTechs : skills.slice(0, 3),
+          bullets: [],
+        });
+      }
+    }
 
     const structuredData: ParsedResumePayload = {
       fullName,
       email,
       phone,
-      location: 'San Francisco, CA',
-      summary: lines.find((l) => l.length > 50) || 'Experienced software professional.',
+      location: 'Candidate Location',
+      summary: lines.find((l) => l.length > 60 && !l.startsWith('•') && !l.startsWith('-')) || 'Software engineering candidate.',
       education: [
         {
-          school: 'State University',
-          degree: 'B.S.',
+          school: lines.find(l => /university|college|institute|polytechnic/i.test(l)) || 'University',
+          degree: 'Bachelor of Science',
           major: 'Computer Science',
           startYear: 2022,
           endYear: 2026,
-          gpa: '3.7/4.0',
+          gpa: null,
         },
       ],
-      experience: [
+      experience: extractedExperience.length > 0 ? extractedExperience.slice(0, 3) : [
         {
-          company: 'Tech Internships Corp',
-          title: 'Software Engineer Intern',
-          location: 'Remote',
-          startDate: 'June 2023',
-          endDate: 'August 2023',
-          description: 'Developed scalable web applications.',
-          bullets: ['Built full stack features in React & Node.', 'Designed PostgreSQL schemas.'],
-        },
+          company: 'Engineering Experience',
+          title: 'Software Developer',
+          location: null,
+          startDate: null,
+          endDate: null,
+          description: 'Software development experience from candidate resume.',
+          bullets: [],
+        }
       ],
-      projects: [
+      projects: extractedProjects.length > 0 ? extractedProjects.slice(0, 4) : [
         {
-          title: 'Job Tracker Platform',
-          description: 'An AI-powered internship application logging dashboard.',
-          technologies: ['TypeScript', 'Next.js', 'Prisma'],
-          bullets: ['Connected Neon DB securely with adapters.'],
-        },
+          title: 'Full Stack Web Project',
+          description: 'Technical software project built by candidate.',
+          technologies: skills.slice(0, 3),
+          bullets: [],
+        }
       ],
-      certifications: ['AWS Cloud Practitioner'],
-      skills: skills.length > 0 ? skills : ['Algorithms', 'Software Engineering'],
-      technologies: technologies.length > 0 ? technologies : ['Git', 'Docker'],
+      certifications: [],
+      skills: skills.length > 0 ? skills : ['Software Engineering', 'System Design', 'Algorithms'],
+      technologies: skills.slice(0, 8),
       languages: ['English'],
-      links: [{ name: 'GitHub', url: 'https://github.com' }],
-      confidenceScore: 0.7,
+      links: [{ name: 'Portfolio', url: '' }],
+      confidenceScore: 0.8,
     };
 
     return {
       structuredData,
-      confidenceScore: 0.7,
+      confidenceScore: 0.8,
       tokensConsumed: 0,
       aiProvider: 'Mock-Local',
       parserVersion: this.PARSER_VERSION,

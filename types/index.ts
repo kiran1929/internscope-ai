@@ -1,4 +1,4 @@
-export type ApplicationStatus = 'saved' | 'applied' | 'interviewing' | 'offered' | 'rejected';
+export type ApplicationStatus = 'discovered' | 'shortlisted' | 'preparing' | 'applied' | 'oa' | 'interview' | 'offer' | 'rejected' | 'withdrawn';
 
 export interface Company {
   id: string;

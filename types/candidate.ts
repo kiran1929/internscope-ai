@@ -1,1 +1,1 @@
-export type CandidateApplicationStatus = 'SAVED' | 'APPLIED' | 'INTERVIEWING' | 'OFFERED' | 'REJECTED' | 'ACCEPTED';
+export type CandidateApplicationStatus = 'DISCOVERED' | 'SHORTLISTED' | 'PREPARING' | 'APPLIED' | 'OA' | 'INTERVIEW' | 'OFFER' | 'REJECTED' | 'WITHDRAWN';

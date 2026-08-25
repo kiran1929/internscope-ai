@@ -1,16 +1,31 @@
-'use client';
-
 import React from 'react';
-import { useDashboardState } from '@/providers/DashboardStateProvider';
-import { DashboardEmailReports } from '@/components/DashboardEmailReports';
+import { getAuthenticatedUser } from '@/app/actions/candidate';
+import { prisma } from '@/lib/db';
+import EmailReportsClient from '@/components/EmailReportsClient';
 
-export default function EmailReportsPage() {
-  const { emailPreferences, handleTogglePreference } = useDashboardState();
+export const dynamic = 'force-dynamic';
+
+export default async function EmailReportsPage() {
+  const user = await getAuthenticatedUser();
+
+  const pref = await prisma.emailPreference.findUnique({
+    where: { userId: user.id },
+  });
+
+  const preference = {
+    emailDestination: pref?.emailDestination ?? user.email,
+    weeklyDigest: pref?.weeklyDigest ?? true,
+    instantAlerts: pref?.instantAlerts ?? true,
+    deadlineReminders: pref?.deadlineReminders ?? true,
+    newOpportunities: pref?.newOpportunities ?? true,
+    applicationStatus: pref?.applicationStatus ?? true,
+    interviewReminders: pref?.interviewReminders ?? true,
+  };
 
   return (
-    <DashboardEmailReports
-      preferences={emailPreferences}
-      onTogglePreference={handleTogglePreference}
+    <EmailReportsClient
+      userEmail={user.email}
+      preference={preference}
     />
   );
 }

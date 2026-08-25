@@ -1,11 +1,13 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Bell, Sun, Moon, Menu, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
+import { getMyNotificationsAction } from '@/app/actions/notifications';
 
 interface NavbarProps {
   onMenuToggle: () => void;
@@ -22,11 +24,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
   const [searchFocused, setSearchFocused] = useState(false);
   const [isDark, setIsDark] = useState(true); // Default dark theme
 
-  const notifications = [
-    { id: 1, title: 'Interview Scheduled', desc: 'Stripe payments role panel scheduled for Aug 4.', time: '2h ago', read: false },
-    { id: 2, title: 'Deadline Approaching', desc: 'NVIDIA applications close in 2 days.', time: '1d ago', read: false },
-    { id: 3, title: 'Match Score Updated', desc: 'Your match score for Apple SWE increased by 8%.', time: '3d ago', read: true },
-  ];
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadNotifications() {
+      const res = await getMyNotificationsAction();
+      if (res.success && res.notifications) {
+        setNotifications(res.notifications);
+      }
+    }
+    loadNotifications();
+  }, []);
 
   return (
     <header className="h-16 bg-[#09090B] border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 select-none">
@@ -118,18 +126,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                   <button className="text-[10px] text-primary hover:underline font-semibold focus-visible:outline-none">Mark all read</button>
                 </div>
                 <div className="max-h-[300px] overflow-y-auto divide-y divide-zinc-800/40">
-                  {notifications.map((notif) => (
-                    <div key={notif.id} className="p-3.5 hover:bg-zinc-950 transition-colors cursor-pointer group" role="menuitem">
-                      <div className="flex items-start gap-2.5">
-                        <span className={cn('w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-primary', notif.read && 'bg-transparent')} />
-                        <div className="space-y-0.5">
-                          <p className="text-xs font-medium text-white group-hover:text-primary transition-colors">{notif.title}</p>
-                          <p className="text-[11px] text-text-muted leading-relaxed">{notif.desc}</p>
-                          <p className="text-[9px] text-text-muted/50 font-mono mt-0.5">{notif.time}</p>
+                  {notifications.length === 0 ? (
+                    <p className="text-[10px] text-zinc-550 py-6 text-center">No notifications logged.</p>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div key={notif.id} className="p-3.5 hover:bg-zinc-950 transition-colors cursor-pointer group" role="menuitem">
+                        <div className="flex items-start gap-2.5">
+                          <span className={cn('w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-primary', notif.isRead && 'bg-transparent')} />
+                          <div className="space-y-0.5">
+                            <p className="text-xs font-medium text-white group-hover:text-primary transition-colors">{notif.title}</p>
+                            <p className="text-[11px] text-text-muted leading-relaxed">{notif.message}</p>
+                            <p className="text-[9px] text-text-muted/50 font-mono mt-0.5">{new Date(notif.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
                 <div className="p-2 border-t border-zinc-800 text-center">
                   <button className="text-xs text-text-muted hover:text-white font-medium w-full py-1 focus-visible:outline-none">View all activity</button>

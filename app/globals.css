@@ -193,3 +193,38 @@ body {
   transform: translateY(-1px);
 }
 
+/* Clerk Dark Theme Legibility Overrides */
+.cl-rootBox span,
+.cl-rootBox p,
+.cl-rootBox div:not(.cl-formFieldInputGroup):not(.cl-socialButtons):not(.cl-socialButtonsBlockButton),
+.cl-rootBox label,
+.cl-card span,
+.cl-card p,
+.cl-card div:not(.cl-formFieldInputGroup):not(.cl-socialButtons):not(.cl-socialButtonsBlockButton),
+.cl-card label {
+  color: #E4E4E7 !important; /* text-zinc-200 */
+}
+.cl-rootBox a,
+.cl-card a {
+  color: #2563EB !important; /* Force action links to remain primary blue */
+}
+.cl-rootBox a:hover,
+.cl-card a:hover {
+  color: #60A5FA !important; /* Light blue on hover */
+}
+.cl-rootBox svg,
+.cl-card svg,
+.cl-rootBox img,
+.cl-card img {
+  filter: invert(0.9) brightness(1.8) !important; /* Make Clerk branding logo bright and visible */
+}
+.cl-dividerLine {
+  background-color: #27272A !important; /* border-zinc-800 */
+}
+.cl-formFieldInput {
+  background-color: #09090B !important;
+  color: #FAFAFA !important;
+}
+
+
+

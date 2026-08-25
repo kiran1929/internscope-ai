@@ -3,19 +3,64 @@
 import React from 'react';
 import { TrendingUp, Award, Calendar, Percent } from 'lucide-react';
 
-export const DashboardAnalytics: React.FC = () => {
+interface DashboardAnalyticsProps {
+  responseRate: number;
+  interviewConversion: number;
+  averageMatchRate: number;
+  daysActive: number;
+  scoreBins: {
+    fiftyToSixty: number;
+    sixtyToSeventy: number;
+    seventyToEighty: number;
+    eightyToNinety: number;
+    ninetyToNinetyFive: number;
+    ninetyFiveToHundred: number;
+  };
+  sectorDistribution: Array<{
+    name: string;
+    count: number;
+    percent: number;
+  }>;
+}
+
+export const DashboardAnalytics: React.FC<DashboardAnalyticsProps> = ({
+  responseRate,
+  interviewConversion,
+  averageMatchRate,
+  daysActive,
+  scoreBins,
+  sectorDistribution,
+}) => {
   const metrics = [
-    { label: 'Application Response Rate', value: '42.8%', icon: Percent, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: 'Interview Conversion', value: '25.0%', icon: Award, color: 'text-success', bg: 'bg-success/10' },
-    { label: 'Weekly Match Rate', value: '+18.4%', icon: TrendingUp, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
-    { label: 'Days Active', value: '18 Days', icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+    { label: 'Application Response Rate', value: `${responseRate}%`, icon: Percent, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Interview Conversion', value: `${interviewConversion}%`, icon: Award, color: 'text-success', bg: 'bg-success/10' },
+    { label: 'Average Match Rate', value: `${averageMatchRate}%`, icon: TrendingUp, color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+    { label: 'Days Active', value: `${daysActive} Days`, icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-500/10' },
   ];
 
-  const industryDistribution = [
-    { name: 'Artificial Intelligence', count: 24, percent: 80, color: 'bg-emerald-500' },
-    { name: 'Enterprise Cloud Systems', count: 18, percent: 60, color: 'bg-primary' },
-    { name: 'Financial Tech (Fintech)', count: 12, percent: 40, color: 'bg-indigo-500' },
-    { name: 'Developer Tooling & DevOps', count: 9, percent: 30, color: 'bg-amber-500' },
+  const maxCount = Math.max(
+    1,
+    scoreBins.fiftyToSixty,
+    scoreBins.sixtyToSeventy,
+    scoreBins.seventyToEighty,
+    scoreBins.eightyToNinety,
+    scoreBins.ninetyToNinetyFive,
+    scoreBins.ninetyFiveToHundred
+  );
+
+  const getBarYAndHeight = (count: number) => {
+    const height = Math.max(5, (count / maxCount) * 100);
+    const y = 110 - height;
+    return { y, height };
+  };
+
+  const binKeys = [
+    { key: 'fiftyToSixty' as const, label: '50-60%', x: 20, fill: '#3f3f46', opacity: 0.9 },
+    { key: 'sixtyToSeventy' as const, label: '60-70%', x: 80, fill: '#2563EB', opacity: 0.6 },
+    { key: 'seventyToEighty' as const, label: '70-80%', x: 140, fill: '#2563EB', opacity: 0.8 },
+    { key: 'eightyToNinety' as const, label: '80-90%', x: 200, fill: '#2563EB', opacity: 1.0 },
+    { key: 'ninetyToNinetyFive' as const, label: '90-95%', x: 260, fill: '#22C55E', opacity: 0.9 },
+    { key: 'ninetyFiveToHundred' as const, label: '95-100%', x: 320, fill: '#22C55E', opacity: 1.0 },
   ];
 
   return (
@@ -55,20 +100,24 @@ export const DashboardAnalytics: React.FC = () => {
           </div>
 
           <div className="space-y-4">
-            {industryDistribution.map((item) => (
-              <div key={item.name} className="space-y-1">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-white">{item.name}</span>
-                  <span className="text-text-muted font-mono">{item.count} roles ({item.percent / 2}%)</span>
+            {sectorDistribution.map((item, idx) => {
+              const bgColors = ['bg-emerald-500', 'bg-primary', 'bg-indigo-500', 'bg-amber-500'];
+              const colorClass = bgColors[idx % bgColors.length];
+              return (
+                <div key={item.name} className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-white truncate max-w-[200px]" title={item.name}>{item.name}</span>
+                    <span className="text-text-muted font-mono">{item.count} roles ({item.percent}%)</span>
+                  </div>
+                  <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden border border-zinc-850">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${colorClass}`}
+                      style={{ width: `${item.percent}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2 bg-zinc-900 rounded-full overflow-hidden border border-zinc-850">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${item.color}`}
-                    style={{ width: `${item.percent}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -86,22 +135,37 @@ export const DashboardAnalytics: React.FC = () => {
               <line x1="0" y1="110" x2="400" y2="110" stroke="#27272a" strokeWidth="1" />
 
               {/* Bars */}
-              {/* 50-60% */}
-              <rect x="20" y="80" width="40" height="30" fill="#3f3f46" rx="3" />
-              {/* 60-70% */}
-              <rect x="80" y="60" width="40" height="50" fill="#2563EB" opacity="0.6" rx="3" />
-              {/* 70-80% */}
-              <rect x="140" y="30" width="40" height="80" fill="#2563EB" opacity="0.8" rx="3" />
-              {/* 80-90% */}
-              <rect x="200" y="10" width="40" height="100" fill="#2563EB" rx="3" />
-              {/* 90-95% */}
-              <rect x="260" y="25" width="40" height="85" fill="#22C55E" rx="3" />
-              {/* 95-100% */}
-              <rect x="320" y="70" width="40" height="40" fill="#22C55E" opacity="0.7" rx="3" />
+              {binKeys.map((bin) => {
+                const count = scoreBins[bin.key];
+                const { y, height } = getBarYAndHeight(count);
+                return (
+                  <g key={bin.key}>
+                    <rect
+                      x={bin.x}
+                      y={y}
+                      width="40"
+                      height={height}
+                      fill={bin.fill}
+                      opacity={bin.opacity}
+                      rx="3"
+                    />
+                    <text
+                      x={bin.x + 20}
+                      y={y - 6}
+                      fill="#71717a"
+                      fontSize="8"
+                      textAnchor="middle"
+                      fontFamily="monospace"
+                    >
+                      {count}
+                    </text>
+                  </g>
+                );
+              })}
             </svg>
 
             {/* Labels */}
-            <div className="flex justify-between text-[9px] text-text-muted font-mono mt-2">
+            <div className="flex justify-between text-[9px] text-text-muted font-mono mt-2 px-1">
               <span className="w-10 text-center">50%</span>
               <span className="w-10 text-center">60%</span>
               <span className="w-10 text-center">70%</span>

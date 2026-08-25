@@ -123,7 +123,23 @@ export default async function InterviewPrepPage() {
     };
   });
 
+  const latestResume = await prisma.resume.findFirst({
+    where: { userId: user.id, isParsed: true },
+  });
+
   const jobOptions = Object.values(uniqueJobOptionsMap);
+
+  // 6. Fetch candidate's longitudinal skills memory
+  const { InterviewMemoryService } = await import('@/lib/interview/memory-service');
+  const { INTERVIEW_LIMITS } = await import('@/lib/interview/constants');
+  const longitudinalSkills = await InterviewMemoryService.getLongitudinalSkills(user.id);
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const todaySessionsCount = await prisma.interviewSession.count({
+    where: { userId: user.id, createdAt: { gte: startOfDay } },
+  });
+  const dailyInterviewsRemaining = Math.max(0, INTERVIEW_LIMITS.maxFreeInterviewsPerDay - todaySessionsCount);
 
   return (
     <CandidateInterviewClient
@@ -137,6 +153,9 @@ export default async function InterviewPrepPage() {
       }}
       jobOptions={jobOptions}
       pastSessions={pastSessions}
+      hasResume={!!latestResume}
+      longitudinalSkills={longitudinalSkills}
+      dailyInterviewsRemaining={dailyInterviewsRemaining}
     />
   );
 }

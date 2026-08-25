@@ -43,6 +43,9 @@ export class ExtractionService {
     // pdf-parse throws if PDF binary structure is corrupted
     let data;
     try {
+      if (typeof (globalThis as any).pdfjsWorker === 'undefined') {
+        (globalThis as any).pdfjsWorker = require('pdfjs-dist/legacy/build/pdf.worker.mjs');
+      }
       const parser = new PDFParse({ data: buffer });
       data = await parser.getText();
     } catch (e) {

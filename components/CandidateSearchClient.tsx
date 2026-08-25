@@ -64,7 +64,7 @@ export default function CandidateSearchClient({
 
   // Tracking modal dialog states
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  const [appStatus, setAppStatus] = useState<CandidateApplicationStatus>('SAVED');
+  const [appStatus, setAppStatus] = useState<CandidateApplicationStatus>('DISCOVERED');
   const [notes, setNotes] = useState('');
 
   // Autocomplete suggestion states
@@ -425,12 +425,15 @@ export default function CandidateSearchClient({
                 onChange={(e) => setAppStatus(e.target.value as CandidateApplicationStatus)}
                 className="w-full bg-zinc-950 border border-zinc-850 rounded-lg p-2 text-white outline-none focus:border-primary"
               >
-                <option value="SAVED">Interested (Saved)</option>
-                <option value="APPLIED">Applied (Submitted)</option>
-                <option value="INTERVIEWING">Interview</option>
-                <option value="OFFERED">Offer Received</option>
+                <option value="DISCOVERED">Discovered</option>
+                <option value="SHORTLISTED">Shortlisted</option>
+                <option value="PREPARING">Preparing</option>
+                <option value="APPLIED">Applied</option>
+                <option value="OA">OA / Test</option>
+                <option value="INTERVIEW">Interviewing</option>
+                <option value="OFFER">Offer</option>
                 <option value="REJECTED">Rejected</option>
-                <option value="ACCEPTED">Accepted</option>
+                <option value="WITHDRAWN">Withdrawn</option>
               </select>
             </div>
 

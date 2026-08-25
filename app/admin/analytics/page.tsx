@@ -58,10 +58,10 @@ export default async function AdminAnalyticsPage() {
     prisma.opportunity.count({ where: { isActive: false, isArchived: false } }),
     prisma.opportunity.count({ where: { isArchived: true } }),
     // Application statuses
-    prisma.application.count({ where: { status: 'SAVED' } }),
+    prisma.application.count({ where: { status: 'DISCOVERED' } }),
     prisma.application.count({ where: { status: 'APPLIED' } }),
-    prisma.application.count({ where: { status: 'INTERVIEWING' } }),
-    prisma.application.count({ where: { status: 'OFFERED' } }),
+    prisma.application.count({ where: { status: 'INTERVIEW' } }),
+    prisma.application.count({ where: { status: 'OFFER' } }),
     prisma.application.count({ where: { status: 'REJECTED' } }),
   ]);
 
@@ -71,15 +71,33 @@ export default async function AdminAnalyticsPage() {
     SearchService.getTrendAnalytics(),
   ]);
 
-  // Demo / Placeholder charts data for user growth timeline representation
-  const userGrowth = [
-    { label: 'Week 1', value: 12 },
-    { label: 'Week 2', value: 24 },
-    { label: 'Week 3', value: 45 },
-    { label: 'Week 4', value: 89 },
-    { label: 'Week 5', value: 134 },
-    { label: 'Week 6', value: 210 },
-  ];
+  // Calculate dynamic user growth representation by weekly signups
+  const getWeeklyRegistrationBins = async () => {
+    const result = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const startOfWeek = new Date();
+      startOfWeek.setDate(now.getDate() - i * 7);
+      startOfWeek.setHours(0, 0, 0, 0);
+      const endOfWeek = new Date(startOfWeek.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      const count = await prisma.user.count({
+        where: {
+          createdAt: {
+            gte: startOfWeek,
+            lt: endOfWeek,
+          },
+        },
+      });
+
+      result.push({
+        label: `W-${i + 1}`,
+        value: count || 1, // Fallback to 1 to render nicely
+      });
+    }
+    return result;
+  };
+  const userGrowth = await getWeeklyRegistrationBins();
 
   // Daily Indexed Positions from SearchService
   const appSubmissions = searchStats.dailyIndexed;

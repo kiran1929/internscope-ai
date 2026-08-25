@@ -22,17 +22,21 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
   const [showAddModal, setShowAddModal] = useState(false);
   const [newCompanyName, setNewCompanyName] = useState('');
   const [newRole, setNewRole] = useState('');
-  const [newStatus, setNewStatus] = useState<ApplicationStatus>('saved');
+  const [newStatus, setNewStatus] = useState<ApplicationStatus>('discovered');
   const [newDate, setNewDate] = useState(new Date().toISOString().split('T')[0]);
   const [newNotes, setNewNotes] = useState('');
   const [newNextStep, setNewNextStep] = useState('');
 
   const columns: { id: ApplicationStatus; label: string; color: string; border: string }[] = [
-    { id: 'saved', label: 'Saved', color: 'bg-zinc-800/40 text-text-muted', border: 'border-zinc-800' },
+    { id: 'discovered', label: 'Discovered', color: 'bg-zinc-800/40 text-text-muted', border: 'border-zinc-800' },
+    { id: 'shortlisted', label: 'Shortlisted', color: 'bg-blue-500/10 text-blue-400', border: 'border-blue-500/20' },
+    { id: 'preparing', label: 'Preparing', color: 'bg-purple-500/10 text-purple-400', border: 'border-purple-500/20' },
     { id: 'applied', label: 'Applied', color: 'bg-indigo-500/10 text-indigo-400', border: 'border-indigo-500/20' },
-    { id: 'interviewing', label: 'Interviewing', color: 'bg-primary/10 text-primary', border: 'border-primary/20' },
-    { id: 'offered', label: 'Offered', color: 'bg-success/10 text-success', border: 'border-success/20' },
-    { id: 'rejected', label: 'Rejected / Archived', color: 'bg-danger/10 text-danger', border: 'border-danger/20' },
+    { id: 'oa', label: 'OA / Test', color: 'bg-amber-500/10 text-amber-400', border: 'border-amber-500/20' },
+    { id: 'interview', label: 'Interview', color: 'bg-primary/10 text-primary', border: 'border-primary/20' },
+    { id: 'offer', label: 'Offer', color: 'bg-success/10 text-success', border: 'border-success/20' },
+    { id: 'rejected', label: 'Rejected', color: 'bg-danger/10 text-danger', border: 'border-danger/20' },
+    { id: 'withdrawn', label: 'Withdrawn', color: 'bg-zinc-700/30 text-zinc-550', border: 'border-zinc-800' }
   ];
 
   const handleAddSubmit = (e: React.FormEvent) => {
@@ -53,7 +57,7 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
     // Reset Form
     setNewCompanyName('');
     setNewRole('');
-    setNewStatus('saved');
+    setNewStatus('discovered');
     setNewNotes('');
     setNewNextStep('');
     setShowAddModal(false);
@@ -61,9 +65,12 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
 
   const getNextStatus = (current: ApplicationStatus): ApplicationStatus | null => {
     switch (current) {
-      case 'saved': return 'applied';
-      case 'applied': return 'interviewing';
-      case 'interviewing': return 'offered';
+      case 'discovered': return 'shortlisted';
+      case 'shortlisted': return 'preparing';
+      case 'preparing': return 'applied';
+      case 'applied': return 'oa';
+      case 'oa': return 'interview';
+      case 'interview': return 'offer';
       default: return null;
     }
   };
@@ -86,12 +93,12 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
       </div>
 
       {/* Kanban Board Container */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 overflow-x-auto pb-4 select-none">
+      <div className="flex gap-4 overflow-x-auto pb-4 select-none items-stretch">
         {columns.map((column) => {
           const colApps = applications.filter((app) => app.status === column.id);
 
           return (
-            <div key={column.id} className="space-y-3 min-w-[220px] flex-1">
+            <div key={column.id} className="space-y-3 min-w-[220px] flex-1 flex flex-col">
               {/* Column Header */}
               <div className="flex items-center justify-between px-2.5 py-1.5 bg-zinc-900/50 border border-zinc-800 rounded-lg">
                 <span className={cn('text-xs font-bold px-2 py-0.5 rounded-md', column.color)}>
@@ -160,7 +167,7 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
                               <ChevronRight className="w-3 h-3" />
                             </button>
                           )}
-                          {app.status === 'offered' && (
+                          {app.status === 'offer' && (
                             <span className="text-success font-bold flex items-center gap-0.5">
                               <CheckCircle2 className="w-3 h-3" /> Offered
                             </span>
@@ -229,11 +236,15 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
                     onChange={(e) => setNewStatus(e.target.value as ApplicationStatus)}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-lg p-2.5 text-white outline-none focus:border-primary"
                   >
-                    <option value="saved">Saved</option>
+                    <option value="discovered">Discovered</option>
+                    <option value="shortlisted">Shortlisted</option>
+                    <option value="preparing">Preparing</option>
                     <option value="applied">Applied</option>
-                    <option value="interviewing">Interviewing</option>
-                    <option value="offered">Offered</option>
-                    <option value="rejected">Rejected / Archived</option>
+                    <option value="oa">OA / Test</option>
+                    <option value="interview">Interviewing</option>
+                    <option value="offer">Offer</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="withdrawn">Withdrawn</option>
                   </select>
                 </div>
 

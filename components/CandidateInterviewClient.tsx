@@ -3,26 +3,14 @@
 import React, { useState, useTransition } from 'react';
 import {
   Brain,
-  TrendingUp,
-  Award,
-  AlertTriangle,
   CheckCircle,
-  HelpCircle,
-  Clock,
   Sparkles,
-  BookOpen,
-  Briefcase,
-  Compass,
-  ArrowRight,
-  Plus,
   Play,
   History,
   Activity,
-  Flame,
   ShieldCheck,
-  ChevronRight,
-  AlertOctagon,
-  Loader2
+  Loader2,
+  Upload,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -44,6 +32,15 @@ interface PastSessionItem {
   createdAt: Date;
 }
 
+export interface LongitudinalSkillItem {
+  skill: string;
+  averageScore: number;
+  recentScore: number;
+  attemptCount: number;
+  trend: 'improving' | 'steady' | 'weak';
+  lastTested: string;
+}
+
 interface CandidateInterviewClientProps {
   readiness: {
     overall: number;
@@ -60,6 +57,9 @@ interface CandidateInterviewClientProps {
   };
   jobOptions: JobOption[];
   pastSessions: PastSessionItem[];
+  hasResume: boolean;
+  longitudinalSkills?: LongitudinalSkillItem[];
+  dailyInterviewsRemaining?: number;
 }
 
 export default function CandidateInterviewClient({
@@ -67,11 +67,18 @@ export default function CandidateInterviewClient({
   stats,
   jobOptions,
   pastSessions,
+  hasResume,
+  longitudinalSkills = [],
+  dailyInterviewsRemaining = 2,
 }: CandidateInterviewClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Launcher configurations
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showUploadSection, setShowUploadSection] = useState(false);
+
+  // Launcher configurations (called unconditionally at top of component)
   const [targetJobId, setTargetJobId] = useState<string>('general');
   const [sessionLength, setSessionLength] = useState<number>(5);
   const [difficulty, setDifficulty] = useState<'Easy' | 'Medium' | 'Hard'>('Medium');
@@ -83,6 +90,88 @@ export default function CandidateInterviewClient({
     'Resume-based',
     'Problem Solving'
   ]);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setUploadFile(e.target.files[0]);
+    }
+  };
+
+  const handleUploadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile) return;
+    setIsUploading(true);
+    const { uploadResumeAction } = await import('@/app/actions/resume');
+    const formData = new FormData();
+    formData.append('file', uploadFile);
+    const res = await uploadResumeAction(formData);
+    setIsUploading(false);
+    if (res.success) {
+      toast.success('Resume uploaded successfully! Initializing mock interviewer...');
+      setShowUploadSection(false);
+      setUploadFile(null);
+      router.refresh();
+    } else {
+      toast.error(`Upload failed: ${res.error}`);
+    }
+  };
+
+  if (!hasResume) {
+    return (
+      <div className="space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
+        <div className="border-b border-zinc-900 pb-5">
+          <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight flex items-center gap-2">
+            <Brain className="w-6 h-6 text-primary" /> AI Interview Prep
+          </h2>
+          <p className="text-xs text-zinc-400 mt-1">Practice customized role-specific questions and get instant STAR behavioral coaching.</p>
+        </div>
+
+        <div className="bg-[#111113] border border-zinc-850 rounded-xl p-10 text-center max-w-xl mx-auto space-y-5">
+          <Brain className="w-12 h-12 text-zinc-650 mx-auto" />
+          <h2 className="text-lg font-bold font-display">Resume Required</h2>
+          <p className="text-xs text-zinc-400 leading-relaxed font-sans font-normal">
+            The AI Interview Coach generates highly relevant, mock interview questions specifically tailored to your work history and tech stack. Please upload a resume first.
+          </p>
+
+          <form onSubmit={handleUploadSubmit} className="space-y-4 pt-2">
+            <div className="border border-dashed border-zinc-850 hover:border-zinc-800 rounded-lg p-6 text-center relative hover:bg-zinc-950/20 transition-all cursor-pointer">
+              <input
+                type="file"
+                accept=".pdf,.docx"
+                onChange={handleFileChange}
+                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              />
+              <Upload className="w-8 h-8 text-zinc-650 mx-auto mb-2" />
+              <p className="text-[10px] font-semibold text-zinc-400">
+                {uploadFile ? uploadFile.name : 'Select PDF or DOCX'}
+              </p>
+              <p className="text-[8px] text-zinc-650 mt-1">Max file size 5MB</p>
+            </div>
+
+            {uploadFile && (
+              <div className="flex gap-2 justify-center">
+                <button
+                  type="button"
+                  onClick={() => setUploadFile(null)}
+                  className="px-3.5 py-1.5 border border-zinc-850 hover:bg-zinc-900 text-zinc-400 rounded-lg text-xs font-bold"
+                >
+                  Clear
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading}
+                  className="px-4 py-1.5 bg-primary hover:bg-primary/95 text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
+                >
+                  {isUploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>Upload & Process</span>
+                </button>
+              </div>
+            )}
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const toggleCategory = (cat: string) => {
     if (categories.includes(cat)) {
@@ -123,6 +212,11 @@ export default function CandidateInterviewClient({
             <Brain className="w-6 h-6 text-primary" /> AI Interview Prep
           </h2>
           <p className="text-xs text-zinc-400 mt-1">Practice customized role-specific questions and get instant STAR behavioral coaching.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono px-2.5 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300">
+            Free Sessions Remaining Today: <strong className="text-emerald-400">{dailyInterviewsRemaining}</strong>
+          </span>
         </div>
       </div>
 
@@ -207,6 +301,65 @@ export default function CandidateInterviewClient({
               </select>
             </div>
 
+            {/* Active Resume / Change Resume Section */}
+            <div className="bg-zinc-950/45 border border-zinc-850/60 rounded-lg p-3.5 space-y-3">
+              <div className="flex justify-between items-center text-[10px]">
+                <span className="font-bold text-zinc-400 uppercase tracking-wider">Active Base Resume</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUploadSection(!showUploadSection);
+                    setUploadFile(null);
+                  }}
+                  className="text-primary hover:text-blue-400 font-bold transition-all"
+                >
+                  {showUploadSection ? 'Cancel' : 'Upload Different Resume'}
+                </button>
+              </div>
+
+              {!showUploadSection ? (
+                <div className="flex items-center gap-2 text-xs text-emerald-400 font-semibold bg-emerald-500/5 border border-emerald-500/10 p-2 rounded-md">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>Resume loaded. Interview questions will auto-tune to your resume.</span>
+                </div>
+              ) : (
+                <form onSubmit={handleUploadSubmit} className="space-y-3 pt-1">
+                  <div className="border border-dashed border-zinc-800 hover:border-zinc-700 rounded-lg p-4 text-center relative hover:bg-zinc-950/40 transition-all cursor-pointer">
+                    <input
+                      type="file"
+                      accept=".pdf,.docx"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                    <Upload className="w-6 h-6 text-zinc-650 mx-auto mb-1.5" />
+                    <p className="text-[10px] font-semibold text-zinc-400">
+                      {uploadFile ? uploadFile.name : 'Choose new resume (PDF/DOCX)'}
+                    </p>
+                    <p className="text-[8px] text-zinc-600 mt-0.5">Max file size 5MB</p>
+                  </div>
+                  {uploadFile && (
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        type="button"
+                        onClick={() => { setUploadFile(null); setShowUploadSection(false); }}
+                        className="px-2.5 py-1.5 border border-zinc-850 hover:bg-zinc-900 text-zinc-400 rounded-lg text-[9px] font-bold"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isUploading}
+                        className="px-3 py-1.5 bg-primary hover:bg-primary/95 text-white rounded-lg text-[9px] font-bold flex items-center gap-1"
+                      >
+                        {isUploading && <Loader2 className="w-2.5 h-2.5 animate-spin" />}
+                        <span>Upload & Sync</span>
+                      </button>
+                    </div>
+                  )}
+                </form>
+              )}
+            </div>
+
             {/* Difficulty and Length */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -233,7 +386,7 @@ export default function CandidateInterviewClient({
                 <label className="text-[10px] uppercase font-bold text-zinc-500 block">Difficulty</label>
                 <select
                   value={difficulty}
-                  onChange={(e) => setDifficulty(e.target.value as any)}
+                  onChange={(e) => setDifficulty(e.target.value as 'Easy' | 'Medium' | 'Hard')}
                   className="bg-zinc-950 border border-zinc-850 text-xs text-white rounded-lg p-1.5 w-full focus:outline-none"
                 >
                   <option value="Easy">Easy</option>
@@ -340,6 +493,47 @@ export default function CandidateInterviewClient({
               )}
             </div>
           </div>
+
+          {/* Longitudinal Candidate Skill Memory */}
+          {longitudinalSkills.length > 0 && (
+            <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-3.5 shadow-sm">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                  <Brain className="w-4 h-4 text-emerald-400" /> Longitudinal Skill Memory
+                </h3>
+                <span className="text-[9px] font-mono text-zinc-500">{longitudinalSkills.length} Tracked</span>
+              </div>
+              <p className="text-[10px] text-zinc-450 leading-relaxed">
+                Adaptive memory tracked across your interview history. Future questions adaptively target your weaker trends.
+              </p>
+              <div className="space-y-2 pt-1">
+                {longitudinalSkills.slice(0, 5).map((skillItem) => (
+                  <div
+                    key={skillItem.skill}
+                    className="flex justify-between items-center p-2.5 rounded-lg border border-zinc-900 bg-zinc-950/40 text-xs"
+                  >
+                    <div>
+                      <span className="font-bold text-zinc-200 capitalize block">{skillItem.skill}</span>
+                      <span className="text-[9px] text-zinc-500 font-mono">
+                        {skillItem.attemptCount} attempts • {skillItem.trend}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded border ${
+                        skillItem.averageScore >= 75
+                          ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                          : skillItem.averageScore >= 55
+                          ? 'text-amber-400 bg-amber-500/10 border-amber-500/20'
+                          : 'text-rose-400 bg-rose-500/10 border-rose-500/20'
+                      }`}>
+                        Avg: {skillItem.averageScore}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Strongest vs Weakest areas splits */}
           <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-sm">

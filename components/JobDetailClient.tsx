@@ -22,7 +22,7 @@ import {
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { toggleSaveJobAction, upsertApplicationAction } from '@/app/actions/candidate';
+import { toggleSaveJobAction, upsertApplicationAction, generateApplicationCopilotAction } from '@/app/actions/candidate';
 import { CandidateApplicationStatus } from '@/types/candidate';
 
 interface JobDetailClientProps {
@@ -97,9 +97,28 @@ export default function JobDetailClient({
   const [saved, setSaved] = useState(isSaved);
   const [showTrackModal, setShowTrackModal] = useState(false);
   const [appStatus, setAppStatus] = useState<CandidateApplicationStatus>(
-    (currentStatus as CandidateApplicationStatus) || 'SAVED'
+    (currentStatus as CandidateApplicationStatus) || 'DISCOVERED'
   );
   const [notes, setNotes] = useState('');
+
+  // AI Application Copilot states
+  const [selectedCopilotTab, setSelectedCopilotTab] = useState<'resume' | 'cover-letter' | 'email' | 'questions' | null>(null);
+  const [copilotText, setCopilotText] = useState('');
+  const [isGeneratingCopilot, setIsGeneratingCopilot] = useState(false);
+
+  const handleGenerateCopilot = async (type: 'resume' | 'cover-letter' | 'email' | 'questions') => {
+    setSelectedCopilotTab(type);
+    setIsGeneratingCopilot(true);
+    setCopilotText('');
+    const res = await generateApplicationCopilotAction(job.id, type);
+    setIsGeneratingCopilot(false);
+    if (res.success) {
+      setCopilotText(res.text!);
+      toast.success('Tailored copilot draft generated!');
+    } else {
+      toast.error(`Generation failed: ${res.error}`);
+    }
+  };
 
   const handleToggleSave = () => {
     setSaved(!saved);
@@ -349,6 +368,92 @@ export default function JobDetailClient({
               </div>
             </div>
           )}
+
+          {/* RAG Application Copilot */}
+          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-zinc-900 pb-2">
+              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-white">AI Application Copilot</h3>
+            </div>
+            <p className="text-xs text-zinc-400 font-sans leading-relaxed">
+              Generate personalized artifacts for this role powered by your parsed resume and target job requirements.
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              <button
+                type="button"
+                onClick={() => handleGenerateCopilot('resume')}
+                className={`py-2 rounded-lg border text-[10px] font-bold transition-all ${
+                  selectedCopilotTab === 'resume'
+                    ? 'bg-primary/10 border-primary/20 text-primary'
+                    : 'bg-zinc-950 border-zinc-900 text-zinc-400 hover:border-zinc-800'
+                }`}
+              >
+                Tailored Resume Check
+              </button>
+              <button
+                type="button"
+                onClick={() => handleGenerateCopilot('cover-letter')}
+                className={`py-2 rounded-lg border text-[10px] font-bold transition-all ${
+                  selectedCopilotTab === 'cover-letter'
+                    ? 'bg-primary/10 border-primary/20 text-primary'
+                    : 'bg-zinc-950 border-zinc-900 text-zinc-400 hover:border-zinc-800'
+                }`}
+              >
+                Tailor Cover Letter
+              </button>
+              <button
+                type="button"
+                onClick={() => handleGenerateCopilot('email')}
+                className={`py-2 rounded-lg border text-[10px] font-bold transition-all ${
+                  selectedCopilotTab === 'email'
+                    ? 'bg-primary/10 border-primary/20 text-primary'
+                    : 'bg-zinc-950 border-zinc-900 text-zinc-400 hover:border-zinc-800'
+                }`}
+              >
+                Outreach Draft
+              </button>
+              <button
+                type="button"
+                onClick={() => handleGenerateCopilot('questions')}
+                className={`py-2 rounded-lg border text-[10px] font-bold transition-all ${
+                  selectedCopilotTab === 'questions'
+                    ? 'bg-primary/10 border-primary/20 text-primary'
+                    : 'bg-zinc-950 border-zinc-900 text-zinc-400 hover:border-zinc-800'
+                }`}
+              >
+                Q&A Answers
+              </button>
+            </div>
+
+            {isGeneratingCopilot && (
+              <div className="flex flex-col items-center justify-center py-10 space-y-2.5">
+                <Loader2 className="w-6 h-6 animate-spin text-primary" />
+                <span className="text-xs text-zinc-500 font-mono">Formulating tailored artifacts...</span>
+              </div>
+            )}
+
+            {!isGeneratingCopilot && copilotText && (
+              <div className="space-y-3 pt-2">
+                <div className="flex justify-between items-center bg-zinc-950 border border-zinc-900 px-3 py-2 rounded-lg text-xs">
+                  <span className="font-bold text-zinc-300 capitalize">{selectedCopilotTab} Draft</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(copilotText);
+                      toast.success('Copied draft to clipboard.');
+                    }}
+                    className="text-primary hover:underline font-bold text-[10px]"
+                  >
+                    Copy Draft
+                  </button>
+                </div>
+                <div className="bg-zinc-950/40 border border-zinc-900 rounded-lg p-4 font-mono text-[10px] text-zinc-300 overflow-x-auto max-h-72 whitespace-pre-wrap leading-relaxed font-sans">
+                  {copilotText}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Right 1 column: Company details, skills, and related jobs */}

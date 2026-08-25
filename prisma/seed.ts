@@ -659,7 +659,7 @@ async function main() {
     data: {
       userId: userCandidate.id,
       opportunityId: opportunities[0].id,
-      status: ApplicationStatus.SAVED,
+      status: ApplicationStatus.DISCOVERED,
       notes: 'Need to review resume and highlight STEP focus.',
     },
   });
@@ -675,7 +675,7 @@ async function main() {
     data: {
       userId: userCandidate.id,
       opportunityId: opportunities[5].id,
-      status: ApplicationStatus.INTERVIEWING,
+      status: ApplicationStatus.INTERVIEW,
       notes: 'Scheduled explore phone screen next week! Prep array patterns.',
     },
   });
@@ -701,7 +701,7 @@ async function main() {
     data: {
       userId: userJohn.id,
       opportunityId: opportunities[15].id,
-      status: ApplicationStatus.OFFERED,
+      status: ApplicationStatus.OFFER,
       notes: 'Received SWE Intern offer! $65/hr Cupertino location.',
     },
   });

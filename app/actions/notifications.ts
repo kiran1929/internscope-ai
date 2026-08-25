@@ -51,3 +51,14 @@ export async function deleteNotificationAction(id: string) {
     return { success: false, error: message };
   }
 }
+
+export async function getMyNotificationsAction() {
+  try {
+    const dbUser = await getAdminUser();
+    const res = await NotificationRepository.findManyByUser(dbUser.id, { limit: 10 });
+    return { success: true, notifications: res.data };
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch notifications';
+    return { success: false, error: message };
+  }
+}

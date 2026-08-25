@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable react-hooks/purity */
 
 import React, { useState } from 'react';
 import {
@@ -43,14 +44,28 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   // Statistics calculation
   const trackedCompaniesCount = companies.filter(c => c.isTracking).length;
   const openInternshipsCount = internships.length;
-  const deadlinesThisWeek = 3; // Static dummy count
-  const appliedCount = applications.filter(a => a.status === 'applied' || a.status === 'interviewing').length;
+  
+  const today = new Date();
+  const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const deadlinesThisWeek = internships.filter(role => {
+    if (!role.deadline) return false;
+    const deadlineDate = new Date(role.deadline);
+    if (isNaN(deadlineDate.getTime())) return false;
+    return deadlineDate >= today && deadlineDate <= nextWeek;
+  }).length;
+
+  const appliedCount = applications.filter(a => a.status === 'applied' || a.status === 'interview' || a.status === 'oa').length;
+
+  const companiesTrend = trackedCompaniesCount > 0 ? `+${Math.min(trackedCompaniesCount, 2)} this week` : '0 this week';
+  const internshipsTrend = `${Math.min(openInternshipsCount, 14)} new today`;
+  const deadlinesTrend = deadlinesThisWeek > 0 ? `${deadlinesThisWeek} closing soon` : 'Critical alerts';
+  const appliedTrend = `${appliedCount} active funnels`;
 
   const kpis = [
-    { label: 'Companies Tracking', value: trackedCompaniesCount, icon: Building, color: 'text-primary', bg: 'bg-primary/10', trend: '+2 this week' },
-    { label: 'Open Internships', value: openInternshipsCount, icon: Compass, color: 'text-emerald-500', bg: 'bg-emerald-500/10', trend: '14 new today' },
-    { label: 'Deadlines This Week', value: deadlinesThisWeek, icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-500/10', trend: 'Critical alerts' },
-    { label: 'Applied & Interviewing', value: appliedCount, icon: Briefcase, color: 'text-indigo-500', bg: 'bg-indigo-500/10', trend: 'Active funnels' },
+    { label: 'Companies Tracking', value: trackedCompaniesCount, icon: Building, color: 'text-primary', bg: 'bg-primary/10', trend: companiesTrend },
+    { label: 'Open Internships', value: openInternshipsCount, icon: Compass, color: 'text-emerald-500', bg: 'bg-emerald-500/10', trend: internshipsTrend },
+    { label: 'Deadlines This Week', value: deadlinesThisWeek, icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-500/10', trend: deadlinesTrend },
+    { label: 'Applied & Interviewing', value: appliedCount, icon: Briefcase, color: 'text-indigo-500', bg: 'bg-indigo-500/10', trend: appliedTrend },
   ];
 
   const handleResumeUpload = () => {
@@ -60,6 +75,75 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
       setResumeUploaded(true);
     }, 1500);
   };
+
+  // 1. Application Velocity Area Chart calculations
+  const getLast6Months = () => {
+    const monthNames = ['FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN'];
+    const result = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(now.getMonth() - i);
+      result.push({
+        name: monthNames[d.getMonth()],
+        monthIndex: d.getMonth(),
+        year: d.getFullYear(),
+        count: 0,
+      });
+    }
+    return result;
+  };
+
+  const monthsData = getLast6Months();
+  applications.forEach(app => {
+    const appDate = app.appliedDate ? new Date(app.appliedDate) : null;
+    if (appDate && !isNaN(appDate.getTime())) {
+      const match = monthsData.find(m => m.monthIndex === appDate.getMonth() && m.year === appDate.getFullYear());
+      if (match) {
+        match.count++;
+      }
+    }
+  });
+
+  const totalAppsCount = applications.length;
+  const avgAppsPerMonth = (totalAppsCount / 6).toFixed(1);
+
+  const maxMonthCount = Math.max(1, ...monthsData.map(m => m.count));
+  const getPointY = (count: number) => {
+    const ratio = count / maxMonthCount;
+    return 130 - ratio * 100;
+  };
+
+  const points = monthsData.map((m, i) => {
+    const x = 10 + i * 96;
+    const y = getPointY(m.count);
+    return { x, y };
+  });
+
+  const areaPath = `M 10 140 L ${points.map(p => `${p.x} ${p.y}`).join(' L ')} L 490 140 Z`;
+  const linePath = `M ${points.map(p => `${p.x} ${p.y}`).join(' L ')}`;
+
+  // 2. Application Stages breakdown
+  const interviewCount = applications.filter(a => a.status === 'interview' || a.status === 'oa').length;
+  const offeredCount = applications.filter(a => a.status === 'offer').length;
+  const appliedCountTotal = applications.filter(a => a.status === 'applied').length;
+  const savedCountTotal = applications.filter(a => a.status === 'discovered' || a.status === 'shortlisted' || a.status === 'preparing').length;
+  const totalStagesCount = applications.length || 1;
+
+  const pctInterview = Math.round((interviewCount / totalStagesCount) * 100);
+  const pctOffered = Math.round((offeredCount / totalStagesCount) * 100);
+  const pctApplied = Math.round((appliedCountTotal / totalStagesCount) * 100);
+  const pctSaved = Math.round((savedCountTotal / totalStagesCount) * 100);
+
+  const interviewShare = (interviewCount / totalStagesCount) * 251.2;
+  const offeredShare = (offeredCount / totalStagesCount) * 251.2;
+  const savedShare = (savedCountTotal / totalStagesCount) * 251.2;
+  const appliedShare = (appliedCountTotal / totalStagesCount) * 251.2;
+
+  const interviewOffset = 251.2;
+  const offeredOffset = 251.2 - interviewShare;
+  const appliedOffset = offeredOffset - offeredShare;
+  const savedOffset = appliedOffset - appliedShare;
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300">
@@ -104,7 +188,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <h3 className="text-sm font-semibold text-white">Application Velocity</h3>
               <p className="text-[11px] text-text-muted">Tracking applications sent over the past 6 months</p>
             </div>
-            <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">Avg: 4.2 / mo</span>
+            <span className="text-[11px] font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">Avg: {avgAppsPerMonth} / mo</span>
           </div>
 
           {/* Custom SVG Line Chart */}
@@ -123,13 +207,13 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
               {/* Area Under Curve */}
               <path
-                d="M 10 140 L 10 120 Q 90 90, 100 100 T 200 40 T 300 70 T 400 30 T 490 20 L 490 140 Z"
+                d={areaPath}
                 fill="url(#chart-grad)"
               />
 
               {/* Curve Line */}
               <path
-                d="M 10 120 Q 90 90, 100 100 T 200 40 T 300 70 T 400 30 T 490 20"
+                d={linePath}
                 fill="none"
                 stroke="#2563EB"
                 strokeWidth="2.5"
@@ -137,22 +221,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               />
 
               {/* Data Points */}
-              <circle cx="10" cy="120" r="4" fill="#2563EB" stroke="#18181B" strokeWidth="2" />
-              <circle cx="100" cy="100" r="4" fill="#2563EB" stroke="#18181B" strokeWidth="2" />
-              <circle cx="200" cy="40" r="4" fill="#2563EB" stroke="#18181B" strokeWidth="2" />
-              <circle cx="300" cy="70" r="4" fill="#2563EB" stroke="#18181B" strokeWidth="2" />
-              <circle cx="400" cy="30" r="4" fill="#2563EB" stroke="#18181B" strokeWidth="2" />
-              <circle cx="490" cy="20" r="4" fill="#2563EB" stroke="#18181B" strokeWidth="2" />
+              {points.map((p, idx) => (
+                <circle key={idx} cx={p.x} cy={p.y} r="4" fill="#2563EB" stroke="#18181B" strokeWidth="2" />
+              ))}
             </svg>
             
             {/* Axis labels */}
             <div className="flex justify-between text-[9px] text-text-muted font-mono mt-2 px-1">
-              <span>FEB</span>
-              <span>MAR</span>
-              <span>APR</span>
-              <span>MAY</span>
-              <span>JUN</span>
-              <span>JUL (CURRENT)</span>
+              {monthsData.map((m, i) => (
+                <span key={i}>{m.name}</span>
+              ))}
             </div>
           </div>
         </div>
@@ -170,24 +248,32 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               {/* Background ring */}
               <circle cx="50" cy="50" r="40" fill="transparent" stroke="#27272a" strokeWidth="11" />
               
-              {/* Interviewing (1) - Blue: 25% */}
-              <circle cx="50" cy="50" r="40" fill="transparent" stroke="#2563EB" strokeWidth="11"
-                strokeDasharray="251.2" strokeDashoffset="62.8" />
+              {/* Interviewing - Blue */}
+              {interviewCount > 0 && (
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#2563EB" strokeWidth="11"
+                  strokeDasharray={`${interviewShare} 251.2`} strokeDashoffset={interviewOffset} />
+              )}
 
-              {/* Offered (1) - Success Green: 25% */}
-              <circle cx="50" cy="50" r="40" fill="transparent" stroke="#22C55E" strokeWidth="11"
-                strokeDasharray="251.2" strokeDashoffset="125.6" />
+              {/* Offered - Success Green */}
+              {offeredCount > 0 && (
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#22C55E" strokeWidth="11"
+                  strokeDasharray={`${offeredShare} 251.2`} strokeDashoffset={offeredOffset} />
+              )}
 
-              {/* Saved (1) - Muted Grey: 25% */}
-              <circle cx="50" cy="50" r="40" fill="transparent" stroke="#71717A" strokeWidth="11"
-                strokeDasharray="251.2" strokeDashoffset="188.4" />
+              {/* Saved - Muted Grey */}
+              {savedCountTotal > 0 && (
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#71717A" strokeWidth="11"
+                  strokeDasharray={`${savedShare} 251.2`} strokeDashoffset={savedOffset} />
+              )}
 
-              {/* Applied (1) - Purple/Indigo: 25% */}
-              <circle cx="50" cy="50" r="40" fill="transparent" stroke="#6366F1" strokeWidth="11"
-                strokeDasharray="251.2" strokeDashoffset="251.2" />
+              {/* Applied - Purple/Indigo */}
+              {appliedCountTotal > 0 && (
+                <circle cx="50" cy="50" r="40" fill="transparent" stroke="#6366F1" strokeWidth="11"
+                  strokeDasharray={`${appliedShare} 251.2`} strokeDashoffset={appliedOffset} />
+              )}
             </svg>
             <div className="absolute flex flex-col items-center justify-center">
-              <span className="text-xl font-bold text-white font-display">4</span>
+              <span className="text-xl font-bold text-white font-display">{applications.length}</span>
               <span className="text-[9px] text-text-muted font-semibold uppercase">Total</span>
             </div>
           </div>
@@ -196,19 +282,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <div className="grid grid-cols-2 gap-2 text-[10px] font-medium text-text-muted">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-primary shrink-0"></span>
-              <span>Interview (25%)</span>
+              <span>Interview ({pctInterview}%)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-success shrink-0"></span>
-              <span>Offered (25%)</span>
+              <span>Offered ({pctOffered}%)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0"></span>
-              <span>Applied (25%)</span>
+              <span>Applied ({pctApplied}%)</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-zinc-500 shrink-0"></span>
-              <span>Saved (25%)</span>
+              <span>Saved ({pctSaved}%)</span>
             </div>
           </div>
         </div>

@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider            = "prisma-client"
   output              = "../lib/generated/prisma"
@@ -11,93 +8,61 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ADMIN
-  SUPER_ADMIN
-}
-
-enum OpportunityType {
-  INTERNSHIP
-  NEW_GRAD
-  SCHOLARSHIP
-  FELLOWSHIP
-  HACKATHON
-  RESEARCH
-}
-
-enum ApplicationStatus {
-  SAVED
-  APPLIED
-  INTERVIEWING
-  OFFERED
-  REJECTED
-  ACCEPTED
-}
-
-enum NotificationType {
-  SYSTEM
-  ALERT
-  APPLICATION_DEADLINE
-  MATCH_ACCURACY
-}
-
-enum RemoteType {
-  REMOTE
-  HYBRID
-  ONSITE
-}
-
 model User {
-  id                 String             @id @default(uuid())
-  clerkId            String             @unique
-  email              String             @unique
-  role               Role               @default(USER)
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-  profile            Profile?
-  savedOpportunities SavedOpportunity[]
-  applications       Application[]
-  notifications      Notification[]
-  emailPreference    EmailPreference?
-  isActive           Boolean            @default(true)
-  resumes            Resume[]
-  careerAnalysis     CareerAnalysis?
-  careerSnapshots    CareerSnapshot[]
-  careerInsights     CareerInsight[]
-  interviewSessions  InterviewSession[]
-  resumeOptimizations ResumeOptimization[]
-  coverLetters       CoverLetter[]
-  careerGoals        CareerGoal[]
+  id                   String                @id @default(uuid())
+  clerkId              String                @unique
+  email                String                @unique
+  role                 Role                  @default(USER)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  isActive             Boolean               @default(true)
+  aiActionLogs         AIActionLog[]
+  applications         Application[]
+  careerAnalysis       CareerAnalysis?
+  careerGoals          CareerGoal[]
+  careerInsights       CareerInsight[]
+  careerSnapshots      CareerSnapshot[]
   copilotConversations CopilotConversation[]
-  weeklyCareerReports WeeklyCareerReport[]
-  aiActionLogs       AIActionLog[]
+  coverLetters         CoverLetter[]
+  emailPreference      EmailPreference?
+  interviewSessions    InterviewSession[]
+  notifications        Notification[]
+  profile              Profile?
+  resumes              Resume[]
+  resumeOptimizations  ResumeOptimization[]
+  savedOpportunities   SavedOpportunity[]
+  weeklyCareerReports  WeeklyCareerReport[]
+  targetCompanies      TargetCompany[]
 }
 
 model Profile {
-  id             String   @id @default(uuid())
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  firstName      String?
-  lastName       String?
-  avatarUrl      String?
-  resumeUrl      String?
-  githubUrl      String?
-  linkedinUrl    String?
-  portfolioUrl   String?
-  skills         String[]
-  graduationYear Int?
-  major          String?
-  headline       String?
-  bio            String?
-  preferredTechnologies String[]
-  preferredLocations    String[]
+  id                    String   @id @default(uuid())
+  userId                String   @unique
+  firstName             String?
+  lastName              String?
+  avatarUrl             String?
+  resumeUrl             String?
+  githubUrl             String?
+  linkedinUrl           String?
+  portfolioUrl          String?
+  skills                String[]
+  graduationYear        Int?
+  major                 String?
+  university            String?
+  degree                String?
+  branch                String?
+  cgpa                  Float?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  bio                   String?
   employmentPreferences String[]
+  experienceLevel       String?
+  headline              String?
+  preferredLocations    String[]
+  preferredTechnologies String[]
   remotePreferences     String[]
   salaryExpectations    String?
-  experienceLevel       String?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Company {
@@ -105,24 +70,25 @@ model Company {
   name          String        @unique
   logoUrl       String?
   websiteUrl    String?
-  careerPageUrl String?
   industry      String?
   description   String?
-  country       String?
-  state         String?
-  city          String?
-  companySize   String?       @default("1-10")
-  foundedYear   Int?
-  linkedinUrl   String?
-  twitterUrl    String?
-  githubUrl     String?
-  isVerified    Boolean       @default(false)
-  hiringStatus  String        @default("HIRING") // e.g. "HIRING", "NOT_HIRING", "FREEZE"
-  isArchived    Boolean       @default(false)
-  tags          String[]      @default([])
-  opportunities Opportunity[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  careerPageUrl String?
+  city          String?
+  companySize   String?       @default("1-10")
+  country       String?
+  foundedYear   Int?
+  githubUrl     String?
+  hiringStatus  String        @default("HIRING")
+  isArchived    Boolean       @default(false)
+  isVerified    Boolean       @default(false)
+  linkedinUrl   String?
+  state         String?
+  tags          String[]      @default([])
+  twitterUrl    String?
+  opportunities Opportunity[]
+  targetUsers   TargetCompany[]
 
   @@index([name])
   @@index([websiteUrl])
@@ -132,31 +98,31 @@ model Company {
 }
 
 model Opportunity {
-  id             String             @id @default(uuid())
-  title          String
-  type           OpportunityType
-  companyId      String
-  company        Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  description    String?
-  requirements   String?
-  location       String
-  remoteType     RemoteType
-  salaryRange    String?
-  benefits       String?
-  applicationUrl String
-  deadline       DateTime?
-  isActive       Boolean            @default(true)
-  isArchived     Boolean            @default(false)
-  tags           String[]           @default([])
-  savedByUsers   SavedOpportunity[]
-  applications   Application[]
-  enrichment     OpportunityEnrichment?
-  matches        JobMatch[]
-  interviewSessions InterviewSession[]
+  id                  String                 @id @default(uuid())
+  title               String
+  type                OpportunityType
+  companyId           String
+  description         String?
+  requirements        String?
+  location            String
+  remoteType          RemoteType
+  salaryRange         String?
+  benefits            String?
+  applicationUrl      String
+  deadline            DateTime?
+  isActive            Boolean                @default(true)
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  isArchived          Boolean                @default(false)
+  tags                String[]               @default([])
+  applications        Application[]
+  coverLetters        CoverLetter[]
+  interviewSessions   InterviewSession[]
+  matches             JobMatch[]
+  company             Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  enrichment          OpportunityEnrichment?
   resumeOptimizations ResumeOptimization[]
-  coverLetters       CoverLetter[]
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  savedByUsers        SavedOpportunity[]
 
   @@index([deadline])
   @@index([createdAt])
@@ -168,10 +134,10 @@ model Opportunity {
 model SavedOpportunity {
   id            String      @id @default(uuid())
   userId        String
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   opportunityId String
-  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
   savedAt       DateTime    @default(now())
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, opportunityId])
 }
@@ -179,14 +145,14 @@ model SavedOpportunity {
 model Application {
   id            String            @id @default(uuid())
   userId        String
-  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   opportunityId String
-  opportunity   Opportunity       @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
-  status        ApplicationStatus @default(SAVED)
+  status        ApplicationStatus @default(DISCOVERED)
   notes         String?
   appliedAt     DateTime          @default(now())
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
+  opportunity   Opportunity       @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, opportunityId])
   @@index([status])
@@ -196,12 +162,12 @@ model Application {
 model Notification {
   id        String           @id @default(uuid())
   userId    String
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type      NotificationType
   title     String
   message   String
   isRead    Boolean          @default(false)
   createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([createdAt])
 }
@@ -209,26 +175,23 @@ model Notification {
 model EmailPreference {
   id                String   @id @default(uuid())
   userId            String   @unique
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  emailDestination  String?
   weeklyDigest      Boolean  @default(true)
   instantAlerts     Boolean  @default(true)
   deadlineReminders Boolean  @default(true)
+  newOpportunities  Boolean  @default(true)
+  applicationStatus Boolean  @default(true)
+  interviewReminders Boolean @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
-}
-
-enum JobStatus {
-  RUNNING
-  COMPLETED
-  FAILED
-  CANCELLED
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model IngestionJob {
   id               String    @id @default(uuid())
-  provider         String    // "greenhouse", "lever", "ashby", "all"
+  provider         String
   status           JobStatus @default(RUNNING)
-  triggerId        String?   // Trigger.dev run ID if available
+  triggerId        String?
   startedAt        DateTime  @default(now())
   finishedAt       DateTime?
   durationMs       Int?
@@ -236,9 +199,9 @@ model IngestionJob {
   importedCount    Int       @default(0)
   duplicateCount   Int       @default(0)
   failedCount      Int       @default(0)
-  validationErrors Json?     // Array/Object of validation failures
-  error            String?   // Stack trace / error message if FAILED
-  logs             Json?     // Array of structured runtime logs
+  validationErrors Json?
+  error            String?
+  logs             Json?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 
@@ -247,37 +210,31 @@ model IngestionJob {
   @@index([createdAt])
 }
 
-enum EnrichmentStatus {
-  RUNNING
-  COMPLETED
-  FAILED
-}
-
 model OpportunityEnrichment {
   id              String           @id @default(uuid())
   opportunityId   String           @unique
-  opportunity     Opportunity      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
   status          EnrichmentStatus @default(RUNNING)
-  skills          String[]         @default([]) // Extracted skills
-  techStack       Json?            // Frontend, Backend, Database, Cloud, DevOps, Mobile, AI, DataEngineering
-  experienceLevel String?          // Intern, Entry Level, Junior, Mid Level, Senior, Lead, Manager
-  employmentType  String?          // Internship, Full-Time, Part-Time, Contract, Freelance
-  remoteType      String?          // Remote, Hybrid, Onsite, Unknown
+  skills          String[]         @default([])
+  techStack       Json?
+  experienceLevel String?
+  employmentType  String?
+  remoteType      String?
   salaryMin       Float?
   salaryMax       Float?
-  salaryCurrency  String?          // USD, EUR, etc.
-  salaryPeriod    String?          // HOURLY, MONTHLY, ANNUAL
-  tags            String[]         @default([]) // Tags
+  salaryCurrency  String?
+  salaryPeriod    String?
+  tags            String[]         @default([])
   qualityScore    Float            @default(0.0)
-  reasoning       String?          // Reasoning metadata
-  provider        String           // Gemini, OpenAI, Anthropic, Mock
-  model           String           // Model name used
+  reasoning       String?
+  provider        String
+  model           String
   tokensUsed      Int              @default(0)
   latencyMs       Int              @default(0)
   estimatedCost   Float            @default(0.0)
-  error           String?          // Error message if failed
+  error           String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  opportunity     Opportunity      @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([qualityScore])
@@ -287,7 +244,7 @@ model OpportunityEnrichment {
 model SearchLog {
   id           String   @id @default(uuid())
   query        String
-  filters      Json?    // Stores the filters applied during search
+  filters      Json?
   resultsCount Int      @default(0)
   userId       String?
   createdAt    DateTime @default(now())
@@ -297,32 +254,31 @@ model SearchLog {
 }
 
 model Resume {
-  id               String     @id @default(uuid())
-  userId           String
-  fileName         String
-  filePath         String
-  fileSize         Int
-  mimeType         String
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  version          Int        @default(1)
-  rawText          String?    // DB text representation
-  isParsed         Boolean    @default(false)
-  parsedAt         DateTime?
-  parsingError     String?
-  parserVersion    String?
-  aiProvider       String?
-  confidenceScore  Float?
-  processingTimeMs Int?
-  tokensConsumed   Int?
-  structuredData   Json?      // Parsed sections JSON payload
-  qualityScore     Float?     // Quality evaluation score
-  qualityFeedback  Json?      // Actionable feedback JSON array
-  
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  matches          JobMatch[]
-  careerAnalyses   CareerAnalysis[]
-  careerSnapshots  CareerSnapshot[]
+  id                  String               @id @default(uuid())
+  userId              String
+  fileName            String
+  filePath            String
+  fileSize            Int
+  mimeType            String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  version             Int                  @default(1)
+  rawText             String?
+  isParsed            Boolean              @default(false)
+  parsedAt            DateTime?
+  parsingError        String?
+  parserVersion       String?
+  aiProvider          String?
+  confidenceScore     Float?
+  processingTimeMs    Int?
+  tokensConsumed      Int?
+  structuredData      Json?
+  qualityScore        Float?
+  qualityFeedback     Json?
+  careerAnalyses      CareerAnalysis[]
+  careerSnapshots     CareerSnapshot[]
+  matches             JobMatch[]
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   resumeOptimizations ResumeOptimization[]
 
   @@index([userId])
@@ -333,7 +289,7 @@ model JobMatch {
   id                     String      @id @default(uuid())
   resumeId               String
   opportunityId          String
-  overallScore           Float       // Overall matching score (0-100)
+  overallScore           Float
   skillScore             Float
   techScore              Float
   experienceScore        Float
@@ -346,9 +302,8 @@ model JobMatch {
   improvementSuggestions String[]    @default([])
   matchExplanation       String?
   createdAt              DateTime    @default(now())
-
-  resume                 Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
   opportunity            Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  resume                 Resume      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
   @@unique([resumeId, opportunityId])
   @@index([resumeId])
@@ -356,55 +311,44 @@ model JobMatch {
 }
 
 model CareerAnalysis {
-  id                 String            @id @default(uuid())
-  userId             String            @unique
-  resumeId           String
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  
-  // AI Career Analysis fields
-  summary            String?           
-  strengths          String[]          @default([])
-  weaknesses         String[]          @default([])
-  suitableRoles      String[]          @default([])
-  careerPaths        Json?             // Array of suggested paths
-  hiringIndustries   String[]          @default([])
-  estimatedReadiness Float?
-  
-  // Skill Gap Analysis fields
-  missingSkills      String[]          @default([])
-  missingTechnologies String[]         @default([])
-  frequentSkills     String[]          @default([])
-  criticalGaps       String[]          @default([])
-  strengthAreas      String[]          @default([])
-  
-  // Interview Readiness fields
+  id                      String            @id @default(uuid())
+  userId                  String            @unique
+  resumeId                String
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  summary                 String?
+  strengths               String[]          @default([])
+  weaknesses              String[]          @default([])
+  suitableRoles           String[]          @default([])
+  careerPaths             Json?
+  hiringIndustries        String[]          @default([])
+  estimatedReadiness      Float?
+  missingSkills           String[]          @default([])
+  missingTechnologies     String[]          @default([])
+  frequentSkills          String[]          @default([])
+  criticalGaps            String[]          @default([])
+  strengthAreas           String[]          @default([])
   interviewReadinessScore Float?
-  technicalReadiness     Float?
-  behavioralReadiness    Float?
-  portfolioStrength      Float?
-  projectQuality         Float?
-  communicationReadiness Float?
-
-  // Career Score fields
-  careerScore        Float?
-  resumeQualityScore Float?
-  jobMatchAvg        Float?
-  skillCoverageScore Float?
-  projectQualityScore Float?
-  experienceScore    Float?
-  consistencyScore   Float?
-
-  // Observability metadata
-  provider           String?
-  model              String?
-  tokensUsed         Int               @default(0)
-  latencyMs          Int               @default(0)
-  estimatedCost      Float             @default(0.0)
-  
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resume             Resume            @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  roadmaps           LearningRoadmap[]
+  technicalReadiness      Float?
+  behavioralReadiness     Float?
+  portfolioStrength       Float?
+  projectQuality          Float?
+  communicationReadiness  Float?
+  careerScore             Float?
+  resumeQualityScore      Float?
+  jobMatchAvg             Float?
+  skillCoverageScore      Float?
+  projectQualityScore     Float?
+  experienceScore         Float?
+  consistencyScore        Float?
+  provider                String?
+  model                   String?
+  tokensUsed              Int               @default(0)
+  latencyMs               Int               @default(0)
+  estimatedCost           Float             @default(0.0)
+  resume                  Resume            @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user                    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roadmaps                LearningRoadmap[]
 
   @@index([userId])
   @@index([resumeId])
@@ -417,11 +361,10 @@ model CareerSnapshot {
   careerScore        Float
   overallMatchScore  Float
   resumeQualityScore Float
-  analysisData       Json     // Stores the full serialized snapshot payload
+  analysisData       Json
   createdAt          DateTime @default(now())
-  
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   resume             Resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([resumeId])
@@ -429,16 +372,15 @@ model CareerSnapshot {
 }
 
 model LearningRoadmap {
-  id               String   @id @default(uuid())
+  id               String         @id @default(uuid())
   careerAnalysisId String
   skillName        String
-  steps            Json     // Steps sequence JSON array (step name, details, key lessons)
+  steps            Json
   estimatedHours   Int
-  difficulty       String   // Beginner, Intermediate, Advanced
-  prerequisites    String[] @default([])
-  expectedImpact   String?  
+  difficulty       String
+  prerequisites    String[]       @default([])
+  expectedImpact   String?
   learningOrder    Int
-  
   analysis         CareerAnalysis @relation(fields: [careerAnalysisId], references: [id], onDelete: Cascade)
 
   @@index([careerAnalysisId])
@@ -448,10 +390,9 @@ model CareerInsight {
   id        String   @id @default(uuid())
   userId    String
   title     String
-  content   String   
-  type      String   // milestone, warning, recommendation
+  content   String
+  type      String
   createdAt DateTime @default(now())
-  
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -459,28 +400,25 @@ model CareerInsight {
 }
 
 model InterviewSession {
-  id                  String             @id @default(uuid())
-  userId              String
-  opportunityId       String?
-  title               String
-  status              String             // PENDING, IN_PROGRESS, COMPLETED, FAILED
-  sessionLength       Int                // 5, 10, custom
-  difficulty          String             // Easy, Medium, Hard
-  categories          String[]           // Technical, Behavioral, etc.
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  
-  // Scores
-  overallScore        Float?
-  technicalScore      Float?
-  behavioralScore     Float?
-  communicationScore  Float?
-  confidenceScore     Float?
-  
-  user                User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  opportunity         Opportunity?       @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
-  questions           InterviewQuestion[]
-  summary             InterviewSummary?
+  id                 String              @id @default(uuid())
+  userId             String
+  opportunityId      String?
+  title              String
+  status             String
+  sessionLength      Int
+  difficulty         String
+  categories         String[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  overallScore       Float?
+  technicalScore     Float?
+  behavioralScore    Float?
+  communicationScore Float?
+  confidenceScore    Float?
+  questions          InterviewQuestion[]
+  opportunity        Opportunity?        @relation(fields: [opportunityId], references: [id])
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  summary            InterviewSummary?
 
   @@index([userId])
   @@index([opportunityId])
@@ -488,99 +426,84 @@ model InterviewSession {
 }
 
 model InterviewQuestion {
-  id             String             @id @default(uuid())
-  sessionId      String
-  category       String             // Technical, Behavioral, etc.
-  text           String             
-  difficulty     String
-  sampleAnswer   String?            
-  order          Int
-  createdAt      DateTime           @default(now())
-  
-  session        InterviewSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  answer         InterviewAnswer?
-  evaluation     InterviewEvaluation?
+  id           String               @id @default(uuid())
+  sessionId    String
+  category     String
+  text         String
+  difficulty   String
+  sampleAnswer String?
+  order        Int
+  createdAt    DateTime             @default(now())
+  answer       InterviewAnswer?
+  evaluation   InterviewEvaluation?
+  session      InterviewSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
 }
 
 model InterviewAnswer {
-  id          String            @id @default(uuid())
-  questionId  String            @unique
-  userAnswer  String            
-  createdAt   DateTime          @default(now())
-  
-  question    InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id         String            @id @default(uuid())
+  questionId String            @unique
+  userAnswer String
+  createdAt  DateTime          @default(now())
+  question   InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model InterviewEvaluation {
   id                   String            @id @default(uuid())
   questionId           String            @unique
-  score                Float             // Overall question answer score
-  
-  // Sub-scores
+  score                Float
   technicalAccuracy    Float
   communication        Float
   completeness         Float
   problemSolving       Float
   confidence           Float
   structure            Float
-  
   strengths            String[]          @default([])
   weaknesses           String[]          @default([])
-  improvedAnswer       String?           
-  
-  // STAR coaching details
+  improvedAnswer       String?
   starMethodFollowed   Boolean           @default(false)
-  starSituation        String?           
-  starTask             String?           
-  starAction           String?           
-  starResult           String?           
-  starCoachingFeedback String?           
-  
-  // Observability metadata
+  starSituation        String?
+  starTask             String?
+  starAction           String?
+  starResult           String?
+  starCoachingFeedback String?
   provider             String?
   model                String?
   latencyMs            Int               @default(0)
   tokensUsed           Int               @default(0)
-  
   question             InterviewQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
 model InterviewSummary {
-  id                 String           @id @default(uuid())
-  sessionId          String           @unique
-  
-  overallFeedback    String           
-  keyStrengths       String[]         @default([])
-  keyWeaknesses      String[]         @default([])
-  recommendedPractice String[]        @default([])
-  
-  // Observability metadata
-  provider           String?
-  model              String?
-  latencyMs          Int              @default(0)
-  tokensUsed         Int              @default(0)
-  estimatedCost      Float            @default(0.0)
-  
-  session            InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id                  String           @id @default(uuid())
+  sessionId           String           @unique
+  overallFeedback     String
+  keyStrengths        String[]         @default([])
+  keyWeaknesses       String[]         @default([])
+  recommendedPractice String[]         @default([])
+  provider            String?
+  model               String?
+  latencyMs           Int              @default(0)
+  tokensUsed          Int              @default(0)
+  estimatedCost       Float            @default(0.0)
+  session             InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 }
 
 model ResumeOptimization {
-  id              String                      @id @default(uuid())
-  userId          String
-  resumeId        String
-  opportunityId   String?
-  title           String
-  atsScore        Float?
-  createdAt       DateTime                    @default(now())
-  updatedAt       DateTime                    @updatedAt
-
-  user            User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resume          Resume                      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
-  opportunity     Opportunity?                @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
-  sections        ResumeOptimizationSection[]
-  atsAnalysis     ATSAnalysis?
+  id            String                      @id @default(uuid())
+  userId        String
+  resumeId      String
+  opportunityId String?
+  title         String
+  atsScore      Float?
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+  atsAnalysis   ATSAnalysis?
+  opportunity   Opportunity?                @relation(fields: [opportunityId], references: [id])
+  resume        Resume                      @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  user          User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sections      ResumeOptimizationSection[]
 
   @@index([userId])
   @@index([resumeId])
@@ -591,52 +514,47 @@ model ResumeOptimization {
 model ResumeOptimizationSection {
   id               String             @id @default(uuid())
   optimizationId   String
-  sectionType      String             // Summary, Experience, Projects, Skills, Education, Certifications, Achievements
-  originalContent  String             
-  optimizedContent String             
-  bulletRewrites   Json?              // JSON Array of [{original: string, suggested: string, explanation: string}]
+  sectionType      String
+  originalContent  String
+  optimizedContent String
+  bulletRewrites   Json?
   createdAt        DateTime           @default(now())
-  
   optimization     ResumeOptimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
 
   @@index([optimizationId])
 }
 
 model ATSAnalysis {
-  id                     String             @id @default(uuid())
-  optimizationId         String             @unique
-  atsScore               Float
-  keywordMatchScore      Float
-  missingKeywords        String[]
-  weakBullets            String[]
-  strongBullets          String[]
-  missingSkills          String[]
-  suggestedProjects      String[]
+  id                      String             @id @default(uuid())
+  optimizationId          String             @unique
+  atsScore                Float
+  keywordMatchScore       Float
+  missingKeywords         String[]
+  weakBullets             String[]
+  strongBullets           String[]
+  missingSkills           String[]
+  suggestedProjects       String[]
   suggestedCertifications String[]
-  formattingIssues       String[]
-  improvementChecklist   String[]
-  
-  // Observability metadata
-  provider               String?
-  model                  String?
-  latencyMs              Int                @default(0)
-  tokensUsed             Int                @default(0)
-  estimatedCost          Float              @default(0.0)
-  
-  optimization           ResumeOptimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
+  formattingIssues        String[]
+  improvementChecklist    String[]
+  provider                String?
+  model                   String?
+  latencyMs               Int                @default(0)
+  tokensUsed              Int                @default(0)
+  estimatedCost           Float              @default(0.0)
+  optimization            ResumeOptimization @relation(fields: [optimizationId], references: [id], onDelete: Cascade)
 }
 
 model CoverLetter {
-  id              String                @id @default(uuid())
-  userId          String
-  opportunityId   String?
-  title           String
-  createdAt       DateTime              @default(now())
-  updatedAt       DateTime              @updatedAt
-  
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  opportunity     Opportunity?          @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
-  versions        CoverLetterVersion[]
+  id            String               @id @default(uuid())
+  userId        String
+  opportunityId String?
+  title         String
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  opportunity   Opportunity?         @relation(fields: [opportunityId], references: [id])
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  versions      CoverLetterVersion[]
 
   @@index([userId])
   @@index([opportunityId])
@@ -644,38 +562,34 @@ model CoverLetter {
 }
 
 model CoverLetterVersion {
-  id             String       @id @default(uuid())
-  coverLetterId  String
-  version        Int
-  content        String       
-  style          String       // Professional, Concise, Enthusiastic, Startup, Corporate
-  createdAt      DateTime     @default(now())
-  
-  // Observability metadata
-  provider       String?
-  model          String?
-  latencyMs      Int          @default(0)
-  tokensUsed     Int          @default(0)
-  estimatedCost  Float        @default(0.0)
-  
-  coverLetter    CoverLetter  @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
+  id            String      @id @default(uuid())
+  coverLetterId String
+  version       Int
+  content       String
+  style         String
+  createdAt     DateTime    @default(now())
+  provider      String?
+  model         String?
+  latencyMs     Int         @default(0)
+  tokensUsed    Int         @default(0)
+  estimatedCost Float       @default(0.0)
+  coverLetter   CoverLetter @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
 
   @@index([coverLetterId])
 }
 
 model CareerGoal {
-  id                 String             @id @default(uuid())
+  id                 String    @id @default(uuid())
   userId             String
-  title              String             // Backend Internship, Google STEP, etc.
+  title              String
   targetDate         DateTime?
-  status             String             // IN_PROGRESS, COMPLETED, ABANDONED
-  progress           Float              @default(0.0)
+  status             String
+  progress           Float     @default(0.0)
   missingSkills      String[]
   estimatedReadiness Float?
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
-   
-  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -686,7 +600,6 @@ model CopilotConversation {
   title     String
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
-   
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages  CopilotMessage[]
 
@@ -697,18 +610,15 @@ model CopilotConversation {
 model CopilotMessage {
   id             String              @id @default(uuid())
   conversationId String
-  sender         String              // USER, ASSISTANT, SYSTEM
-  content        String              
+  sender         String
+  content        String
   createdAt      DateTime            @default(now())
-   
-  // Observability metadata
   provider       String?
   model          String?
   latencyMs      Int                 @default(0)
   tokensUsed     Int                 @default(0)
   estimatedCost  Float               @default(0.0)
   contextSize    Int                 @default(0)
-   
   conversation   CopilotConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId])
@@ -716,28 +626,23 @@ model CopilotMessage {
 }
 
 model WeeklyCareerReport {
-  id                   String           @id @default(uuid())
+  id                   String   @id @default(uuid())
   userId               String
   startDate            DateTime
   endDate              DateTime
-   
-  careerScoreDelta     Float            @default(0.0)
+  careerScoreDelta     Float    @default(0.0)
   resumeImprovements   String[]
-  interviewProgress    String           
-  newMatchingJobsCount Int              @default(0)
+  interviewProgress    String
+  newMatchingJobsCount Int      @default(0)
   skillsLearned        String[]
   recommendations      String[]
-   
-  // Observability metadata
   provider             String?
   model                String?
-  latencyMs            Int              @default(0)
-  tokensUsed           Int              @default(0)
-  estimatedCost        Float            @default(0.0)
-   
-  createdAt            DateTime         @default(now())
-   
-  user                 User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  latencyMs            Int      @default(0)
+  tokensUsed           Int      @default(0)
+  estimatedCost        Float    @default(0.0)
+  createdAt            DateTime @default(now())
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([createdAt])
@@ -746,11 +651,10 @@ model WeeklyCareerReport {
 model AIActionLog {
   id         String   @id @default(uuid())
   userId     String
-  actionType String   // GENERATE_INTERVIEW_PLAN, GENERATE_COVER_LETTER, RECALCULATE_ATS, etc.
-  status     String   // SUCCESS, FAILED
+  actionType String
+  status     String
   metadata   Json?
   createdAt  DateTime @default(now())
-   
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -772,8 +676,8 @@ model SystemAuditLog {
   id        String   @id @default(uuid())
   userId    String?
   action    String
-  status    String   // SUCCESS, WARNING, FAILURE
-  details   String   
+  status    String
+  details   String
   ipAddress String?
   createdAt DateTime @default(now())
 
@@ -784,8 +688,8 @@ model SystemAuditLog {
 model UserFeedback {
   id         String   @id @default(uuid())
   userId     String?
-  type       String   // BUG, FEATURE_REQUEST, GENERAL, AI_RATING
-  content    String   
+  type       String
+  content    String
   rating     Int?
   isResolved Boolean  @default(false)
   createdAt  DateTime @default(now())
@@ -798,17 +702,73 @@ model BetaInvitation {
   id        String   @id @default(uuid())
   email     String   @unique
   token     String   @unique
-  status    String   // PENDING, SENT, USED, EXPIRED
+  status    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+enum Role {
+  USER
+  ADMIN
+  SUPER_ADMIN
+}
 
+enum OpportunityType {
+  INTERNSHIP
+  NEW_GRAD
+  SCHOLARSHIP
+  FELLOWSHIP
+  HACKATHON
+  RESEARCH
+}
 
+enum ApplicationStatus {
+  DISCOVERED
+  SHORTLISTED
+  PREPARING
+  APPLIED
+  OA
+  INTERVIEW
+  OFFER
+  REJECTED
+  WITHDRAWN
+}
 
+enum NotificationType {
+  SYSTEM
+  ALERT
+  APPLICATION_DEADLINE
+  MATCH_ACCURACY
+}
 
+enum RemoteType {
+  REMOTE
+  HYBRID
+  ONSITE
+}
 
+enum JobStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
 
+enum EnrichmentStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
 
+model TargetCompany {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
-
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+}
