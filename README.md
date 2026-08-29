@@ -4,6 +4,22 @@ InternScope AI is a premium, AI-powered internship tracking platform designed to
 
 ---
 
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+|-------|----------------|
+| **Frontend** | [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/), [Tailwind CSS 4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/), [Lucide React](https://lucide.dev/), [React Hook Form](https://react-hook-form.com/) + [Zod](https://zod.dev/), [TanStack Table](https://tanstack.com/table) |
+| **Backend** | Next.js Server Actions & API Routes, [Trigger.dev](https://trigger.dev/) background jobs |
+| **Database** | [PostgreSQL](https://www.postgresql.org/) ([Neon](https://neon.tech/)), [Prisma ORM 7](https://www.prisma.io/) with `@prisma/adapter-pg` |
+| **Authentication** | [Clerk](https://clerk.com/) (OAuth, sessions, webhooks) |
+| **AI / LLM** | [Google Gemini](https://ai.google.dev/) (resume parsing, enrichment, copilot, ATS optimizer), [Groq](https://groq.com/) (mock interviews with Gemini fallback) |
+| **Email** | [Nodemailer](https://nodemailer.com/) (SMTP — Gmail / custom host) |
+| **Job ingestion** | Greenhouse, Lever & Ashby API connectors (scheduled sync + deduplication) |
+| **Document parsing** | [unpdf](https://www.npmjs.com/package/unpdf) (PDF), [Mammoth](https://www.npmjs.com/package/mammoth) (DOCX) |
+| **Tooling** | ESLint, PostCSS, [Sonner](https://sonner.emilkowal.ski/) toasts |
+
+---
+
 ## 🎨 Design Philosophy & Colors
 The UI combines design tokens from **Linear**, **Vercel**, **Apple**, and **Stripe**:
 - **Background:** `#09090B` (Clean Dark Slate)

@@ -53,27 +53,10 @@ export const fullSync = task({
   },
 });
 
-// Define configurable Trigger.dev schedules with required deduplication keys
-schedules.create({
-  task: 'greenhouse-sync',
-  cron: '0 */6 * * *', // Every 6 hours
-  deduplicationKey: 'greenhouse-sync-schedule',
-});
-
-schedules.create({
-  task: 'lever-sync',
-  cron: '0 */6 * * *', // Every 6 hours
-  deduplicationKey: 'lever-sync-schedule',
-});
-
-schedules.create({
-  task: 'ashby-sync',
-  cron: '0 */6 * * *', // Every 6 hours
-  deduplicationKey: 'ashby-sync-schedule',
-});
-
+// Full catalog sync twice daily at 9:00 AM & 9:00 PM IST (03:30 & 15:30 UTC).
+// Post-ingestion enrichment drains the full pending queue with throttled Gemini calls.
 schedules.create({
   task: 'full-sync',
-  cron: '0 0 * * *', // Daily at midnight
+  cron: '30 3,15 * * *',
   deduplicationKey: 'full-sync-schedule',
 });

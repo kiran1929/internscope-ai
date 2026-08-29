@@ -5,6 +5,9 @@ import { EnrichmentRepository } from '../repositories/enrichment';
 import { IngestionLogger } from '../ingestion/logger';
 import { scheduleNewOpportunityNotifications } from '../email/new-opportunity-dispatcher';
 
+/** ~13 requests/min — stays under Gemini free-tier RPM (~15). */
+export const ENRICHMENT_RATE_LIMIT_DELAY_MS = 4500;
+
 export class EnrichmentEngine {
   static async enrichOpportunity(opportunityId: string): Promise<boolean> {
     const startTime = Date.now();
@@ -133,6 +136,48 @@ export class EnrichmentEngine {
       processed: idsToProcess.length,
       success,
       failed,
+    };
+  }
+
+  /** Process every pending opportunity sequentially with throttling. */
+  static async drainAllPending(
+    rateLimitDelayMs = ENRICHMENT_RATE_LIMIT_DELAY_MS,
+  ): Promise<{
+    processed: number;
+    success: number;
+    failed: number;
+    remaining: number;
+  }> {
+    const pendingIds = await EnrichmentRepository.findPending();
+
+    console.log(
+      `[Enrichment] Draining queue: ${pendingIds.length} pending opportunities (delay ${rateLimitDelayMs}ms).`,
+    );
+
+    let success = 0;
+    let failed = 0;
+
+    for (let i = 0; i < pendingIds.length; i++) {
+      const isSuccess = await this.enrichOpportunity(pendingIds[i]);
+      if (isSuccess) success++;
+      else failed++;
+
+      if (i < pendingIds.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, rateLimitDelayMs));
+      }
+    }
+
+    const remaining = (await EnrichmentRepository.findPending()).length;
+
+    console.log(
+      `[Enrichment] Drain complete. Processed: ${pendingIds.length}, success: ${success}, failed: ${failed}, remaining: ${remaining}.`,
+    );
+
+    return {
+      processed: pendingIds.length,
+      success,
+      failed,
+      remaining,
     };
   }
 }

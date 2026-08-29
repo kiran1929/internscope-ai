@@ -166,8 +166,10 @@ export class IngestionQueue {
         (async () => {
           try {
             console.log('[Queue] Triggering post-ingestion AI data enrichment task...');
-            const enrichResult = await EnrichmentEngine.enrichAllPending(50, 1000);
-            console.log(`[Queue] Post-ingestion enrichment complete. Success: ${enrichResult.success}, Failed: ${enrichResult.failed}`);
+            const enrichResult = await EnrichmentEngine.drainAllPending();
+            console.log(
+              `[Queue] Post-ingestion enrichment drain complete. Processed: ${enrichResult.processed}, success: ${enrichResult.success}, failed: ${enrichResult.failed}, remaining: ${enrichResult.remaining}`,
+            );
           } catch (enrichErr) {
             console.error('[Queue] Post-ingestion AI enrichment failed to trigger:', enrichErr);
           }

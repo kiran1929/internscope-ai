@@ -61,14 +61,14 @@ export class JobRepository {
   }
 
   static async getNextScheduledSync(provider: string): Promise<Date> {
-    // Standard schedule: Greenhouse/Lever/Ashby run every 6 hours, Full Sync runs daily
+    // Scheduled full sync runs twice daily (9 AM & 9 PM IST).
     const lastJob = await prisma.ingestionJob.findFirst({
       where: { provider },
       orderBy: { startedAt: 'desc' },
     });
 
     const baseTime = lastJob ? new Date(lastJob.startedAt) : new Date();
-    const hours = provider === 'all' ? 24 : 6;
+    const hours = 12;
     return new Date(baseTime.getTime() + hours * 60 * 60 * 1000);
   }
 }

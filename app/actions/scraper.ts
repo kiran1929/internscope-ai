@@ -72,7 +72,7 @@ export async function triggerEnrichmentAction() {
     await checkAdminAuth();
     (async () => {
       try {
-        await EnrichmentEngine.enrichAllPending(30, 1000);
+        await EnrichmentEngine.drainAllPending();
       } catch (err) {
         console.error('Manual enrichment run failed:', err);
       }
