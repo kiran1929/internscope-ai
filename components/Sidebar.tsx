@@ -27,7 +27,6 @@ export type DashboardTab =
   | 'saved'
   | 'applications'
   | 'resume'
-  | 'resume-optimize'
   | 'cover-letter'
   | 'interview'
   | 'copilot'
@@ -42,7 +41,6 @@ export const TAB_HREF: Record<DashboardTab, string> = {
   saved: '/saved',
   applications: '/applications',
   resume: '/resume',
-  'resume-optimize': '/resume/optimize',
   'cover-letter': '/cover-letter',
   interview: '/interview',
   copilot: '/copilot',
@@ -79,7 +77,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'saved', label: 'Saved Positions', icon: Bookmark },
     { id: 'applications', label: 'Applications', icon: Briefcase },
     { id: 'resume', label: 'Resume Intel', icon: FileText },
-    { id: 'resume-optimize', label: 'ATS Optimizer', icon: Sparkles },
     { id: 'cover-letter', label: 'Cover Letters', icon: Mail },
     { id: 'interview', label: 'Interview Prep', icon: Award },
     { id: 'copilot', label: 'AI Copilot', icon: Brain },

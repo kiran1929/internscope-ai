@@ -26,6 +26,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { uploadResumeAction, deleteResumeAction } from '@/app/actions/resume';
+import { ResumeOptimizerPanel } from '@/components/ResumeOptimizerClient';
 
 interface ResumeHistoryItem {
   id: string;
@@ -56,16 +57,59 @@ interface CandidateResumeClientProps {
     structuredData: any;
     createdAt: Date;
   } | null;
+  optimizations: Array<{
+    id: string;
+    title: string;
+    atsScore: number | null;
+    createdAt: Date;
+    opportunity: { title: string; company: { name: string } } | null;
+    atsAnalysis: {
+      atsScore: number;
+      keywordMatchScore: number;
+      missingKeywords: string[];
+      weakBullets: string[];
+      strongBullets: string[];
+      missingSkills: string[];
+      suggestedProjects: string[];
+      suggestedCertifications: string[];
+      formattingIssues: string[];
+      improvementChecklist: string[];
+    } | null;
+    sections: Array<{
+      id: string;
+      sectionType: string;
+      originalContent: string;
+      optimizedContent: string;
+      bulletRewrites: unknown;
+    }>;
+  }>;
+  jobOptions: Array<{ id: string; title: string; companyName: string }>;
+  initialTab?: 'profile' | 'quality' | 'history' | 'ats';
+  preselectedJobId?: string;
 }
 
 export default function CandidateResumeClient({
   resumes,
   latestResume,
+  optimizations,
+  jobOptions,
+  initialTab = 'profile',
+  preselectedJobId,
 }: CandidateResumeClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'quality' | 'history'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'quality' | 'history' | 'ats'>(initialTab);
+
+  const switchTab = (tab: 'profile' | 'quality' | 'history' | 'ats') => {
+    setActiveTab(tab);
+    const params = new URLSearchParams();
+    if (tab !== 'profile') {
+      params.set('tab', tab);
+    }
+    const query = params.toString();
+    router.replace(query ? `/resume?${query}` : '/resume', { scroll: false });
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -118,8 +162,17 @@ export default function CandidateResumeClient({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-900 pb-5">
         <div>
           <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">Resume Intelligence</h2>
-          <p className="text-xs text-zinc-400 mt-1">Upload your resume to extract structured data, analyze formatting quality, and generate match scores.</p>
+          <p className="text-xs text-zinc-400 mt-1">Upload your resume, review parsed data, and optimize it for ATS keyword matching.</p>
         </div>
+        {latestResume?.isParsed && (
+          <button
+            onClick={() => switchTab('ats')}
+            className="px-4 py-2 bg-primary hover:bg-primary/95 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0"
+          >
+            <Sparkles className="w-4 h-4" />
+            Optimize for ATS
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -205,26 +258,34 @@ export default function CandidateResumeClient({
         <div className="lg:col-span-2 space-y-6">
           
           {/* Tabs Menu */}
-          <div className="flex border-b border-zinc-900 pb-px text-xs">
+          <div className="flex border-b border-zinc-900 pb-px text-xs overflow-x-auto">
             <button
-              onClick={() => setActiveTab('profile')}
-              className={`px-4 py-2 font-bold border-b-2 transition-all ${
+              onClick={() => switchTab('profile')}
+              className={`px-4 py-2 font-bold border-b-2 transition-all whitespace-nowrap ${
                 activeTab === 'profile' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 hover:text-zinc-300'
               }`}
             >
               Structured Profile
             </button>
             <button
-              onClick={() => setActiveTab('quality')}
-              className={`px-4 py-2 font-bold border-b-2 transition-all ${
+              onClick={() => switchTab('quality')}
+              className={`px-4 py-2 font-bold border-b-2 transition-all whitespace-nowrap ${
                 activeTab === 'quality' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 hover:text-zinc-300'
               }`}
             >
               Quality Evaluation
             </button>
             <button
-              onClick={() => setActiveTab('history')}
-              className={`px-4 py-2 font-bold border-b-2 transition-all ${
+              onClick={() => switchTab('ats')}
+              className={`px-4 py-2 font-bold border-b-2 transition-all whitespace-nowrap ${
+                activeTab === 'ats' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 hover:text-zinc-300'
+              }`}
+            >
+              ATS Optimizer
+            </button>
+            <button
+              onClick={() => switchTab('history')}
+              className={`px-4 py-2 font-bold border-b-2 transition-all whitespace-nowrap ${
                 activeTab === 'history' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 hover:text-zinc-300'
               }`}
             >
@@ -476,6 +537,36 @@ export default function CandidateResumeClient({
                     )}
                   </div>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 4: ATS Optimizer */}
+          {activeTab === 'ats' && (
+            <div className="space-y-6">
+              {!latestResume ? (
+                <div className="bg-[#111113] border border-zinc-850 rounded-xl p-8 text-center text-zinc-500 space-y-3">
+                  <Sparkles className="w-8 h-8 text-zinc-700 mx-auto" />
+                  <p className="text-xs">Upload a resume first to run ATS keyword optimization and bullet rewrites.</p>
+                  <button
+                    onClick={() => switchTab('profile')}
+                    className="text-xs text-primary font-bold hover:underline"
+                  >
+                    Go to upload
+                  </button>
+                </div>
+              ) : !latestResume.isParsed ? (
+                <div className="bg-[#111113] border border-zinc-850 rounded-xl p-8 text-center text-zinc-500 space-y-3">
+                  <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
+                  <p className="text-xs font-semibold text-zinc-300">Resume is still being parsed...</p>
+                  <p className="text-[10px] text-zinc-550">ATS optimization will be available once parsing completes.</p>
+                </div>
+              ) : (
+                <ResumeOptimizerPanel
+                  optimizations={optimizations}
+                  jobOptions={jobOptions}
+                  preselectedJobId={preselectedJobId}
+                />
               )}
             </div>
           )}

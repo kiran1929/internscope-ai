@@ -19,7 +19,6 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   const getActiveTabFromPath = (path: string): DashboardTab => {
-    if (path.startsWith('/resume/optimize')) return 'resume-optimize';
     if (path.startsWith('/resume')) return 'resume';
     if (path.startsWith('/cover-letter')) return 'cover-letter';
     if (path.startsWith('/copilot')) return 'copilot';

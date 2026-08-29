@@ -12,8 +12,9 @@ import {
   Opportunity,
   Prisma,
 } from '../lib/generated/prisma/client';
+import { getPgConnectionString } from '../lib/db-connection';
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new pg.Pool({ connectionString: getPgConnectionString() });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 

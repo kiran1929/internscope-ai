@@ -2,6 +2,7 @@
 import pg from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from './generated/prisma/client';
+import { getPgConnectionString } from './db-connection';
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -11,11 +12,7 @@ const globalForPrisma = globalThis as unknown as {
 let prisma: PrismaClient;
 let pool: pg.Pool;
 
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is not defined.');
-}
+const connectionString = getPgConnectionString();
 
 if (process.env.NODE_ENV === 'production') {
   pool = new pg.Pool({ connectionString });

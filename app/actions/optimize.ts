@@ -40,7 +40,7 @@ export async function optimizeResumeAction(params: {
       });
     }
 
-    revalidatePath('/resume/optimize');
+    revalidatePath('/resume');
     return { success: true };
   } catch (error) {
     console.error('Failed to tailormade optimize resume:', error);
@@ -59,7 +59,7 @@ export async function deleteOptimizationAction(id: string) {
       where: { id, userId: user.id },
     });
 
-    revalidatePath('/resume/optimize');
+    revalidatePath('/resume');
     return { success: true };
   } catch (error) {
     return {

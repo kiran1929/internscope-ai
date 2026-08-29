@@ -6,8 +6,9 @@ import { PrismaClient } from '../lib/generated/prisma/client';
 import { UserRepository } from '../lib/repositories/user';
 import { OpportunityNotificationService } from '../lib/email/opportunity-notification-service';
 import { isDirectApplicationUrl } from '../lib/email/application-url-utils';
+import { getPgConnectionString } from '../lib/db-connection';
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new pg.Pool({ connectionString: getPgConnectionString() });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 

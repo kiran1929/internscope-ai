@@ -2,7 +2,6 @@
 
 import React, { useState, useTransition } from 'react';
 import {
-  Brain,
   Award,
   AlertTriangle,
   CheckCircle,
@@ -21,7 +20,6 @@ import {
   Loader2,
   Copy,
   CornerDownRight,
-  Upload
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -66,49 +64,20 @@ interface OptimizationItem {
   }>;
 }
 
-interface ResumeOptimizerClientProps {
+interface ResumeOptimizerPanelProps {
   optimizations: OptimizationItem[];
   jobOptions: JobOption[];
-  hasResume: boolean;
   preselectedJobId?: string;
 }
 
-export default function ResumeOptimizerClient({
+export function ResumeOptimizerPanel({
   optimizations,
   jobOptions,
-  hasResume,
   preselectedJobId,
-}: ResumeOptimizerClientProps) {
+}: ResumeOptimizerPanelProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadFile(e.target.files[0]);
-    }
-  };
-
-  const handleUploadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uploadFile) return;
-    setIsUploading(true);
-    const { uploadResumeAction } = await import('@/app/actions/resume');
-    const formData = new FormData();
-    formData.append('file', uploadFile);
-    const res = await uploadResumeAction(formData);
-    setIsUploading(false);
-    if (res.success) {
-      toast.success('Resume uploaded successfully! Starting ATS optimizer...');
-      router.refresh();
-    } else {
-      toast.error(`Upload failed: ${res.error}`);
-    }
-  };
-
-  // Launcher configurations
   const [targetJobId, setTargetJobId] = useState<string>(preselectedJobId || 'general');
   const [title, setTitle] = useState<string>('');
 
@@ -164,80 +133,8 @@ export default function ResumeOptimizerClient({
     toast.success('Copied to clipboard!');
   };
 
-  if (!hasResume) {
-    return (
-      <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
-        <div className="border-b border-zinc-900 pb-5">
-          <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight flex items-center gap-2">
-            <Brain className="w-6 h-6 text-primary" /> Resume ATS Optimizer
-          </h2>
-          <p className="text-xs text-zinc-400 mt-1">Scan keyword matches, optimize formatting parameters, and tailor developer bullet points.</p>
-        </div>
-
-        <div className="bg-[#111113] border border-zinc-850 rounded-xl p-10 text-center max-w-xl mx-auto space-y-5">
-          <Brain className="w-12 h-12 text-zinc-650 mx-auto" />
-          <h2 className="text-lg font-bold font-display">Resume Required</h2>
-          <p className="text-xs text-zinc-400 leading-relaxed font-sans font-normal">
-            The ATS Resume Optimizer scans keyword matches and suggests bullet rewrites based on your base resume. Please upload a resume first.
-          </p>
-
-          <form onSubmit={handleUploadSubmit} className="space-y-4 pt-2">
-            <div className="border border-dashed border-zinc-850 hover:border-zinc-800 rounded-lg p-6 text-center relative hover:bg-zinc-950/20 transition-all cursor-pointer">
-              <input
-                type="file"
-                accept=".pdf,.docx"
-                onChange={handleFileChange}
-                className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-              />
-              <Upload className="w-8 h-8 text-zinc-650 mx-auto mb-2" />
-              <p className="text-[10px] font-semibold text-zinc-400">
-                {uploadFile ? uploadFile.name : 'Select PDF or DOCX'}
-              </p>
-              <p className="text-[8px] text-zinc-650 mt-1">Max file size 5MB</p>
-            </div>
-
-            {uploadFile && (
-              <div className="flex gap-2 justify-center">
-                <button
-                  type="button"
-                  onClick={() => setUploadFile(null)}
-                  className="px-3.5 py-1.5 border border-zinc-850 hover:bg-zinc-900 text-zinc-400 rounded-lg text-xs font-bold"
-                >
-                  Clear
-                </button>
-                <button
-                  type="submit"
-                  disabled={isUploading}
-                  className="px-4 py-1.5 bg-primary hover:bg-primary/95 text-white rounded-lg text-xs font-bold flex items-center gap-1.5"
-                >
-                  {isUploading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  <span>Upload & Process</span>
-                </button>
-              </div>
-            )}
-          </form>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
-      
-      {/* Title Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-900 pb-5">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight flex items-center gap-2">
-            <Brain className="w-6 h-6 text-primary" /> Resume ATS Optimizer
-          </h2>
-          <p className="text-xs text-zinc-400 mt-1">Audit formatting, score keywords match density, and generate tailored section copies.</p>
-        </div>
-      </div>
-
-      {/* Main Splits: Settings launcher vs Version reviews */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
-        {/* Left Column: Practice Setup & Version History lists */}
         <div className="space-y-6">
           
           {/* Launcher Panel */}
@@ -568,7 +465,5 @@ export default function ResumeOptimizerClient({
         </div>
 
       </div>
-
-    </div>
   );
 }

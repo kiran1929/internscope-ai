@@ -100,12 +100,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
       return crumbs;
     }
 
-    if (rawSegments[0] === 'resume' && rawSegments.length > 1 && rawSegments[1] === 'optimize') {
-      crumbs.push({ label: 'Resume Intel', href: '/resume', isLast: false });
-      crumbs.push({ label: 'ATS Optimizer', href: '/resume/optimize', isLast: true });
-      return crumbs;
-    }
-
     rawSegments.forEach((segment, idx) => {
       const href = '/' + rawSegments.slice(0, idx + 1).join('/');
       let label = routeNameMap[segment.toLowerCase()];
