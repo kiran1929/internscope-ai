@@ -1,4 +1,4 @@
-import { PDFParse } from 'pdf-parse';
+import { extractText as unpdfExtractText } from 'unpdf';
 import mammoth from 'mammoth';
 
 export interface ExtractionResult {
@@ -42,19 +42,12 @@ export class ExtractionService {
   private static async extractPdf(buffer: Buffer): Promise<ExtractionResult> {
     let rawText = '';
     try {
-      if (typeof (globalThis as any).pdfjsWorker === 'undefined') {
-        try {
-          (globalThis as any).pdfjsWorker = require('pdfjs-dist/legacy/build/pdf.worker.mjs');
-        } catch {
-          // Worker fallback
-        }
-      }
-      const parser = new PDFParse({ data: buffer });
-      const data = await parser.getText();
-      rawText = data?.text || '';
+      const uint8Array = new Uint8Array(buffer);
+      const res = await unpdfExtractText(uint8Array);
+      rawText = Array.isArray(res.text) ? res.text.join('\n') : String(res.text || '');
     } catch (e) {
-      console.warn('Primary PDF parser encountered an issue, attempting raw text stream recovery:', e);
-      // Raw string fallback for simple text PDFs
+      console.warn('unpdf parser encountered an issue, attempting raw text stream recovery:', e);
+      // Raw string fallback for text streams in PDF buffers
       const asString = buffer.toString('binary');
       const textMatches = asString.match(/\(([^)]+)\)\s*Tj/g) || asString.match(/BT[\s\S]*?ET/g);
       if (textMatches && textMatches.length > 0) {
