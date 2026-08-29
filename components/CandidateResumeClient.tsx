@@ -260,8 +260,8 @@ export default function CandidateResumeClient({
                   <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-3">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="text-sm font-bold text-white leading-tight">{parsedData.fullName || 'No Name Extracted'}</h4>
-                        <p className="text-[10px] text-primary font-semibold mt-0.5">{parsedData.location || 'Location undisclosed'}</p>
+                        <h4 className="text-sm font-bold text-white leading-tight">{parsedData?.fullName || 'No Name Extracted'}</h4>
+                        <p className="text-[10px] text-primary font-semibold mt-0.5">{parsedData?.location || 'Location undisclosed'}</p>
                       </div>
                       <a
                         href={`/api/resumes/${latestResume.id}`}
@@ -275,17 +275,17 @@ export default function CandidateResumeClient({
                     </div>
 
                     <p className="text-xs text-zinc-400 leading-relaxed font-sans italic">
-                      &ldquo;{parsedData.summary || 'No summary extracted.'}&rdquo;
+                      &ldquo;{parsedData?.summary || 'No summary extracted.'}&rdquo;
                     </p>
 
                     <div className="grid grid-cols-2 gap-4 text-[10px] font-mono text-zinc-400 border-t border-zinc-900 pt-3">
                       <div>
                         <span className="text-zinc-500 block">Email:</span>
-                        <span className="text-zinc-200">{parsedData.email || '---'}</span>
+                        <span className="text-zinc-200">{parsedData?.email || '---'}</span>
                       </div>
                       <div>
                         <span className="text-zinc-500 block">Phone:</span>
-                        <span className="text-zinc-200">{parsedData.phone || '---'}</span>
+                        <span className="text-zinc-200">{parsedData?.phone || '---'}</span>
                       </div>
                     </div>
                   </div>
@@ -297,7 +297,7 @@ export default function CandidateResumeClient({
                         <Award className="w-4 h-4 text-primary" /> Core Skills
                       </h5>
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {parsedData.skills && parsedData.skills.length > 0 ? (
+                        {parsedData?.skills && parsedData.skills.length > 0 ? (
                           parsedData.skills.map((s: string) => (
                             <span key={s} className="text-[9px] bg-zinc-950 text-zinc-400 border border-zinc-900 px-2 py-1 rounded">
                               {s}
@@ -314,7 +314,7 @@ export default function CandidateResumeClient({
                         <Sparkles className="w-4 h-4 text-emerald-400" /> Technologies & Tools
                       </h5>
                       <div className="flex flex-wrap gap-1.5 pt-1">
-                        {parsedData.technologies && parsedData.technologies.length > 0 ? (
+                        {parsedData?.technologies && parsedData.technologies.length > 0 ? (
                           parsedData.technologies.map((t: string) => (
                             <span key={t} className="text-[9px] bg-zinc-950 text-zinc-400 border border-zinc-900 px-2 py-1 rounded">
                               {t}
@@ -332,7 +332,7 @@ export default function CandidateResumeClient({
                     <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
                       <Briefcase className="w-4 h-4 text-indigo-400" /> Professional Experience
                     </h5>
-                    {parsedData.experience && parsedData.experience.length > 0 ? (
+                    {parsedData?.experience && parsedData.experience.length > 0 ? (
                       <div className="space-y-4 divide-y divide-zinc-900">
                         {parsedData.experience.map((exp: any, idx: number) => (
                           <div key={idx} className={`space-y-2 text-xs ${idx > 0 ? 'pt-4' : ''}`}>
@@ -364,23 +364,48 @@ export default function CandidateResumeClient({
                     <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
                       <BookOpen className="w-4 h-4 text-amber-500" /> Academic History
                     </h5>
-                    {parsedData.education && parsedData.education.length > 0 ? (
+                    {parsedData?.education && parsedData.education.length > 0 ? (
                       <div className="space-y-3.5">
                         {parsedData.education.map((edu: any, idx: number) => (
                           <div key={idx} className="text-xs flex justify-between items-start">
                             <div>
                               <h6 className="font-bold text-zinc-200">{edu.school}</h6>
-                              <p className="text-[10px] text-zinc-500 mt-0.5">{edu.degree} in {edu.major}</p>
+                              <p className="text-[10px] text-zinc-400">{edu.degree} {edu.major ? `in ${edu.major}` : ''}</p>
                             </div>
-                            <div className="text-right text-[9px] font-mono text-zinc-500 space-y-1">
-                              <span>Class of {edu.endYear}</span>
-                              {edu.gpa && <span className="block text-zinc-400 font-bold">GPA: {edu.gpa}</span>}
-                            </div>
+                            <span className="text-[9px] font-mono text-zinc-500">{edu.startYear} - {edu.endYear}</span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-zinc-500">No academic log parsed.</p>
+                      <p className="text-[10px] text-zinc-500">No education history parsed.</p>
+                    )}
+                  </div>
+
+                  {/* Projects */}
+                  <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+                      <Compass className="w-4 h-4 text-pink-400" /> Featured Projects
+                    </h5>
+                    {parsedData?.projects && parsedData.projects.length > 0 ? (
+                      <div className="space-y-4 divide-y divide-zinc-900">
+                        {parsedData.projects.map((proj: any, idx: number) => (
+                          <div key={idx} className={`space-y-2 text-xs ${idx > 0 ? 'pt-4' : ''}`}>
+                            <h6 className="font-bold text-zinc-200">{proj.title}</h6>
+                            <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">{proj.description}</p>
+                            {proj.technologies && proj.technologies.length > 0 && (
+                              <div className="flex flex-wrap gap-1 pt-1">
+                                {proj.technologies.map((pt: string) => (
+                                  <span key={pt} className="text-[8px] bg-zinc-900 text-zinc-400 px-2 py-0.5 rounded">
+                                    {pt}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-zinc-500">No projects parsed.</p>
                     )}
                   </div>
 
