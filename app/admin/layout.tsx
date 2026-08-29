@@ -40,8 +40,14 @@ export default async function AdminLayout({
     }
   }
 
-  // Authorize: Only permit ADMIN or SUPER_ADMIN access to CMS
-  if (!dbUser || (dbUser.role !== Role.ADMIN && dbUser.role !== Role.SUPER_ADMIN)) {
+  const userEmail = (clerkUser.emailAddresses[0]?.emailAddress || '').toLowerCase();
+  const allowedAdminEmails = ['gudepukirandeep@gmail.com', 'admin@internscope.ai'];
+
+  // Authorize: Only permit authorized admin emails with ADMIN role access to CMS
+  const hasAdminRole = dbUser && (dbUser.role === Role.ADMIN || dbUser.role === Role.SUPER_ADMIN);
+  const isAllowedEmail = allowedAdminEmails.includes(userEmail);
+
+  if (!hasAdminRole || !isAllowedEmail) {
     redirect('/403');
   }
 

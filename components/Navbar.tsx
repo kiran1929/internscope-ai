@@ -344,17 +344,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                   >
                     Platform Settings
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowProfile(false);
-                      router.push('/admin');
-                    }}
-                    className="w-full text-left px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors focus-visible:outline-none flex items-center justify-between"
-                    role="menuitem"
-                  >
-                    <span>Admin Console</span>
-                    <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">CMS</span>
-                  </button>
+                  {user?.primaryEmailAddress?.emailAddress && 
+                   ['gudepukirandeep@gmail.com', 'admin@internscope.ai'].includes(user.primaryEmailAddress.emailAddress.toLowerCase()) && (
+                    <button
+                      onClick={() => {
+                        setShowProfile(false);
+                        router.push('/admin');
+                      }}
+                      className="w-full text-left px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors focus-visible:outline-none flex items-center justify-between"
+                      role="menuitem"
+                    >
+                      <span>Admin Console</span>
+                      <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">CMS</span>
+                    </button>
+                  )}
                 </div>
                 <div className="border-t border-zinc-800 py-1">
                   <button
