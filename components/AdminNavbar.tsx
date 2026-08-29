@@ -7,6 +7,7 @@ import { useUser, useClerk } from '@clerk/nextjs';
 import { useRouter, usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import Link from 'next/link';
+import { useTheme } from '@/providers/ThemeProvider';
 
 interface AdminNavbarProps {
   onMenuToggle: () => void;
@@ -21,7 +22,8 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuToggle }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [isDark, setIsDark] = useState(true);
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   // Generate breadcrumbs from pathname
   const getBreadcrumbs = () => {
@@ -49,7 +51,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuToggle }) => {
   };
 
   return (
-    <header className="h-16 bg-[#09090B] border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 ">
+    <header className="h-16 bg-background border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 ">
       <div className="flex items-center gap-4">
         {/* Mobile Toggle Button */}
         <button
@@ -106,7 +108,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuToggle }) => {
       <div className="flex items-center gap-3">
         {/* Theme Toggle (Aesthetic Only, Default Dark) */}
         <button
-          onClick={() => setIsDark(!isDark)}
+          onClick={toggleTheme}
           className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-zinc-900 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none hidden sm:block"
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           aria-label="Toggle Theme"

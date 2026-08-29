@@ -81,7 +81,7 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
           title={activeTab}
         />
 
-        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-[#09090B] overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-background overflow-y-auto">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

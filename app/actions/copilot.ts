@@ -4,6 +4,7 @@ import { getAuthenticatedUser } from './candidate';
 import { prisma } from '@/lib/db';
 import { ContextBuilder } from '@/lib/copilot/context-builder';
 import { AIOrchestrator } from '@/lib/copilot/ai-orchestrator';
+import { buildCopilotSystemPrompt } from '@/lib/copilot/prompts';
 import { runWeeklyReportPipeline } from '@/trigger/copilot';
 import { revalidatePath } from 'next/cache';
 
@@ -59,20 +60,7 @@ export async function askCopilotAction(params: {
     });
 
     // 4. Assemble system prompt
-    const systemPrompt = `
-You are the AI Career Copilot, an elite career assistant grounded in candidate intelligence.
-Your task is to answer the candidate's questions using ONLY their matching data context provided below.
-
-Candidate Career context details:
-${context.contextString}
-
-Important Rules:
-- Answer questions by retrieving facts from the context above.
-- NEVER hallucinate or infer metrics not provided.
-- If data does not exist (e.g. they ask about a skill or job not matching, or resume optimization has not been run), explicitly say so.
-- Keep answers professional, concise, actionable, and formatted in markdown.
-- Suggest next action buttons or follow-up questions they can trigger.
-`;
+    const systemPrompt = buildCopilotSystemPrompt(context.contextString);
 
     // 5. Query the AI Orchestrator
     const aiResult = await AIOrchestrator.generate({

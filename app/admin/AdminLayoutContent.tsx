@@ -18,7 +18,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
   const router = useRouter();
 
   return (
-    <div className="flex-1 flex min-h-screen relative z-10 bg-[#09090B] text-white">
+    <div className="flex-1 flex min-h-screen relative z-10 bg-background text-foreground">
       {/* Desktop Admin Sidebar */}
       <AdminSidebar
         isCollapsed={sidebarCollapsed}
@@ -61,7 +61,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
         />
 
         {/* Central Workspace */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-[#09090B] overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-background overflow-y-auto">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

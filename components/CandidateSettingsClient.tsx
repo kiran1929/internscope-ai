@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { updateEmailPreferenceAction } from '@/app/actions/candidate';
 import { exportAccountDataAction, requestDataDeletionAction } from '@/app/actions/compliance';
 import CandidateFeedbackClient from './CandidateFeedbackClient';
+import { useTheme } from '@/providers/ThemeProvider';
 
 interface EmailPreference {
   weeklyDigest: boolean;
@@ -28,8 +29,7 @@ export default function CandidateSettingsClient({
   const [weeklyDigest, setWeeklyDigest] = useState(emailPreference.weeklyDigest);
   const [instantAlerts, setInstantAlerts] = useState(emailPreference.instantAlerts);
   const [deadlineReminders, setDeadlineReminders] = useState(emailPreference.deadlineReminders);
-  
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const { theme, setTheme } = useTheme();
   const [privacyMode, setPrivacyMode] = useState(true);
 
   // Submit Handler
@@ -240,10 +240,7 @@ export default function CandidateSettingsClient({
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    setTheme('light');
-                    toast.info('Light mode is simulated; keeping premium glassmorphism dark theme enabled.');
-                  }}
+                  onClick={() => setTheme('light')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${
                     theme === 'light' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-300'
                   }`}

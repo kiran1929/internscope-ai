@@ -36,6 +36,14 @@ export class ContextBuilder {
         where: { userId, status: 'COMPLETED' },
         orderBy: { createdAt: 'desc' },
         take: 3,
+        include: {
+          questions: {
+            where: { category: { equals: 'Behavioral', mode: 'insensitive' } },
+            include: { evaluation: true },
+            take: 2,
+          },
+          summary: true,
+        },
       }),
       prisma.resumeOptimization.findMany({
         where: { userId },
@@ -78,8 +86,24 @@ export class ContextBuilder {
       contextBlocks.push(`Extracted Skills: ${JSON.stringify(data?.skills || [])}`);
       contextBlocks.push(`Extracted Technologies: ${JSON.stringify(data?.technologies || [])}`);
       if (Array.isArray(data?.projects)) {
-        const projSummary = data.projects.map((p: any) => p.name || p.title).join(', ');
+        const projSummary = data.projects
+          .map((p: any) => {
+            const name = p.name || p.title || 'Project';
+            const desc = p.description ? `: ${String(p.description).slice(0, 120)}` : '';
+            return `${name}${desc}`;
+          })
+          .join('; ');
         contextBlocks.push(`Resume Projects: ${projSummary}`);
+      }
+      if (Array.isArray(data?.experience)) {
+        const expSummary = data.experience
+          .map((e: any) => {
+            const role = e.role || e.title || 'Role';
+            const company = e.company || 'Company';
+            return `${role} at ${company}`;
+          })
+          .join('; ');
+        contextBlocks.push(`Work Experience: ${expSummary}`);
       }
     }
 
@@ -91,8 +115,38 @@ export class ContextBuilder {
 
     // Mock Interviews Context
     if (pastSessions.length > 0) {
-      const sessionsSummary = pastSessions.map(s => `"${s.title}" (Score: ${s.overallScore}%)`).join(', ');
+      const sessionsSummary = pastSessions
+        .map((s) => {
+          const parts = [`"${s.title}" (Overall: ${s.overallScore ?? 'N/A'}%`];
+          if (s.behavioralScore != null) parts.push(`Behavioral: ${s.behavioralScore}%`);
+          parts.push(')');
+          return parts.join(', ');
+        })
+        .join('; ');
       contextBlocks.push(`Recent Interview Sessions: ${sessionsSummary}`);
+
+      const behavioralNotes: string[] = [];
+      pastSessions.forEach((session) => {
+        session.questions.forEach((q) => {
+          if (!q.evaluation) return;
+          const evalParts = [`Q: "${q.text.slice(0, 80)}..."`];
+          if (q.evaluation.starCoachingFeedback) {
+            evalParts.push(`STAR feedback: ${q.evaluation.starCoachingFeedback}`);
+          }
+          if (q.evaluation.weaknesses.length > 0) {
+            evalParts.push(`Weaknesses: ${q.evaluation.weaknesses.join(', ')}`);
+          }
+          behavioralNotes.push(evalParts.join(' | '));
+        });
+        if (session.summary?.recommendedPractice?.length) {
+          behavioralNotes.push(
+            `Recommended practice from "${session.title}": ${session.summary.recommendedPractice.join(', ')}`
+          );
+        }
+      });
+      if (behavioralNotes.length > 0) {
+        contextBlocks.push(`Behavioral Interview Coaching History:\n${behavioralNotes.join('\n')}`);
+      }
     }
 
     // Resume Optimization / ATS Context

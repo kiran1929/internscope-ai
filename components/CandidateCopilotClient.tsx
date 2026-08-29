@@ -195,7 +195,7 @@ export default function CandidateCopilotClient({
   const suggestedQuestions = [
     'What should I learn this week?',
     'How can I improve my resume?',
-    'Why is my match score only 74%?',
+    'How do I answer: conflict with a teammate?',
     'Which internship should I apply to first?',
   ];
 
@@ -208,7 +208,7 @@ export default function CandidateCopilotClient({
           <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight flex items-center gap-2">
             <Brain className="w-6 h-6 text-primary" /> AI Career Copilot
           </h2>
-          <p className="text-xs text-zinc-400 mt-1">Grounding contextual suggestions using your parsed resumes, matched jobs, and mock practice logs.</p>
+          <p className="text-xs text-zinc-400 mt-1">Career intelligence from your resume and matches, plus behavioral interview coaching with STAR-format answers.</p>
         </div>
 
         <button
@@ -321,7 +321,7 @@ export default function CandidateCopilotClient({
               <div className="text-center py-16 space-y-3 max-w-sm mx-auto text-zinc-550">
                 <Brain className="w-10 h-10 text-zinc-700 mx-auto" />
                 <p className="text-[11px] leading-relaxed">
-                  I can review your resume ATS optimization tags, target matches scores, and suggest preparation timeline paths. Pick a query below to start!
+                  Ask about match scores, resume improvements, or how to answer behavioral questions like teamwork and conflict. Pick a prompt below to start!
                 </p>
               </div>
             ) : (
@@ -371,7 +371,7 @@ export default function CandidateCopilotClient({
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Ask Copilot about match score differences, learning goals, or resume improvements..."
+                placeholder="Ask about match scores, resume tips, or behavioral questions (e.g. conflict with a teammate)..."
                 disabled={isPending}
                 className="bg-zinc-950 border border-zinc-850 text-xs text-white placeholder:text-zinc-700 rounded-lg p-2.5 flex-1 focus:outline-none"
               />

@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+:root,
+html.dark {
   --background: #09090B;
   --foreground: #FAFAFA;
   --sidebar-bg: #111113;
@@ -12,6 +13,25 @@
   --text-muted: #A1A1AA;
   --border-subtle: #27272A;
   --border-hover: #3F3F46;
+}
+
+html.light {
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --sidebar-bg: #FFFFFF;
+  --card-bg: #FFFFFF;
+  --primary: #2563EB;
+  --success: #16A34A;
+  --warning: #D97706;
+  --danger: #DC2626;
+  --text-muted: #64748B;
+  --border-subtle: #E2E8F0;
+  --border-hover: #CBD5E1;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 @theme {
@@ -55,6 +75,102 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #3F3F46;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Light mode overrides for dashboard hardcoded surfaces */
+html.light [class*="bg-[#111113]"],
+html.light [class*="bg-[#18181B]"] {
+  background-color: var(--card-bg) !important;
+}
+
+html.light [class*="bg-[#09090B]"] {
+  background-color: var(--background) !important;
+}
+
+html.light [class*="border-zinc-8"],
+html.light [class*="border-zinc-9"] {
+  border-color: var(--border-subtle) !important;
+}
+
+html.light .text-white {
+  color: var(--foreground) !important;
+}
+
+html.light .text-zinc-200,
+html.light .text-zinc-300 {
+  color: #334155 !important;
+}
+
+html.light .text-zinc-400,
+html.light .text-zinc-500,
+html.light .text-zinc-600 {
+  color: var(--text-muted) !important;
+}
+
+html.light [class*="hover:text-white"]:hover {
+  color: var(--foreground) !important;
+}
+
+html.light [class*="hover:bg-zinc-900"]:hover {
+  background-color: #F1F5F9 !important;
+}
+
+html.light [class*="bg-zinc-900"] {
+  background-color: #F1F5F9 !important;
+}
+
+html.light [class*="bg-zinc-950"] {
+  background-color: #F8FAFC !important;
+}
+
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+html.light .glass-navbar {
+  background: rgba(248, 250, 252, 0.9);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+html.light .card-interactive {
+  background-color: var(--card-bg);
+  border-color: var(--border-subtle);
+}
+
+html.light .card-interactive:hover {
+  border-color: var(--border-hover);
+  box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+}
+
+html.light .btn-secondary {
+  color: var(--foreground) !important;
+  background-color: #F1F5F9;
+  border-color: var(--border-subtle);
+}
+
+html.light .btn-secondary:hover {
+  background-color: #E2E8F0;
+  color: var(--foreground) !important;
+}
+
+html.light .btn-outline,
+html.light .btn-ghost {
+  color: var(--text-muted) !important;
+}
+
+html.light .btn-outline:hover,
+html.light .btn-ghost:hover {
+  background-color: #F1F5F9;
+  color: var(--foreground) !important;
 }
 
 /* Custom utility animations */

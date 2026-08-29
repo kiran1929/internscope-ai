@@ -100,6 +100,36 @@ export class AIOrchestrator {
     if (pLower.includes('companies')) {
       return `Based on your full stack Node/React profile, startups using TypeScript and Postgres (like Supabase or Vercel matches) would fit your skillset best. Review your saved list in InternScope to launch practice mock sessions.`;
     }
+    if (
+      pLower.includes('conflict') ||
+      pLower.includes('teammate') ||
+      pLower.includes('disagreement') ||
+      pLower.includes('behavioral') ||
+      pLower.includes('how do i answer') ||
+      pLower.includes('how to answer') ||
+      pLower.includes('tell me about a time')
+    ) {
+      return `**What interviewers look for**
+- Emotional maturity and ownership — not blaming others
+- Clear communication and empathy when opinions differ
+- A concrete resolution with a measurable outcome
+
+**STAR answer outline**
+- **Situation:** Brief context — team project, what you were building, where the disagreement arose
+- **Task:** Your responsibility and why resolving it mattered for delivery
+- **Action:** How you listened, shared data/trade-offs, proposed a compromise or escalation path
+- **Result:** What shipped, what improved (velocity, quality, relationship), and what you learned
+
+**Sample answer (60–90 sec)**
+"In a recent team project, my teammate and I disagreed on whether to prioritize speed or test coverage before a demo deadline. I suggested a 15-minute sync to list risks on both sides, then proposed shipping the core feature with targeted tests on critical paths and a follow-up ticket for full coverage. We aligned, hit the deadline, and adopted a lightweight decision doc for future disagreements."
+
+**Common mistakes to avoid**
+- Speaking negatively about the other person
+- Vague actions like "we talked it out" with no specifics
+- Ending without a result or lesson learned
+
+Ask me to tailor this to one of your resume projects for a more personalized version.`;
+    }
 
     return `I am your AI Career Copilot. I can help you analyze your resume optimization details, plan mock interview practices, structure STAR behavioral stories, or review missing skills from your learning roadmaps. How can I help you improve today?`;
   }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { Toaster } from "sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -30,6 +29,9 @@ export const metadata: Metadata = {
 };
 
 import CookieConsent from "@/components/CookieConsent";
+import { ThemeProvider } from "@/providers/ThemeProvider";
+import { ThemeToaster } from "@/components/ThemeToaster";
+import { ThemeScript } from "@/components/ThemeScript";
 
 export default function RootLayout({
   children,
@@ -41,11 +43,17 @@ export default function RootLayout({
       <html
         lang="en"
         className={`${inter.variable} ${outfit.variable} dark h-full antialiased`}
+        suppressHydrationWarning
       >
+        <head>
+          <ThemeScript />
+        </head>
         <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-primary/20 selection:text-primary">
-          {children}
-          <Toaster position="top-right" theme="dark" richColors />
-          <CookieConsent />
+          <ThemeProvider>
+            {children}
+            <ThemeToaster />
+            <CookieConsent />
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>

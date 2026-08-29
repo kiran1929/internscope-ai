@@ -9,6 +9,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { getMyNotificationsAction } from '@/app/actions/notifications';
 import Link from 'next/link';
+import { useTheme } from '@/providers/ThemeProvider';
 
 interface NavbarProps {
   onMenuToggle: () => void;
@@ -46,7 +47,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const [isDark, setIsDark] = useState(true); // Default dark theme
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === 'dark';
 
   const [notifications, setNotifications] = useState<any[]>([]);
 
@@ -129,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
   };
 
   return (
-    <header className="h-16 bg-[#09090B] border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 ">
+    <header className="h-16 bg-background border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 ">
       <div className="flex items-center gap-3">
         {/* Mobile Toggle Button */}
         <button
@@ -204,7 +206,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
       <div className="flex items-center gap-3">
         {/* Theme Toggle (Aesthetic Only, Default Dark) */}
         <button
-          onClick={() => setIsDark(!isDark)}
+          onClick={toggleTheme}
           className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-zinc-900 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none hidden sm:block"
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           aria-label="Toggle Theme"
