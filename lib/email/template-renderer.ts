@@ -14,6 +14,9 @@ export interface OpportunityEmailData {
   matchScore: number;
   matchedSkills: string[];
   matchReasons: string[];
+  /** Direct link to the specific job application posting */
+  opportunityUrl: string;
+  /** Same external application URL — used for "Apply Now" links */
   applicationUrl: string;
   dashboardUrl?: string;
 }
@@ -54,6 +57,7 @@ export class EmailTemplateRenderer {
     const safeDuration = this.escapeHtml(data.duration || '3–6 Months');
     const safeStipend = this.escapeHtml(data.stipend || 'Competitive');
     const safeDeadline = this.escapeHtml(data.deadline || 'Open until filled');
+    const safeOpportunityUrl = data.opportunityUrl;
     const safeAppUrl = data.applicationUrl;
     const safeDashboardUrl = data.dashboardUrl || process.env.NEXT_PUBLIC_APP_URL || 'https://internscope.ai';
 
@@ -96,6 +100,7 @@ export class EmailTemplateRenderer {
       .replace(/{{deadline}}/g, safeDeadline)
       .replace(/{{matchScore}}/g, String(data.matchScore))
       .replace(/{{matchBadge}}/g, matchBadge)
+      .replace(/{{opportunityUrl}}/g, safeOpportunityUrl)
       .replace(/{{applicationUrl}}/g, safeAppUrl)
       .replace(/{{dashboardUrl}}/g, safeDashboardUrl)
       .replace(/{{matchReasonsList}}/g, matchReasonsList)

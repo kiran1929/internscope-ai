@@ -1,16 +1,11 @@
-'use client';
-
 import React from 'react';
-import { useDashboardState } from '@/providers/DashboardStateProvider';
-import { DashboardCompanies } from '@/components/DashboardCompanies';
+import { getCompaniesDirectoryForUser } from '@/app/actions/candidate';
+import { CompaniesPageClient } from '@/components/CompaniesPageClient';
 
-export default function CompaniesPage() {
-  const { companies, handleToggleCompanyTrack } = useDashboardState();
+export const dynamic = 'force-dynamic';
 
-  return (
-    <DashboardCompanies
-      companies={companies}
-      onToggleTrack={handleToggleCompanyTrack}
-    />
-  );
+export default async function CompaniesPage() {
+  const companies = await getCompaniesDirectoryForUser();
+
+  return <CompaniesPageClient initialCompanies={companies} />;
 }

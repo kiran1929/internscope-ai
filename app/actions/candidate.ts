@@ -1,5 +1,6 @@
 'use server';
 
+import { cache } from 'react';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/db';
 import { UserRepository } from '@/lib/repositories/user';
@@ -12,7 +13,7 @@ import { revalidatePath } from 'next/cache';
 import { SearchService, SearchOptions } from '@/lib/search/search-service';
 
 // Helper to authenticate the candidate user and retrieve DB entity
-export async function getAuthenticatedUser() {
+async function resolveAuthenticatedUser() {
   const session = await auth();
   const userId = session.userId;
   if (!userId) {
@@ -47,6 +48,50 @@ export async function getAuthenticatedUser() {
     });
   }
   return user;
+}
+
+export const getAuthenticatedUser = cache(resolveAuthenticatedUser);
+
+export async function getCompaniesDirectoryForUser() {
+  const user = await getAuthenticatedUser();
+
+  const [dbTrackedCompanies, dbCompanies] = await Promise.all([
+    prisma.targetCompany.findMany({
+      where: { userId: user.id },
+      select: { companyId: true },
+    }),
+    prisma.company.findMany({
+      take: 40,
+      where: { isArchived: false },
+      select: {
+        id: true,
+        name: true,
+        logoUrl: true,
+        websiteUrl: true,
+        industry: true,
+        _count: {
+          select: {
+            opportunities: {
+              where: { isArchived: false, isActive: true },
+            },
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    }),
+  ]);
+
+  const trackedCompanyIds = new Set(dbTrackedCompanies.map((company) => company.companyId));
+
+  return dbCompanies.map((company) => ({
+    id: company.id,
+    name: company.name,
+    logo: company.logoUrl || company.name.slice(0, 4).toUpperCase(),
+    industry: company.industry || 'Tech',
+    activeOpeningsCount: company._count.opportunities,
+    isTracking: trackedCompanyIds.has(company.id),
+    website: company.websiteUrl || '',
+  }));
 }
 
 // 1. Profile Actions

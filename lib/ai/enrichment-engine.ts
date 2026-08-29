@@ -3,6 +3,7 @@ import { Prisma } from '../generated/prisma/client';
 import { AIProviderFactory } from './providers';
 import { EnrichmentRepository } from '../repositories/enrichment';
 import { IngestionLogger } from '../ingestion/logger';
+import { scheduleNewOpportunityNotifications } from '../email/new-opportunity-dispatcher';
 
 export class EnrichmentEngine {
   static async enrichOpportunity(opportunityId: string): Promise<boolean> {
@@ -66,6 +67,13 @@ export class EnrichmentEngine {
         opportunityId
       );
 
+      scheduleNewOpportunityNotifications(opportunityId).catch((notifyErr) => {
+        console.warn(
+          `[Enrichment] Failed to schedule notifications for ${opportunityId}:`,
+          notifyErr instanceof Error ? notifyErr.message : notifyErr,
+        );
+      });
+
       return true;
     } catch (error) {
       const errObj = error instanceof Error ? error : new Error(String(error));
@@ -85,6 +93,13 @@ export class EnrichmentEngine {
         undefined,
         errObj
       );
+
+      scheduleNewOpportunityNotifications(opportunityId).catch((notifyErr) => {
+        console.warn(
+          `[Enrichment] Failed to schedule fallback notifications for ${opportunityId}:`,
+          notifyErr instanceof Error ? notifyErr.message : notifyErr,
+        );
+      });
 
       return false;
     }

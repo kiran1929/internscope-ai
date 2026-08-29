@@ -3,7 +3,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import { UserRepository } from '@/lib/repositories/user';
 import { prisma } from '@/lib/db';
-import { DashboardStateProvider } from '@/providers/DashboardStateProvider';
+import { SidebarStateProvider } from '@/providers/SidebarStateProvider';
 import { AdminLayoutContent } from './AdminLayoutContent';
 import { Role } from '@/lib/generated/prisma/enums';
 
@@ -52,8 +52,8 @@ export default async function AdminLayout({
   }
 
   return (
-    <DashboardStateProvider>
+    <SidebarStateProvider>
       <AdminLayoutContent>{children}</AdminLayoutContent>
-    </DashboardStateProvider>
+    </SidebarStateProvider>
   );
 }

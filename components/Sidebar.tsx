@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import {
   LayoutDashboard,
   Building,
@@ -34,9 +35,25 @@ export type DashboardTab =
   | 'analytics'
   | 'settings';
 
+export const TAB_HREF: Record<DashboardTab, string> = {
+  overview: '/dashboard',
+  companies: '/companies',
+  internships: '/internships',
+  saved: '/saved',
+  applications: '/applications',
+  resume: '/resume',
+  'resume-optimize': '/resume/optimize',
+  'cover-letter': '/cover-letter',
+  interview: '/interview',
+  copilot: '/copilot',
+  'email-reports': '/email-reports',
+  analytics: '/analytics',
+  settings: '/settings',
+};
+
 interface SidebarProps {
   activeTab: DashboardTab;
-  setActiveTab: (tab: DashboardTab) => void;
+  onNavigate?: () => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
   onExitDemo: () => void;
@@ -50,7 +67,7 @@ interface SidebarItem {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
-  setActiveTab,
+  onNavigate,
   isCollapsed,
   setIsCollapsed,
   onExitDemo,
@@ -108,9 +125,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           const isActive = activeTab === item.id;
 
           return (
-            <button
+            <Link
               key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              href={TAB_HREF[item.id]}
+              prefetch
+              onClick={onNavigate}
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative border border-transparent focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none focus-visible:border-transparent',
                 isActive
@@ -125,13 +144,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               {!isCollapsed && (
                 <span className="truncate">{item.label}</span>
               )}
-              {/* Tooltip for collapsed mode */}
               {isCollapsed && (
                 <span className="absolute left-[80px] bg-zinc-950 text-white text-xs px-2.5 py-1.5 rounded-md opacity-0 group-hover:opacity-100 border border-zinc-800 shadow-xl pointer-events-none transition-all duration-200 whitespace-nowrap z-50">
                   {item.label}
                 </span>
               )}
-            </button>
+            </Link>
           );
         })}
       </nav>

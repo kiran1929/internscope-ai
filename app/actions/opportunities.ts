@@ -3,11 +3,15 @@
 import { revalidatePath } from 'next/cache';
 import { OpportunityRepository } from '@/lib/repositories/opportunity';
 import { opportunitySchema, OpportunityFormValues } from '@/lib/validation/opportunity';
+import { scheduleNewOpportunityNotifications } from '@/lib/email/new-opportunity-dispatcher';
 
 export async function createOpportunityAction(formData: OpportunityFormValues) {
   try {
     const validated = opportunitySchema.parse(formData);
     const opp = await OpportunityRepository.create(validated);
+    if (opp.isActive && !opp.isArchived) {
+      await scheduleNewOpportunityNotifications(opp.id);
+    }
     revalidatePath('/admin/opportunities');
     return { success: true, data: opp };
   } catch (error: unknown) {
@@ -35,6 +39,9 @@ export async function updateOpportunityAction(id: string, formData: OpportunityF
 export async function togglePublishOpportunityAction(id: string, currentIsActive: boolean) {
   try {
     const opp = await OpportunityRepository.update(id, { isActive: !currentIsActive });
+    if (opp.isActive && !opp.isArchived) {
+      await scheduleNewOpportunityNotifications(opp.id);
+    }
     revalidatePath('/admin/opportunities');
     revalidatePath(`/admin/opportunities/${id}`);
     return { success: true, data: opp };

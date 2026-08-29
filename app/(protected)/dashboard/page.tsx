@@ -1,7 +1,11 @@
-import React from 'react';
-import { getAuthenticatedUser, getPersonalizedRecommendations } from '@/app/actions/candidate';
+import React, { Suspense } from 'react';
+import { getAuthenticatedUser } from '@/app/actions/candidate';
 import { prisma } from '@/lib/db';
 import CandidateDashboardClient from '@/components/CandidateDashboardClient';
+import {
+  DashboardRecommendations,
+  DashboardRecommendationsSkeleton,
+} from '@/components/DashboardRecommendations';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,7 +19,7 @@ export default async function DashboardPage() {
   });
 
   // 3. Fetch applications counts and funnel list
-  const [applicationsCount, applications, recentSearches, upcomingDeadlines, recsResult] = await Promise.all([
+  const [applicationsCount, applications, recentSearches, upcomingDeadlines] = await Promise.all([
     prisma.application.count({ where: { userId: user.id } }),
     prisma.application.findMany({
       where: { userId: user.id },
@@ -55,7 +59,6 @@ export default async function DashboardPage() {
         company: { select: { name: true } },
       },
     }),
-    getPersonalizedRecommendations(),
   ]);
 
   // Map to client format
@@ -101,27 +104,11 @@ export default async function DashboardPage() {
     company: item.company,
   }));
 
-  const recommendations = recsResult.success && recsResult.recommendations
-    ? (recsResult.recommendations as any[]).map((job) => ({
-        id: job.id,
-        title: job.title,
-        location: job.location,
-        type: job.type.toString(),
-        applicationUrl: job.applicationUrl || `/jobs/${job.id}`,
-        createdAt: job.createdAt,
-        company: {
-          name: job.company.name,
-          logoUrl: job.company.logoUrl,
-        },
-        enrichment: job.enrichment ? {
-          skills: job.enrichment.skills,
-          experienceLevel: job.enrichment.experienceLevel,
-          salaryMin: job.enrichment.salaryMin,
-          salaryMax: job.enrichment.salaryMax,
-          salaryCurrency: job.enrichment.salaryCurrency,
-        } : null,
-      }))
-    : [];
+  const recommendationsSlot = (
+    <Suspense fallback={<DashboardRecommendationsSkeleton />}>
+      <DashboardRecommendations />
+    </Suspense>
+  );
 
   return (
     <CandidateDashboardClient
@@ -129,7 +116,7 @@ export default async function DashboardPage() {
       savedCount={savedCount}
       applicationsCount={applicationsCount}
       applications={mappedApplications}
-      recommendations={recommendations}
+      recommendationsSlot={recommendationsSlot}
       recentSearches={recentSearches}
       upcomingDeadlines={mappedDeadlines}
     />

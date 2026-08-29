@@ -3,7 +3,7 @@
 import React from 'react';
 import { AdminSidebar } from '@/components/AdminSidebar';
 import { AdminNavbar } from '@/components/AdminNavbar';
-import { useDashboardState } from '@/providers/DashboardStateProvider';
+import { useSidebarState } from '@/providers/SidebarStateProvider';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 
@@ -13,7 +13,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
     setSidebarCollapsed,
     mobileSidebarOpen,
     setMobileSidebarOpen
-  } = useDashboardState();
+  } = useSidebarState();
 
   const router = useRouter();
 

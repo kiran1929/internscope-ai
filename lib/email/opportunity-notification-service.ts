@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db';
 import { smtpTransport } from './smtp-transport';
 import { EmailTemplateRenderer, OpportunityEmailData } from './template-renderer';
+import { isDirectApplicationUrl } from './application-url-utils';
 import { NotificationStatus } from '@/lib/generated/prisma/client';
 
 export interface OpportunityNotificationParams {
@@ -161,20 +162,25 @@ export class OpportunityNotificationService {
     }
 
     const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    let normalizedAppUrl = opp.applicationUrl ? opp.applicationUrl.trim() : '';
 
+    // Direct link to the specific job application posting (external)
+    let normalizedAppUrl = opp.applicationUrl ? opp.applicationUrl.trim() : '';
     if (!normalizedAppUrl) {
-      if (oppId) {
-        normalizedAppUrl = `${appBaseUrl}/jobs/${oppId}`;
-      } else {
-        normalizedAppUrl = `${appBaseUrl}/internships`;
-      }
+      normalizedAppUrl = oppId ? `${appBaseUrl}/jobs/${oppId}` : `${appBaseUrl}/internships`;
     } else if (!normalizedAppUrl.startsWith('http://') && !normalizedAppUrl.startsWith('https://')) {
       if (normalizedAppUrl.startsWith('/')) {
         normalizedAppUrl = `${appBaseUrl}${normalizedAppUrl}`;
       } else {
         normalizedAppUrl = `https://${normalizedAppUrl}`;
       }
+    }
+
+    const opportunityUrl = normalizedAppUrl;
+
+    if (!isDirectApplicationUrl(normalizedAppUrl)) {
+      console.warn(
+        `[NotificationService] Generic application URL for "${opp.title}" (${opp.company.name}): ${normalizedAppUrl}`,
+      );
     }
 
     // Dynamic Timeline / Duration derivation based on opportunity type, title, and program length
@@ -211,6 +217,7 @@ export class OpportunityNotificationService {
       matchScore: params.matchScore,
       matchedSkills,
       matchReasons,
+      opportunityUrl,
       applicationUrl: normalizedAppUrl,
       dashboardUrl: appBaseUrl,
     };
