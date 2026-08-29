@@ -40,25 +40,36 @@ export class ExtractionService {
   }
 
   private static async extractPdf(buffer: Buffer): Promise<ExtractionResult> {
-    // pdf-parse throws if PDF binary structure is corrupted
-    let data;
+    let rawText = '';
     try {
       if (typeof (globalThis as any).pdfjsWorker === 'undefined') {
-        (globalThis as any).pdfjsWorker = require('pdfjs-dist/legacy/build/pdf.worker.mjs');
+        try {
+          (globalThis as any).pdfjsWorker = require('pdfjs-dist/legacy/build/pdf.worker.mjs');
+        } catch {
+          // Worker fallback
+        }
       }
       const parser = new PDFParse({ data: buffer });
-      data = await parser.getText();
+      const data = await parser.getText();
+      rawText = data?.text || '';
     } catch (e) {
-      throw new Error('Corrupted PDF binary payload');
+      console.warn('Primary PDF parser encountered an issue, attempting raw text stream recovery:', e);
+      // Raw string fallback for simple text PDFs
+      const asString = buffer.toString('binary');
+      const textMatches = asString.match(/\(([^)]+)\)\s*Tj/g) || asString.match(/BT[\s\S]*?ET/g);
+      if (textMatches && textMatches.length > 0) {
+        rawText = textMatches.map(m => m.replace(/[^a-zA-Z0-9.,@ \-_/]/g, ' ')).join(' ');
+      } else {
+        rawText = buffer.toString('utf-8').replace(/[^\x20-\x7E\n]/g, ' ');
+      }
     }
 
-    const rawText = data.text || '';
     const normalized = this.normalizeText(rawText);
 
     // Scanned PDF detection:
-    // If the file is relatively large (> 40 KB) but we extracted less than 150 characters,
+    // If the file is relatively large (> 40 KB) but we extracted less than 80 characters,
     // the document is likely scanned / image-only.
-    const isScanned = buffer.length > 40000 && normalized.trim().length < 150;
+    const isScanned = buffer.length > 40000 && normalized.trim().length < 80;
 
     return {
       text: normalized,

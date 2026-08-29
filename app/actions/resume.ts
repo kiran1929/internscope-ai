@@ -62,10 +62,16 @@ export async function uploadResumeAction(formData: FormData) {
       data: { filePath: storedPath },
     });
 
-    // 5. Update user profile resumeUrl dynamically to point to our secure download api
-    await prisma.profile.update({
+    // 5. Update user profile resumeUrl dynamically using upsert (handles cases where profile record was not created yet)
+    await prisma.profile.upsert({
       where: { userId: user.id },
-      data: { resumeUrl: `/api/resumes/${resumeRecord.id}` },
+      update: { resumeUrl: `/api/resumes/${resumeRecord.id}` },
+      create: {
+        userId: user.id,
+        firstName: user.profile?.firstName || '',
+        lastName: user.profile?.lastName || '',
+        resumeUrl: `/api/resumes/${resumeRecord.id}`,
+      },
     });
 
     // 6. Invoke Trigger.dev parsing background job
