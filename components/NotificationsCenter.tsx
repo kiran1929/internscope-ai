@@ -92,7 +92,7 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <div className="space-y-4 text-white select-none relative">
+    <div className="space-y-4 text-white relative">
       {isPending && (
         <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] flex items-center justify-center z-30 rounded-xl">
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -204,7 +204,7 @@ export const NotificationsCenter: React.FC<NotificationsCenterProps> = ({
             );
           })
         ) : (
-          <div className="flex flex-col items-center justify-center min-h-[300px] border border-zinc-850 bg-[#111113]/30 rounded-xl p-8 text-center select-none">
+          <div className="flex flex-col items-center justify-center min-h-[300px] border border-zinc-850 bg-[#111113]/30 rounded-xl p-8 text-center ">
             <div className="w-12 h-12 rounded-lg bg-zinc-900 border border-zinc-850 flex items-center justify-center text-text-muted mb-4">
               <Inbox className="w-5 h-5" />
             </div>

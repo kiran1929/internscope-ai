@@ -10,6 +10,7 @@ import {
   Clock,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   Send,
   BookOpen,
   X,
@@ -170,19 +171,28 @@ export default function CandidatePracticeSessionClient({
     const activeEval = activeReviewQuestion?.evaluation;
 
     return (
-      <div className="space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
         
         {/* Header Title */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-900 pb-5">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-white">{session.title}</h2>
-            <p className="text-xs text-zinc-400 mt-1">Mock session complete. View comprehensive evaluation scores below.</p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push('/interview')}
+              className="p-2 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-850 text-zinc-400 hover:text-white transition-colors"
+              title="Return to Interview Prep"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight text-white">{session.title}</h2>
+              <p className="text-xs text-zinc-400 mt-1">Mock session complete. View comprehensive evaluation scores below.</p>
+            </div>
           </div>
           <button
             onClick={() => router.push('/interview')}
-            className="px-3.5 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 rounded-lg text-xs font-bold"
+            className="px-3.5 py-1.5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 rounded-lg text-xs font-bold text-white transition-colors"
           >
-            Practice Dashboard
+            ← Back to Practice Dashboard
           </button>
         </div>
 
@@ -425,7 +435,7 @@ export default function CandidatePracticeSessionClient({
   const evaluationToShow = localEvaluation || currentQuestion?.evaluation;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
+    <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 animate-fade-in text-white ">
       
       {/* Title Bar info */}
       <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
@@ -434,11 +444,12 @@ export default function CandidatePracticeSessionClient({
           <h2 className="text-sm font-bold text-white mt-0.5">{session.title}</h2>
         </div>
         <button
-          onClick={() => { if(confirm('Exit mock interview? Your answers so far are saved, but the summary report will not generate.')) router.push('/interview'); }}
-          className="text-zinc-500 hover:text-zinc-300 p-1.5 rounded-lg border border-zinc-900 hover:bg-zinc-900"
+          onClick={() => { if(confirm('Exit mock interview? Your answers so far are saved, but the summary report will not generate until all questions are completed.')) router.push('/interview'); }}
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-zinc-400 hover:text-white rounded-lg border border-zinc-900 bg-zinc-950/60 hover:bg-zinc-900 transition-colors"
           title="Exit Practice Room"
         >
-          <X className="w-4 h-4" />
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Exit Arena</span>
         </button>
       </div>
 

@@ -48,7 +48,7 @@ export const DashboardSaved: React.FC<DashboardSavedProps> = ({
             className="bg-transparent border-none outline-none text-sm text-white w-full placeholder:text-text-muted/70"
           />
         </div>
-        <span className="text-xs font-semibold text-text-muted select-none">
+        <span className="text-xs font-semibold text-text-muted ">
           Bookmarked: {savedInternships.length} roles
         </span>
       </div>

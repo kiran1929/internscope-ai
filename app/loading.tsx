@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 
 export default function Loading() {
   return (
-    <div className="flex-1 min-h-screen bg-[#09090B] flex text-text-muted relative select-none overflow-hidden">
+    <div className="flex-1 min-h-screen bg-[#09090B] flex text-text-muted relative overflow-hidden">
       {/* Background gradients */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
 

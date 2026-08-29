@@ -93,7 +93,7 @@ export const CompaniesFilters: React.FC<CompaniesFiltersProps> = ({
     sortBy !== 'newest';
 
   return (
-    <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-4 space-y-4 shadow-sm select-none">
+    <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-4 space-y-4 shadow-sm ">
       {/* Search Input Bar */}
       <div className="flex flex-col md:flex-row md:items-center gap-3">
         <div className="relative flex-1">

@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function OpportunitiesLoading() {
   return (
-    <div className="space-y-6 animate-pulse select-none">
+    <div className="space-y-6 animate-pulse ">
       <div className="flex justify-between items-center">
         <div className="space-y-2">
           <div className="h-6 w-48 bg-zinc-800 rounded-md" />

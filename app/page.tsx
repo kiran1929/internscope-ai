@@ -55,7 +55,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/60 border border-zinc-800 text-[10px] sm:text-xs font-bold text-text-muted hover:border-zinc-700 transition-colors cursor-pointer select-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/60 border border-zinc-800 text-[10px] sm:text-xs font-bold text-text-muted hover:border-zinc-700 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             onClick={handleNavigateToDashboard}
             tabIndex={0}
             aria-label="Launch interactive dashboard demo app"
@@ -128,7 +128,7 @@ export default function Home() {
               { label: 'Daily Updates', value: 24, suffix: '/7' },
               { label: 'Match Accuracy', value: 98, suffix: '%' }
             ].map((stat, idx) => (
-              <div key={idx} className="space-y-1 relative z-10 select-none">
+              <div key={idx} className="space-y-1 relative z-10 ">
                 <div className="text-3xl sm:text-4xl font-extrabold font-display text-white tracking-tight">
                   <Counter value={stat.value} />
                   <span className="text-primary font-bold">{stat.suffix}</span>
@@ -148,7 +148,7 @@ export default function Home() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.8 }}
           id="demo"
-          className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 select-none"
+          className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28 "
         >
           <div
             className="relative bg-zinc-950 border border-zinc-800 rounded-2xl p-2.5 shadow-2xl shadow-black/80 overflow-hidden cursor-pointer group focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
@@ -206,7 +206,7 @@ export default function Home() {
           id="companies"
           className="border-t border-b border-zinc-900 py-16 bg-[#111113]/30"
         >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 select-none">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8 ">
             <h2 className="text-xs font-semibold text-text-muted uppercase tracking-widest">
               Deeply monitoring pipelines from top technology hubs
             </h2>
@@ -311,7 +311,7 @@ export default function Home() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7 }}
           id="testimonials"
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 space-y-12 select-none"
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 space-y-12 "
         >
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="text-xs font-bold text-primary uppercase tracking-widest">Reviews</span>
@@ -346,7 +346,7 @@ export default function Home() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.8 }}
           id="faq"
-          className="max-w-3xl mx-auto px-4 sm:px-6 py-20 sm:py-28 space-y-8 select-none"
+          className="max-w-3xl mx-auto px-4 sm:px-6 py-20 sm:py-28 space-y-8 "
         >
           <div className="text-center space-y-3">
             <HelpCircle className="w-6 h-6 text-primary mx-auto" />
@@ -387,7 +387,7 @@ export default function Home() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
           id="pricing"
-          className="max-w-4xl mx-auto px-4 sm:px-6 pb-28 text-center select-none"
+          className="max-w-4xl mx-auto px-4 sm:px-6 pb-28 text-center "
         >
           <div className="bg-gradient-to-tr from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-8 sm:p-12 space-y-6 relative overflow-hidden shadow-2xl">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full filter blur-[60px]" />

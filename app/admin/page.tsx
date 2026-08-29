@@ -98,7 +98,7 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div className="space-y-8 select-none">
+    <div className="space-y-8 ">
       {/* Welcome Title */}
       <div>
         <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">

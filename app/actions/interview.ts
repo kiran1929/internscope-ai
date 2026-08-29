@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 import { AIQuestionService } from '@/lib/interview/ai-question-service';
 import { AIEvalService } from '@/lib/interview/ai-eval-service';
 import { interviewSummaryPipeline, runInterviewSummaryPipeline } from '@/trigger/interview';
-import { INTERVIEW_LIMITS } from '@/lib/interview/constants';
+import { INTERVIEW_LIMITS, isInterviewRateLimitExempt } from '@/lib/interview/constants';
 import { revalidatePath } from 'next/cache';
 
 export async function createInterviewSessionAction(params: {
@@ -17,19 +17,23 @@ export async function createInterviewSessionAction(params: {
   try {
     const user = await getAuthenticatedUser();
 
-    // 1. Check Daily Free Interview Rate Limit
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // 1. Check Daily Free Interview Rate Limit (Exempt Admin)
+    const isAdmin = isInterviewRateLimitExempt(user.email);
 
-    const todaySessionCount = await prisma.interviewSession.count({
-      where: {
-        userId: user.id,
-        createdAt: { gte: startOfDay },
-      },
-    });
+    if (!isAdmin) {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
 
-    if (todaySessionCount >= INTERVIEW_LIMITS.maxFreeInterviewsPerDay) {
-      throw new Error(`Daily limit reached: You can conduct up to ${INTERVIEW_LIMITS.maxFreeInterviewsPerDay} free AI interviews per day. Please return tomorrow!`);
+      const todaySessionCount = await prisma.interviewSession.count({
+        where: {
+          userId: user.id,
+          createdAt: { gte: startOfDay },
+        },
+      });
+
+      if (todaySessionCount >= INTERVIEW_LIMITS.maxFreeInterviewsPerDay) {
+        throw new Error(`Daily limit reached: You can conduct up to ${INTERVIEW_LIMITS.maxFreeInterviewsPerDay} free AI interviews per day. Please return tomorrow!`);
+      }
     }
 
     // 2. Fetch latest parsed resume for user

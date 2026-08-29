@@ -20,19 +20,30 @@ export async function getAuthenticatedUser() {
   }
 
   let user = await UserRepository.findByClerkId(userId);
+  const clerkUser = await currentUser();
+  const activeClerkEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
+
   if (!user) {
     // Lazy sync Clerk user to PostgreSQL DB if missing
-    const clerkUser = await currentUser();
     if (!clerkUser) {
       throw new Error('User not found in Clerk directory');
     }
-    const email = clerkUser.emailAddresses[0]?.emailAddress || '';
     user = await UserRepository.createUser({
       clerkId: userId,
-      email,
+      email: activeClerkEmail,
       firstName: clerkUser.firstName || '',
       lastName: clerkUser.lastName || '',
       avatarUrl: clerkUser.imageUrl || '',
+    });
+  } else if (activeClerkEmail && user.email !== activeClerkEmail) {
+    // Sync updated email if user changed or logged in with a different Clerk email
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { email: activeClerkEmail },
+      include: {
+        profile: true,
+        emailPreference: true,
+      },
     });
   }
   return user;
@@ -199,10 +210,35 @@ export async function getPersonalizedRecommendations() {
       return { success: true, recommendations: defaultJobs };
     }
 
-    // Query active enriched opportunities
+    // Query active enriched opportunities (take top 60 most relevant candidates for scoring)
     const opportunities = await prisma.opportunity.findMany({
       where: { isArchived: false, isActive: true },
-      include: { company: true, enrichment: true },
+      take: 60,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        location: true,
+        type: true,
+        remoteType: true,
+        applicationUrl: true,
+        createdAt: true,
+        company: {
+          select: {
+            name: true,
+            logoUrl: true,
+          },
+        },
+        enrichment: {
+          select: {
+            skills: true,
+            experienceLevel: true,
+            salaryMin: true,
+            salaryMax: true,
+            salaryCurrency: true,
+          },
+        },
+      },
     });
 
     const userSkills = profile.skills || [];
@@ -729,11 +765,66 @@ export async function loadInitialDashboardStateAction() {
   try {
     const user = await getAuthenticatedUser();
 
-    // Fetch user's applications
-    const dbApplications = await prisma.application.findMany({
-      where: { userId: user.id },
-      include: { opportunity: { include: { company: true } } },
-    });
+    // Run parallel database fetches with optimized projections
+    const [dbApplications, dbSaved, dbTrackedCompanies, dbCompanies] = await Promise.all([
+      // Fetch user's applications
+      prisma.application.findMany({
+        where: { userId: user.id },
+        select: {
+          id: true,
+          opportunityId: true,
+          status: true,
+          appliedAt: true,
+          updatedAt: true,
+          notes: true,
+          opportunity: {
+            select: {
+              title: true,
+              company: {
+                select: {
+                  name: true,
+                  logoUrl: true,
+                },
+              },
+            },
+          },
+        },
+      }),
+
+      // Fetch user's saved opportunities
+      prisma.savedOpportunity.findMany({
+        where: { userId: user.id },
+        select: { opportunityId: true },
+      }),
+
+      // Fetch user's tracked companies
+      prisma.targetCompany.findMany({
+        where: { userId: user.id },
+        select: { companyId: true },
+      }),
+
+      // Fetch top companies for directory (limit to top 40 for speed)
+      prisma.company.findMany({
+        take: 40,
+        where: { isArchived: false },
+        select: {
+          id: true,
+          name: true,
+          logoUrl: true,
+          industry: true,
+          hiringStatus: true,
+          isVerified: true,
+          _count: {
+            select: {
+              opportunities: {
+                where: { isArchived: false, isActive: true },
+              },
+            },
+          },
+        },
+        orderBy: { name: 'asc' },
+      }),
+    ]);
 
     const applications = dbApplications.map(app => ({
       id: app.id,
@@ -741,38 +832,15 @@ export async function loadInitialDashboardStateAction() {
       companyName: app.opportunity.company.name,
       companyLogo: app.opportunity.company.logoUrl,
       role: app.opportunity.title,
-      status: app.status.toLowerCase(), // frontend expects lowercase
+      status: app.status.toLowerCase(),
       appliedDate: app.appliedAt.toISOString().split('T')[0],
       lastUpdated: app.updatedAt.toISOString().split('T')[0],
       notes: app.notes || '',
       nextStep: app.status === 'INTERVIEW' ? 'Technical Interview' : 'None',
     }));
 
-    // Fetch user's saved opportunities
-    const dbSaved = await prisma.savedOpportunity.findMany({
-      where: { userId: user.id },
-      select: { opportunityId: true },
-    });
     const savedIds = dbSaved.map(s => s.opportunityId);
-
-    // Fetch user's tracked companies
-    const dbTrackedCompanies = await prisma.targetCompany.findMany({
-      where: { userId: user.id },
-      select: { companyId: true },
-    });
-    const trackedCompanyIds = dbTrackedCompanies.map(c => c.companyId);
-
-    // Fetch all companies from database to populate company tracking list
-    const dbCompanies = await prisma.company.findMany({
-      include: {
-        opportunities: {
-          where: { isArchived: false, isActive: true },
-        },
-        _count: {
-          select: { opportunities: true },
-        },
-      },
-    });
+    const trackedCompanyIds = new Set(dbTrackedCompanies.map(c => c.companyId));
 
     const companies = dbCompanies.map(c => ({
       id: c.id,
@@ -781,8 +849,8 @@ export async function loadInitialDashboardStateAction() {
       industry: c.industry || 'Tech',
       openingsCount: c._count.opportunities,
       hiringStatus: c.hiringStatus ? 'Active' : 'Closed',
-      isTracking: trackedCompanyIds.includes(c.id),
-      tier: c.opportunities.length > 5 ? 'Tier 1' : 'Tier 2',
+      isTracking: trackedCompanyIds.has(c.id),
+      tier: c._count.opportunities > 5 ? 'Tier 1' : 'Tier 2',
       rating: c.isVerified ? 4.8 : 4.2,
     }));
 
@@ -984,6 +1052,154 @@ Return the questions and customized answers in beautiful markdown.
   }
 }
 
+// 12. Opportunity Email Notification Actions
+export async function sendTestOpportunityEmailAction(opportunityId?: string) {
+  try {
+    const user = await getAuthenticatedUser();
+    const { OpportunityNotificationService } = await import('@/lib/email/opportunity-notification-service');
 
+    let opportunity = null;
 
+    if (opportunityId) {
+      opportunity = await prisma.opportunity.findUnique({
+        where: { id: opportunityId },
+        include: { company: true, enrichment: true },
+      });
+    }
 
+    if (!opportunity) {
+      opportunity = await prisma.opportunity.findFirst({
+        where: {
+          isArchived: false,
+          isActive: true,
+          company: { name: 'Google' },
+          applicationUrl: 'https://summerofcode.withgoogle.com'
+        },
+        include: { company: true, enrichment: true },
+      });
+    }
+
+    if (!opportunity) {
+      opportunity = await prisma.opportunity.findFirst({
+        where: {
+          isArchived: false,
+          isActive: true,
+          type: 'INTERNSHIP',
+          applicationUrl: { startsWith: 'https://' }
+        },
+        include: { company: true, enrichment: true },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    if (!opportunity) {
+      opportunity = await prisma.opportunity.findFirst({
+        where: { isArchived: false, isActive: true },
+        include: { company: true, enrichment: true },
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    if (!opportunity) {
+      return { success: false, error: 'No active opportunity found to use for test email.' };
+    }
+
+    const testMatchScore = 94;
+    const testSkills = opportunity.enrichment?.skills?.length
+      ? opportunity.enrichment.skills.slice(0, 4)
+      : ['React', 'TypeScript', 'Node.js', 'Next.js'];
+
+    const matchReasons = [
+      `Matches your profile skills in ${testSkills.slice(0, 2).join(' and ')}`,
+      `Matches your preferred ${opportunity.remoteType ? opportunity.remoteType.toLowerCase() : 'remote'} work location`,
+      `Strong profile-to-role compatibility (${testMatchScore}% Match Score)`,
+    ];
+
+    const result = await OpportunityNotificationService.notifyCandidateIfEligible({
+      userId: user.id,
+      recipientEmail: user.emailPreference?.emailDestination || user.email,
+      userName: user.profile?.firstName || user.email.split('@')[0],
+      opportunity: {
+        id: opportunity.id,
+        title: opportunity.title,
+        location: opportunity.location,
+        remoteType: opportunity.remoteType?.toString(),
+        type: opportunity.type?.toString(),
+        applicationUrl: opportunity.applicationUrl,
+        deadline: opportunity.deadline,
+        company: {
+          name: opportunity.company.name,
+        },
+        enrichment: opportunity.enrichment,
+      },
+      matchScore: testMatchScore,
+      matchedSkills: testSkills,
+      matchReasons,
+      forceSend: true,
+    });
+
+    return {
+      success: result.sent,
+      messageId: result.messageId,
+      recipient: user.emailPreference?.emailDestination || user.email,
+      error: result.error,
+    };
+  } catch (err) {
+    console.error('sendTestOpportunityEmailAction error:', err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}
+
+export async function triggerOpportunityEmailIfEligibleAction(opportunityId: string, matchScore: number, matchReasons?: string[]) {
+  try {
+    const user = await getAuthenticatedUser();
+    const { OpportunityNotificationService } = await import('@/lib/email/opportunity-notification-service');
+
+    const opportunity = await prisma.opportunity.findUnique({
+      where: { id: opportunityId },
+      include: { company: true, enrichment: true },
+    });
+
+    if (!opportunity) {
+      return { success: false, error: 'Opportunity not found' };
+    }
+
+    const result = await OpportunityNotificationService.notifyCandidateIfEligible({
+      userId: user.id,
+      opportunityId: opportunity.id,
+      opportunity: {
+        id: opportunity.id,
+        title: opportunity.title,
+        location: opportunity.location,
+        remoteType: opportunity.remoteType?.toString(),
+        type: opportunity.type?.toString(),
+        applicationUrl: opportunity.applicationUrl,
+        deadline: opportunity.deadline,
+        company: {
+          name: opportunity.company.name,
+        },
+        enrichment: opportunity.enrichment,
+      },
+      matchScore,
+      matchedSkills: opportunity.enrichment?.skills || [],
+      matchReasons,
+    });
+
+    return {
+      success: result.sent,
+      skipped: result.skipped,
+      skipReason: result.skipReason,
+      messageId: result.messageId,
+      error: result.error,
+    };
+  } catch (err) {
+    console.error('triggerOpportunityEmailIfEligibleAction error:', err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+}

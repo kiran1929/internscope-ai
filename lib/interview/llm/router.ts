@@ -142,25 +142,22 @@ export class LLMRouter implements InterviewLLMProvider {
     let text = '';
     let category: 'Technical' | 'Behavioral' | 'Resume-based' | 'Project-based' | 'Problem Solving' = 'Technical';
 
-    if (input.intent === 'project_deep_dive') {
-      category = 'Project-based';
-      // Match project from topic or candidate projects
-      const matchedProj = input.candidateProfile.projects.find(p => topic.toLowerCase().includes(p.name.toLowerCase()))
-        || input.candidateProfile.projects.find(p => !recent.has(p.name.toLowerCase()))
-        || input.candidateProfile.projects[0];
-
-      if (matchedProj) {
-        const techs = matchedProj.technologies.slice(0, 3).join(', ') || skill;
-        const candidateQuestions = [
-          `In your project "${matchedProj.name}" built with ${techs}, what was the most complex technical decision you made, and what specific tradeoffs did you evaluate?`,
-          `Regarding your "${matchedProj.name}" project: how did you handle state management, data integrity, and error recovery across the ${techs} stack?`,
-          `In "${matchedProj.name}", if traffic increased 100x overnight, where would the primary bottleneck occur in your ${techs} architecture and how would you resolve it?`,
-        ];
-        text = candidateQuestions.find(q => !recent.has(q.toLowerCase())) || candidateQuestions[0];
-      } else {
-        text = `Can you walk me through the architecture of a major system you built with ${skill}? What technical challenges did you encounter and how did you resolve them?`;
-      }
-    } else if (input.intent === 'behavioral') {
+    if (input.pattern === 'code_internals') {
+      category = 'Technical';
+      text = `In ${skill}, how does the underlying engine or runtime manage internal execution, state lifecycle, and memory allocation when processing ${topic}?`;
+    } else if (input.pattern === 'scaling_bottleneck') {
+      category = 'Technical';
+      text = `Imagine your ${skill} service suddenly receives a 50x spike in concurrent requests. Which component or layer becomes the primary bottleneck, and what is your mitigation strategy?`;
+    } else if (input.pattern === 'failure_debugging') {
+      category = 'Problem Solving';
+      text = `Suppose you encounter sudden connection timeouts or resource starvation in your ${skill} stack during production peak hours. Walk me through your step-by-step diagnostic runbook.`;
+    } else if (input.pattern === 'architectural_tradeoff') {
+      category = 'Technical';
+      text = `When architecting with ${skill} for ${topic}, what alternatives did you evaluate, and what specific engineering trade-offs or operational costs did you accept?`;
+    } else if (input.pattern === 'security_resilience') {
+      category = 'Technical';
+      text = `What defensive programming practices, sanitization, or concurrency control mechanisms do you enforce in ${skill} to prevent race conditions and data corruption?`;
+    } else if (input.pattern === 'star_behavioral' || input.intent === 'behavioral') {
       category = 'Behavioral';
       const behavioralQuestions = [
         `Tell me about a time you faced a high-stakes technical disagreement on architecture or coding standards with a teammate. How did you resolve it?`,
@@ -168,23 +165,24 @@ export class LLMRouter implements InterviewLLMProvider {
         `Give an example of a project where requirements changed midway through development. How did you adapt your timeline and engineering deliverables?`,
       ];
       text = behavioralQuestions.find(q => !recent.has(q.toLowerCase())) || behavioralQuestions[0];
-    } else if (input.intent === 'debugging') {
-      category = 'Problem Solving';
-      text = `Suppose you notice an intermittent 500 error and memory spike in your ${skill} service during peak loads. How would you systematically diagnose and fix this issue?`;
-    } else if (input.intent === 'weakness_probe') {
+    } else if (input.pattern === 'live_follow_up') {
       category = 'Technical';
-      text = `Regarding ${skill}: explain the core fundamentals and common performance pitfalls developers encounter when implementing ${topic}.`;
-    } else if (input.intent === 'job_requirement') {
-      category = 'Technical';
-      text = `This role heavily relies on ${skill}. How have you used ${skill} in production to build resilient, maintainable features? Explain key concurrency or performance trade-offs.`;
+      text = `Following up on your explanation of ${skill}: what happens if network latency increases or upstream dependencies fail while handling ${topic}?`;
+    } else if (input.intent === 'project_deep_dive') {
+      category = 'Project-based';
+      const matchedProj = input.candidateProfile.projects.find(p => topic.toLowerCase().includes(p.name.toLowerCase()))
+        || input.candidateProfile.projects.find(p => !recent.has(p.name.toLowerCase()))
+        || input.candidateProfile.projects[0];
+
+      if (matchedProj) {
+        const techs = matchedProj.technologies.slice(0, 3).join(', ') || skill;
+        text = `In "${matchedProj.name}" built with ${techs}, how did you handle state transitions and consistency across service boundaries?`;
+      } else {
+        text = `Can you walk me through the architecture of a major system you built with ${skill}? What technical challenges did you encounter and how did you resolve them?`;
+      }
     } else {
       category = 'Technical';
-      const technicalQuestions = [
-        `Walk me through how you optimize ${skill} applications when dealing with ${topic}. What specific tradeoffs and performance metrics do you monitor?`,
-        `How do you design and structure API contracts and database schema boundaries when working with ${skill}?`,
-        `What are the major security and reliability considerations you enforce when deploying ${skill} services to production?`,
-      ];
-      text = technicalQuestions.find(q => !recent.has(q.toLowerCase())) || technicalQuestions[0];
+      text = `Walk me through how you optimize ${skill} applications when dealing with ${topic}. What specific tradeoffs and performance metrics do you monitor?`;
     }
 
     return {

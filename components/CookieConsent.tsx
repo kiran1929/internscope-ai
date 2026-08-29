@@ -23,7 +23,7 @@ export default function CookieConsent() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 max-w-sm bg-[#111113] border border-zinc-800 rounded-xl p-4 shadow-2xl z-50 animate-in slide-in-from-bottom-5 duration-350 text-white font-sans text-xs select-none leading-relaxed space-y-3">
+    <div className="fixed bottom-4 right-4 max-w-sm bg-[#111113] border border-zinc-800 rounded-xl p-4 shadow-2xl z-50 animate-in slide-in-from-bottom-5 duration-350 text-white font-sans text-xs leading-relaxed space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="flex gap-2">
           <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />

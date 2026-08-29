@@ -86,7 +86,7 @@ export default function CandidateSettingsClient({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white max-w-4xl select-none">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white max-w-4xl ">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">Platform Settings</h2>
         <p className="text-xs text-zinc-400 mt-1">Manage your email alerts, system dashboard theme, and data privacy options.</p>
@@ -171,7 +171,28 @@ export default function CandidateSettingsClient({
 
             </div>
 
-            <div className="pt-2 flex justify-end">
+            <div className="pt-3 border-t border-zinc-900 flex flex-wrap items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  startTransition(async () => {
+                    const { sendTestOpportunityEmailAction } = await import('@/app/actions/candidate');
+                    toast.info('Sending test opportunity email via SMTP...');
+                    const res = await sendTestOpportunityEmailAction();
+                    if (res.success) {
+                      toast.success(`Test email sent to ${res.recipient}! (MsgID: ${res.messageId || 'Success'})`);
+                    } else {
+                      toast.error(`Email delivery failed: ${res.error}`);
+                    }
+                  });
+                }}
+                disabled={isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 hover:bg-zinc-900 text-xs font-semibold text-zinc-300 transition-all hover:text-white disabled:opacity-50 hover:cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                <span>Send Test Opportunity Email (SMTP)</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handlePreferenceSave}

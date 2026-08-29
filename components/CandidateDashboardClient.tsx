@@ -62,6 +62,7 @@ interface CandidateDashboardClientProps {
     title: string;
     location: string;
     type: string;
+    applicationUrl: string;
     createdAt: Date;
     company: {
       name: string;
@@ -146,7 +147,7 @@ export default function CandidateDashboardClient({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
       {/* Welcome header section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-900 pb-5">
         <div>
@@ -308,12 +309,14 @@ export default function CandidateDashboardClient({
                         ? `$${Math.round(job.enrichment.salaryMin / 1000)}k+`
                         : 'Salary undisclosed'}
                     </span>
-                    <Link
-                      href={`/jobs/${job.id}`}
-                      className="text-primary group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5 font-bold"
+                    <a
+                      href={job.applicationUrl || `/jobs/${job.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary/80 group-hover:translate-x-0.5 transition-transform flex items-center gap-1 font-bold"
                     >
-                      Apply Now <ArrowRight className="w-3 h-3" />
-                    </Link>
+                      Apply Now <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
                 </div>
               ))}

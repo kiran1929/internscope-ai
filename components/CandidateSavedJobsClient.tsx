@@ -90,7 +90,7 @@ export default function CandidateSavedJobsClient({
   });
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">Saved Opportunities</h2>
         <p className="text-xs text-zinc-400 mt-1">Review opportunities you marked to apply for later.</p>

@@ -13,6 +13,16 @@ export type QuestionIntent =
   | 'behavioral'
   | 'follow_up';
 
+export type QuestionPattern =
+  | 'architectural_tradeoff'
+  | 'failure_debugging'
+  | 'code_internals'
+  | 'real_world_scenario'
+  | 'scaling_bottleneck'
+  | 'security_resilience'
+  | 'star_behavioral'
+  | 'live_follow_up';
+
 export type InterviewDifficulty = 'Easy' | 'Medium' | 'Hard' | 'Very Hard';
 
 export interface CandidateResumeProfile {
@@ -64,6 +74,7 @@ export interface CandidateInterviewMemory {
   recentTopics: string[];
   projectClaimsTested: string[];
   recentlyAskedQuestionIds: string[];
+  pastQuestionTexts: string[];
 }
 
 export interface LongitudinalSkillRecord {
@@ -82,6 +93,7 @@ export interface QuestionGenerationInput {
   targetSkill: string;
   topic: string;
   intent: QuestionIntent;
+  pattern?: QuestionPattern;
   difficulty: InterviewDifficulty;
   previousAnswerSummary?: CompactAnswerSummary;
   recentQuestions?: string[];
@@ -93,6 +105,7 @@ export interface GeneratedQuestionPayload {
   difficulty: InterviewDifficulty;
   sampleAnswer: string;
   intent?: QuestionIntent;
+  pattern?: QuestionPattern;
   skill?: string;
   topic?: string;
   expectedConcepts?: string[];
@@ -194,6 +207,16 @@ export const GeneratedQuestionSchema = z.object({
     'scenario_based',
     'behavioral',
     'follow_up'
+  ]).optional(),
+  pattern: z.enum([
+    'architectural_tradeoff',
+    'failure_debugging',
+    'code_internals',
+    'real_world_scenario',
+    'scaling_bottleneck',
+    'security_resilience',
+    'star_behavioral',
+    'live_follow_up'
   ]).optional(),
   skill: z.string().optional(),
   topic: z.string().optional(),

@@ -49,7 +49,7 @@ export const AdminNavbar: React.FC<AdminNavbarProps> = ({ onMenuToggle }) => {
   };
 
   return (
-    <header className="h-16 bg-[#09090B] border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 select-none">
+    <header className="h-16 bg-[#09090B] border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 ">
       <div className="flex items-center gap-4">
         {/* Mobile Toggle Button */}
         <button

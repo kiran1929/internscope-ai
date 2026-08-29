@@ -130,7 +130,7 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({ logo, name, size = 'md
 
   return (
     <div
-      className={`flex items-center justify-center shrink-0 select-none overflow-hidden ${sizeClasses[size]} ${brand.bg}`}
+      className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} ${brand.bg}`}
       aria-label={`${name} Logo`}
     >
       {brand.element}

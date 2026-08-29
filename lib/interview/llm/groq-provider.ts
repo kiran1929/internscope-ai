@@ -11,6 +11,7 @@ import {
   AnswerEvaluationSchema,
   SummaryGenerationSchema,
 } from './types';
+import { AI_INTERVIEW_PROMPTS } from '../prompts';
 
 export class GroqProvider implements InterviewLLMProvider {
   name = 'Groq';
@@ -75,7 +76,7 @@ export class GroqProvider implements InterviewLLMProvider {
 
   async generateQuestion(input: QuestionGenerationInput): Promise<LLMResult<GeneratedQuestionPayload>> {
     const startTime = Date.now();
-    const systemPrompt = `You are a senior technical interviewer. Generate exactly ONE interview question. Return JSON only.`;
+    const systemPrompt = AI_INTERVIEW_PROMPTS.questionGenerationSystem;
 
     const userPrompt = `
 Candidate Resume Profile:
@@ -90,6 +91,7 @@ ${input.jobProfile ? `Target Role:
 Target Skill: ${input.targetSkill}
 Topic: ${input.topic}
 Intent: ${input.intent}
+Question Pattern Style: ${input.pattern || 'diverse_technical'}
 Difficulty: ${input.difficulty}
 
 ${input.previousAnswerSummary ? `Previous Answer Summary:
@@ -101,9 +103,20 @@ ${input.previousAnswerSummary ? `Previous Answer Summary:
 ${input.recentQuestions && input.recentQuestions.length > 0 ? `CRITICAL - Already Asked Questions in this Session (DO NOT repeat or rephrase these):
 ${input.recentQuestions.map((q, idx) => `${idx + 1}. ${q}`).join('\n')}` : ''}
 
+Pattern Framing Directives:
+${input.pattern === 'code_internals' ? '- Frame this as a deep internal implementation / mechanics question (e.g. How does the runtime/engine/protocol handle X under the hood? memory management, execution cycles, concurrency primitives).' : ''}
+${input.pattern === 'scaling_bottleneck' ? '- Frame this as a high-traffic / scalability bottleneck scenario (e.g. Traffic jumps 100x; where is the first architectural breaking point, and how do you partition or cache to survive?).' : ''}
+${input.pattern === 'failure_debugging' ? '- Frame this as a live production failure / outage scenario (e.g. Intermittent 504 gateway timeouts or connection leaks in production; walk me through your diagnostic triage steps and log tracing).' : ''}
+${input.pattern === 'architectural_tradeoff' ? '- Frame this as an architectural design choice and trade-off comparison (e.g. Why choose X over alternative Y? What operational overhead or complexity did you accept?).' : ''}
+${input.pattern === 'security_resilience' ? '- Frame this as a defensive security & data integrity challenge (e.g. How did you mitigate SQL/NoSQL injection, race conditions, or cache stampedes?).' : ''}
+${input.pattern === 'star_behavioral' ? '- Frame this as a high-impact STAR behavioral question regarding technical disagreements, cross-team blockers, or incident retrospectives.' : ''}
+${input.pattern === 'live_follow_up' ? '- Frame this as an in-depth follow-up to their previous answer, challenging a missed concept or an edge case constraint.' : ''}
+
 Rules:
-1. Ask exactly ONE question that is completely distinct from all previously asked questions.
-2. Return a JSON object matching this schema:
+1. Ground strictly in the candidate's stated skills and projects. Do not invent technologies not present in resume.
+2. Ask exactly ONE personalized question following the specific Pattern Framing Directive above.
+3. Completely avoid repetitive formulaic phrasing across questions.
+4. Return a JSON object matching this schema:
 {
   "category": "${input.intent === 'behavioral' ? 'Behavioral' : input.intent === 'project_deep_dive' ? 'Project-based' : input.intent === 'debugging' ? 'Problem Solving' : 'Technical'}",
   "text": "The question text",
@@ -144,29 +157,37 @@ Rules:
   async evaluateAnswer(input: AnswerEvaluationInput): Promise<LLMResult<AnswerEvaluationPayload>> {
     const startTime = Date.now();
     const isBehavioral = input.category.toLowerCase() === 'behavioral';
-    const systemPrompt = `You are a strict technical and behavioral interviewer. Evaluate the candidate's response. Penalize vague or unsubstantiated claims. Return JSON only.`;
+    const systemPrompt = AI_INTERVIEW_PROMPTS.answerEvaluationSystem;
 
     const userPrompt = `
 Question: "${input.questionText}"
-Candidate Answer: "${input.userAnswer}"
+Candidate's Submitted Answer: "${input.userAnswer}"
 Category: ${input.category}
 Target Skill: ${input.targetSkill || 'General'}
 Difficulty: ${input.difficulty}
 
-Expected Guidelines: ${input.sampleAnswer || 'N/A'}
+Expected Guidelines / Concepts: ${input.sampleAnswer || 'N/A'}
 
-Evaluate technical correctness, depth, reasoning, and completeness. Scores must be on a 0-100 scale.
-${isBehavioral ? 'Analyze if the response follows the STAR method (Situation, Task, Action, Result).' : ''}
+STRICT EVALUATION CRITERIA:
+1. Evaluate based on technical accuracy, required concepts, keywords, and completeness.
+2. Do not inflate score for confidence or grammar.
+3. Accept equivalent valid technical phrasing, but penalize vague buzzwords and missing mechanics.
+4. Scale (0-100):
+   - 0-29 = Incorrect / irrelevant
+   - 30-49 = Very weak understanding
+   - 50-69 = Partially correct (misses key security, internals, or trade-offs)
+   - 70-89 = Good to very good understanding
+   - 90-100 = Excellent and complete answer
 
 Return exactly a JSON object:
 {
-  "score": 75,
-  "technicalAccuracy": 75,
-  "communication": 80,
-  "completeness": 70,
-  "problemSolving": 75,
-  "confidence": 75,
-  "structure": 75,
+  "score": 60,
+  "technicalAccuracy": 60,
+  "communication": 75,
+  "completeness": 60,
+  "problemSolving": 60,
+  "confidence": 70,
+  "structure": 70,
   "strengths": ["Strength 1", "Strength 2"],
   "weaknesses": ["Weakness 1", "Weakness 2"],
   "improvedAnswer": "Concise model answer illustrating how to address missing elements",
@@ -202,17 +223,16 @@ Return exactly a JSON object:
 
   async generateSummary(input: SummaryGenerationInput): Promise<LLMResult<SummaryGenerationPayload>> {
     const startTime = Date.now();
-    const systemPrompt = `You are an executive mock interviewer. Provide a comprehensive summary of candidate performance. Return JSON only.`;
+    const systemPrompt = AI_INTERVIEW_PROMPTS.summaryGenerationSystem;
 
     const userPrompt = `
 Session: ${input.sessionTitle}
-Overall Score: ${input.overallScore}%
-Technical Score: ${input.technicalScore}%
-Communication Score: ${input.communicationScore}%
+Scores: Overall ${input.overallScore}%, Tech Accuracy ${input.technicalScore}%, Communication ${input.communicationScore}%
 
-Evaluated Answers Summary:
-${input.completedEvaluations.map((e, idx) => `Q${idx + 1} (Score: ${e.score}%): Strengths: ${e.strengths.slice(0, 2).join(', ')} | Weaknesses: ${e.weaknesses.slice(0, 2).join(', ')}`).join('\n')}
+Evaluations:
+${input.completedEvaluations.map((e, idx) => `Q${idx + 1} (${e.score}%): Strengths: ${e.strengths.slice(0, 2).join(', ')} | Weaknesses: ${e.weaknesses.slice(0, 2).join(', ')} | Missing: ${(e.missingConcepts || []).slice(0, 2).join(', ')}`).join('\n')}
 
+Synthesize the overall performance strictly. Avoid score or ability inflation.
 Return JSON matching:
 {
   "overallFeedback": "A 2-3 sentence executive summary of overall performance and core areas for growth.",

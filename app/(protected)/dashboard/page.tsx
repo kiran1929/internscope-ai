@@ -107,6 +107,7 @@ export default async function DashboardPage() {
         title: job.title,
         location: job.location,
         type: job.type.toString(),
+        applicationUrl: job.applicationUrl || `/jobs/${job.id}`,
         createdAt: job.createdAt,
         company: {
           name: job.company.name,

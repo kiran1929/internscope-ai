@@ -99,7 +99,7 @@ export default async function UserProfilePage(props: PageProps) {
   timelineEvents.sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return (
-    <div className="space-y-6 select-none animate-fade-in text-white max-w-5xl">
+    <div className="space-y-6 animate-fade-in text-white max-w-5xl">
       {/* Top Navigation */}
       <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
         <Link

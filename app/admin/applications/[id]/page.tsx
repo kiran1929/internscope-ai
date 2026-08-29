@@ -52,7 +52,7 @@ export default async function ApplicationDetailPage(props: PageProps) {
   if (app.status === ApplicationStatus.REJECTED) badgeColor = 'border-red-500/20 bg-red-500/5 text-red-400';
 
   return (
-    <div className="space-y-6 select-none animate-fade-in text-white max-w-5xl">
+    <div className="space-y-6 animate-fade-in text-white max-w-5xl">
       {/* Top Navigation */}
       <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
         <Link

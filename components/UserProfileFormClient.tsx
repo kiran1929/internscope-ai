@@ -159,7 +159,7 @@ export default function UserProfileFormClient({ user }: UserProfileFormClientPro
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white max-w-4xl select-none">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white max-w-4xl ">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
           Candidate Profile
@@ -278,7 +278,7 @@ export default function UserProfileFormClient({ user }: UserProfileFormClientPro
                 <span>Account Email</span>
                 <span className="text-[8px] bg-emerald-500/10 text-emerald-400 font-bold px-1.5 py-0.25 rounded border border-emerald-500/15 font-mono">VERIFIED</span>
               </label>
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-900 bg-zinc-950/40 text-zinc-500 select-none cursor-not-allowed">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-zinc-900 bg-zinc-950/40 text-zinc-500 cursor-not-allowed">
                 <Mail className="w-4 h-4 shrink-0" />
                 <span className="text-xs">{user.email}</span>
               </div>

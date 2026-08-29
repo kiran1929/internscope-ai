@@ -20,16 +20,21 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
 
   // Map the current path to the DashboardTab type
   const getActiveTabFromPath = (path: string): DashboardTab => {
-    if (path.includes('/resume/optimize')) return 'resume-optimize';
-    if (path.includes('/cover-letter')) return 'cover-letter';
-    if (path.includes('/copilot')) return 'copilot';
-    
-    const segments = path.split('/').filter(Boolean);
-    const lastSegment = segments[segments.length - 1];
-    
-    // Default to 'overview' for /dashboard or fallback
-    if (!lastSegment || lastSegment === 'dashboard') return 'overview';
-    return lastSegment as DashboardTab;
+    if (path.startsWith('/resume/optimize')) return 'resume-optimize';
+    if (path.startsWith('/resume')) return 'resume';
+    if (path.startsWith('/cover-letter')) return 'cover-letter';
+    if (path.startsWith('/copilot')) return 'copilot';
+    if (path.startsWith('/interview')) return 'interview';
+    if (path.startsWith('/internships') || path.startsWith('/jobs')) return 'internships';
+    if (path.startsWith('/companies')) return 'companies';
+    if (path.startsWith('/saved')) return 'saved';
+    if (path.startsWith('/applications')) return 'applications';
+    if (path.startsWith('/email-reports')) return 'email-reports';
+    if (path.startsWith('/analytics')) return 'analytics';
+    if (path.startsWith('/settings')) return 'settings';
+    if (path.startsWith('/profile')) return 'settings';
+    if (path.startsWith('/career')) return 'overview';
+    return 'overview';
   };
 
   const activeTab = getActiveTabFromPath(pathname);

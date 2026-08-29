@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useTransition, useEffect } from 'react';
-import { Search, Compass, MapPin, Calendar, Sparkles, Plus, Check, Bookmark, ArrowUpRight, X, FileText, Loader2, ArrowRight } from 'lucide-react';
+import { Search, Compass, MapPin, Calendar, Sparkles, Plus, Check, Bookmark, ArrowUpRight, X, FileText, Loader2, ArrowRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -145,7 +145,7 @@ export default function CandidateSearchClient({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
       
       {/* Search and Filters Section */}
       <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-sm">
@@ -369,6 +369,19 @@ export default function CandidateSearchClient({
                         <span>Details</span>
                         <ArrowRight className="w-3 h-3" />
                       </Link>
+
+                      {role.applicationUrl && (
+                        <a
+                          href={role.applicationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg border border-primary/40 bg-primary/10 text-[10px] font-bold text-primary hover:bg-primary/20 flex items-center gap-1"
+                          title="Open Direct Application Page"
+                        >
+                          <span>Apply</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
                     </div>
                   </div>
 

@@ -38,7 +38,7 @@ export default async function AdminFeedbackPage() {
   }));
 
   return (
-    <div className="space-y-6 text-white animate-fade-in select-none">
+    <div className="space-y-6 text-white animate-fade-in ">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold font-display flex items-center gap-2">
           <MessageSquare className="w-6 h-6 text-primary" /> Feedback Moderation CMS

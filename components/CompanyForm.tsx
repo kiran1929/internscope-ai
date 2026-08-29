@@ -114,7 +114,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 select-none relative max-w-4xl text-white">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative max-w-4xl text-white">
       {/* Top Save Toolbar */}
       <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
         <Link

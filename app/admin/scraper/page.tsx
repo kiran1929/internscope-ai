@@ -119,7 +119,7 @@ export default async function ScraperDashboardPage() {
   ];
 
   return (
-    <div className="space-y-6 select-none animate-fade-in text-white">
+    <div className="space-y-6 animate-fade-in text-white">
       <ScraperDashboardClient
         providers={providers}
         runningJobs={runningJobs}

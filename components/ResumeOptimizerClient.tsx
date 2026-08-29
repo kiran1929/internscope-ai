@@ -166,7 +166,7 @@ export default function ResumeOptimizerClient({
 
   if (!hasResume) {
     return (
-      <div className="space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
+      <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
         <div className="border-b border-zinc-900 pb-5">
           <h2 className="text-xl sm:text-2xl font-bold font-display tracking-tight flex items-center gap-2">
             <Brain className="w-6 h-6 text-primary" /> Resume ATS Optimizer
@@ -222,7 +222,7 @@ export default function ResumeOptimizerClient({
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
       
       {/* Title Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-900 pb-5">

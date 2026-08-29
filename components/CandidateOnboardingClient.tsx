@@ -66,7 +66,7 @@ export default function CandidateOnboardingClient() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-[#111113] border border-zinc-850 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl text-white select-none">
+    <div className="max-w-2xl mx-auto bg-[#111113] border border-zinc-850 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl text-white ">
       
       {/* Header */}
       <div className="text-center space-y-2 pb-4 border-b border-zinc-900">

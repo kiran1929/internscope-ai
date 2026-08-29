@@ -33,6 +33,7 @@ export class AIQuestionService {
           recentTopics: [],
           projectClaimsTested: [],
           recentlyAskedQuestionIds: [],
+          pastQuestionTexts: [],
         };
 
     const longitudinalSkills = params.userId
@@ -52,6 +53,8 @@ export class AIQuestionService {
       testedSkillsInSession: params.testedSkillsInSession,
     });
 
+    const recentQuestionsList = candidateMemory.pastQuestionTexts || [];
+
     const result = await llmRouter.generateQuestion({
       candidateProfile,
       jobProfile,
@@ -59,8 +62,9 @@ export class AIQuestionService {
       targetSkill: plan.skill,
       topic: plan.topic,
       intent: plan.intent,
+      pattern: plan.pattern,
       difficulty: plan.difficulty,
-      recentQuestions: [],
+      recentQuestions: recentQuestionsList,
     });
 
     return [result.data];
@@ -101,6 +105,7 @@ export class AIQuestionService {
           recentTopics: [],
           projectClaimsTested: [],
           recentlyAskedQuestionIds: [],
+          pastQuestionTexts: [],
         };
 
     const longitudinalSkills = params.userId
@@ -135,9 +140,14 @@ export class AIQuestionService {
       testedSkillsInSession: params.testedSkillsInSession,
     });
 
-    const recentQuestionsList = params.recentQuestions && params.recentQuestions.length > 0
+    const inSessionQuestions = params.recentQuestions && params.recentQuestions.length > 0
       ? params.recentQuestions
       : (params.previousQuestion ? [params.previousQuestion] : []);
+
+    const combinedRecentQuestions = Array.from(new Set([
+      ...inSessionQuestions,
+      ...(candidateMemory.pastQuestionTexts || []),
+    ])).slice(0, 25);
 
     const result = await llmRouter.generateQuestion({
       candidateProfile,
@@ -146,9 +156,10 @@ export class AIQuestionService {
       targetSkill: plan.skill,
       topic: plan.topic,
       intent: plan.intent,
+      pattern: plan.pattern,
       difficulty: plan.difficulty,
       previousAnswerSummary: compactPreviousEval,
-      recentQuestions: recentQuestionsList,
+      recentQuestions: combinedRecentQuestions,
     });
 
     return result.data;

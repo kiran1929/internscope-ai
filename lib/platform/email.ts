@@ -12,8 +12,35 @@ export class EmailService {
     messageId?: string;
     error?: string;
   }> {
+    const { smtpTransport } = await import('@/lib/email/smtp-transport');
+
+    // 1. Prefer SMTP Transport if configured
+    if (smtpTransport.getIsConfigured()) {
+      const result = await smtpTransport.sendMail({
+        to: payload.to,
+        subject: payload.subject,
+        html: payload.body.includes('<') ? payload.body : `<p>${payload.body.replace(/\n/g, '<br />')}</p>`,
+      });
+
+      // Persist delivery log in SystemAuditLog table
+      await prisma.systemAuditLog.create({
+        data: {
+          action: 'EMAIL_DISPATCH',
+          status: result.success ? 'SUCCESS' : 'FAILURE',
+          details: `To: ${payload.to} | Subject: ${payload.subject} | MsgID: ${result.messageId} | Transport: SMTP | Error: ${result.error || 'None'}`,
+        },
+      }).catch(e => console.error('Failed to log email audit:', e));
+
+      return {
+        success: result.success,
+        messageId: result.messageId,
+        error: result.error,
+      };
+    }
+
+    // 2. Fallback to Resend API if RESEND_API_KEY is present
     const apiKey = process.env.RESEND_API_KEY;
-    const fromAddress = process.env.EMAIL_FROM || 'alerts@internscope.ai';
+    const fromAddress = process.env.SMTP_FROM_EMAIL || process.env.EMAIL_FROM || 'alerts@internscope.ai';
 
     console.log(`[Email Service] Processing message outbox to: ${payload.to} | Subject: "${payload.subject}"`);
 
@@ -33,7 +60,7 @@ export class EmailService {
             from: `InternScope AI <${fromAddress}>`,
             to: [payload.to],
             subject: payload.subject,
-            html: `<p>${payload.body.replace(/\n/g, '<br />')}</p>`,
+            html: payload.body.includes('<') ? payload.body : `<p>${payload.body.replace(/\n/g, '<br />')}</p>`,
           }),
         });
 
@@ -52,7 +79,7 @@ export class EmailService {
     } else {
       success = true;
       messageId = `simulated_${Date.now()}`;
-      console.log(`[Email Service] Simulated success (RESEND_API_KEY not configured)`);
+      console.log(`[Email Service] Simulated success (SMTP and Resend not configured)`);
     }
 
     // Persist every email delivery log in SystemAuditLog table
@@ -60,7 +87,7 @@ export class EmailService {
       data: {
         action: 'EMAIL_DISPATCH',
         status: success ? 'SUCCESS' : 'FAILURE',
-        details: `To: ${payload.to} | Subject: ${payload.subject} | MsgID: ${messageId} | Error: ${errorMsg}`,
+        details: `To: ${payload.to} | Subject: ${payload.subject} | MsgID: ${messageId} | Transport: Resend/Simulated | Error: ${errorMsg}`,
       },
     }).catch(e => console.error('Failed to log email audit:', e));
 

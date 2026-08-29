@@ -119,7 +119,7 @@ export const OpportunityForm: React.FC<OpportunityFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 select-none relative max-w-4xl">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 relative max-w-4xl">
       {/* Top Save Toolbar */}
       <div className="flex items-center justify-between border-b border-zinc-900 pb-4">
         <Link
@@ -202,7 +202,7 @@ export const OpportunityForm: React.FC<OpportunityFormProps> = ({
             </div>
             
             {/* Rich text mock bar */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-850 border-b-0 rounded-t-lg text-text-muted text-[10px] select-none font-bold">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 border border-zinc-850 border-b-0 rounded-t-lg text-text-muted text-[10px] font-bold">
               <span className="cursor-not-allowed">Bold</span>
               <span className="text-zinc-800">|</span>
               <span className="cursor-not-allowed">Italic</span>

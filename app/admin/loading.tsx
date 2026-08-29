@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function AdminLoading() {
   return (
-    <div className="space-y-8 animate-pulse select-none">
+    <div className="space-y-8 animate-pulse ">
       {/* Title Skeleton */}
       <div className="space-y-2">
         <div className="h-6 w-48 bg-zinc-800 rounded-md" />

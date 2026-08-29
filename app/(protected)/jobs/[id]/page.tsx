@@ -86,6 +86,7 @@ export default async function JobDetailPage({ params }: PageProps) {
   const mappedJob = {
     id: job.id,
     title: job.title,
+    type: job.type.toString(),
     description: job.description,
     requirements: job.requirements,
     location: job.location,

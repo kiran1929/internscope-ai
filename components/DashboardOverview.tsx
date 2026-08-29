@@ -155,7 +155,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           return (
             <div
               key={kpi.label}
-              className="bg-[#18181B] border border-zinc-850 rounded-xl p-5 hover:border-zinc-700 hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)] transition-all duration-300 relative overflow-hidden group select-none"
+              className="bg-[#18181B] border border-zinc-850 rounded-xl p-5 hover:border-zinc-700 hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)] transition-all duration-300 relative overflow-hidden group "
             >
               <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-zinc-750/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="flex justify-between items-start relative z-10">

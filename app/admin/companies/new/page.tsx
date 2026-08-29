@@ -44,7 +44,7 @@ export default async function NewCompanyPage(props: PageProps) {
   }
 
   return (
-    <div className="space-y-6 select-none animate-fade-in text-white">
+    <div className="space-y-6 animate-fade-in text-white">
       <div>
         <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
           Create Company

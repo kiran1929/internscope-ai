@@ -99,7 +99,7 @@ export const OpportunitiesFilters: React.FC<OpportunitiesFiltersProps> = ({ comp
   const hasActiveFilters = search || type || remoteType || status || companyId || sortBy !== 'newest';
 
   return (
-    <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-5 space-y-4 shadow-sm select-none">
+    <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-5 space-y-4 shadow-sm ">
       <div className="flex items-center gap-2 text-white pb-1">
         <Filter className="w-4 h-4 text-primary" />
         <h3 className="text-xs font-bold uppercase tracking-wider">Search & Filters</h3>

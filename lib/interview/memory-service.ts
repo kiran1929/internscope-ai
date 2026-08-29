@@ -132,10 +132,14 @@ export class InterviewMemoryService {
     const recentTopics: string[] = [];
     const projectClaimsTested: string[] = [];
     const recentlyAskedQuestionIds: string[] = [];
+    const pastQuestionTexts: string[] = [];
 
     recentSessions.forEach((sess) => {
       sess.questions.forEach((q) => {
         recentlyAskedQuestionIds.push(q.id);
+        if (q.text) {
+          pastQuestionTexts.push(q.text);
+        }
         recentTopics.push(q.category);
 
         if (q.evaluation) {
@@ -159,7 +163,8 @@ export class InterviewMemoryService {
       repeatedWeaknesses: repeatedWeaknesses.slice(0, 4),
       recentTopics: Array.from(new Set(recentTopics)).slice(0, 6),
       projectClaimsTested: Array.from(new Set(projectClaimsTested)),
-      recentlyAskedQuestionIds: recentlyAskedQuestionIds.slice(0, 10),
+      recentlyAskedQuestionIds: recentlyAskedQuestionIds.slice(0, 15),
+      pastQuestionTexts: pastQuestionTexts.slice(0, 20),
     };
   }
 

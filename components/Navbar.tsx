@@ -2,22 +2,46 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, Sun, Moon, Menu, ChevronDown } from 'lucide-react';
+import { Search, Bell, Sun, Moon, Menu, ChevronDown, ArrowLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useClerk } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { getMyNotificationsAction } from '@/app/actions/notifications';
+import Link from 'next/link';
 
 interface NavbarProps {
   onMenuToggle: () => void;
-  title: string;
+  title?: string;
 }
+
+// Friendly mapping for route segments
+const routeNameMap: Record<string, string> = {
+  dashboard: 'Dashboard',
+  overview: 'Overview',
+  internships: 'Internships',
+  jobs: 'Internships',
+  companies: 'Companies',
+  saved: 'Saved Positions',
+  applications: 'Applications',
+  resume: 'Resume Intel',
+  optimize: 'ATS Optimizer',
+  'cover-letter': 'Cover Letters',
+  interview: 'Interview Prep',
+  history: 'History Logs',
+  copilot: 'AI Copilot',
+  'email-reports': 'Email Reports',
+  analytics: 'Analytics',
+  settings: 'Settings',
+  profile: 'Profile',
+  career: 'Career Intelligence',
+};
 
 export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
   const { user } = useUser();
   const { signOut } = useClerk();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -36,9 +60,83 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
     loadNotifications();
   }, []);
 
+  // Parse path segments into human-friendly breadcrumbs
+  const getBreadcrumbs = () => {
+    const rawSegments = (pathname || '').split('/').filter(Boolean);
+    if (rawSegments.length === 0) {
+      return [{ label: 'Dashboard', href: '/dashboard', isLast: true }];
+    }
+
+    const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str) || str.length > 20;
+
+    const crumbs: { label: string; href: string; isLast: boolean }[] = [];
+
+    // Special cases
+    if (rawSegments[0] === 'jobs') {
+      crumbs.push({ label: 'Internships', href: '/internships', isLast: false });
+      crumbs.push({ label: 'Job Details', href: pathname, isLast: true });
+      return crumbs;
+    }
+
+    if (rawSegments[0] === 'interview' && rawSegments.length > 1) {
+      crumbs.push({ label: 'Interview Prep', href: '/interview', isLast: false });
+      if (rawSegments[1] === 'history') {
+        crumbs.push({ label: 'Practice Logs', href: '/interview/history', isLast: true });
+      } else {
+        crumbs.push({ label: 'Mock Session', href: pathname, isLast: true });
+      }
+      return crumbs;
+    }
+
+    if (rawSegments[0] === 'cover-letter' && rawSegments.length > 1) {
+      crumbs.push({ label: 'Cover Letters', href: '/cover-letter', isLast: false });
+      crumbs.push({ label: 'Studio Generator', href: pathname, isLast: true });
+      return crumbs;
+    }
+
+    if (rawSegments[0] === 'copilot' && rawSegments.length > 1 && rawSegments[1] === 'history') {
+      crumbs.push({ label: 'AI Copilot', href: '/copilot', isLast: false });
+      crumbs.push({ label: 'Weekly Reports', href: '/copilot/history', isLast: true });
+      return crumbs;
+    }
+
+    if (rawSegments[0] === 'resume' && rawSegments.length > 1 && rawSegments[1] === 'optimize') {
+      crumbs.push({ label: 'Resume Intel', href: '/resume', isLast: false });
+      crumbs.push({ label: 'ATS Optimizer', href: '/resume/optimize', isLast: true });
+      return crumbs;
+    }
+
+    rawSegments.forEach((segment, idx) => {
+      const href = '/' + rawSegments.slice(0, idx + 1).join('/');
+      let label = routeNameMap[segment.toLowerCase()];
+      if (!label) {
+        if (isUUID(segment)) {
+          label = 'Details';
+        } else {
+          label = segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
+        }
+      }
+      const isLast = idx === rawSegments.length - 1;
+      crumbs.push({ label, href, isLast });
+    });
+
+    return crumbs;
+  };
+
+  const breadcrumbs = getBreadcrumbs();
+  const isSubPage = breadcrumbs.length > 1;
+
+  // Derive parent path for back button
+  const getParentPath = () => {
+    if (breadcrumbs.length > 1) {
+      return breadcrumbs[breadcrumbs.length - 2].href;
+    }
+    return '/dashboard';
+  };
+
   return (
-    <header className="h-16 bg-[#09090B] border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 select-none">
-      <div className="flex items-center gap-4">
+    <header className="h-16 bg-[#09090B] border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 ">
+      <div className="flex items-center gap-3">
         {/* Mobile Toggle Button */}
         <button
           onClick={onMenuToggle}
@@ -48,10 +146,39 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
           <Menu className="w-5 h-5" />
         </button>
 
-        {/* View Title */}
-        <h1 className="text-sm font-bold font-display text-white tracking-tight uppercase hidden sm:block">
-          {title.replace('-', ' ')}
-        </h1>
+        {/* Back Button for nested / sub-pages */}
+        {isSubPage && (
+          <button
+            onClick={() => router.push(getParentPath())}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-800/80 bg-zinc-900/50 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-400 hover:text-white transition-all text-xs font-medium focus-visible:ring-2 focus-visible:ring-primary"
+            title="Go back"
+            aria-label="Go back to parent page"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Back</span>
+          </button>
+        )}
+
+        {/* Current Location Breadcrumb Bar */}
+        <nav className="flex items-center gap-1.5 text-xs text-text-muted font-medium" aria-label="Breadcrumb">
+          {breadcrumbs.map((crumb, idx) => (
+            <React.Fragment key={crumb.href + idx}>
+              {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-zinc-600 shrink-0" />}
+              {crumb.isLast ? (
+                <span className="text-white font-semibold font-display tracking-tight text-xs sm:text-sm">
+                  {crumb.label}
+                </span>
+              ) : (
+                <Link
+                  href={crumb.href}
+                  className="hover:text-white transition-colors truncate max-w-[120px] sm:max-w-none text-zinc-400"
+                >
+                  {crumb.label}
+                </Link>
+              )}
+            </React.Fragment>
+          ))}
+        </nav>
       </div>
 
       {/* Middle Search Input */}
@@ -216,6 +343,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                     role="menuitem"
                   >
                     Platform Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowProfile(false);
+                      router.push('/admin');
+                    }}
+                    className="w-full text-left px-4 py-2 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors focus-visible:outline-none flex items-center justify-between"
+                    role="menuitem"
+                  >
+                    <span>Admin Console</span>
+                    <span className="text-[9px] bg-primary/20 text-primary px-1.5 py-0.5 rounded">CMS</span>
                   </button>
                 </div>
                 <div className="border-t border-zinc-800 py-1">

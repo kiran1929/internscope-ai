@@ -14,7 +14,7 @@ export default function UsersError({ error, reset }: ErrorProps) {
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] border border-zinc-800 bg-[#111113] rounded-xl p-8 select-none text-center">
+    <div className="flex flex-col items-center justify-center min-h-[400px] border border-zinc-800 bg-[#111113] rounded-xl p-8 text-center">
       <div className="w-12 h-12 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500 mb-4">
         <AlertCircle className="w-6 h-6" />
       </div>

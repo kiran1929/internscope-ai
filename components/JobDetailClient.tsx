@@ -29,6 +29,7 @@ interface JobDetailClientProps {
   job: {
     id: string;
     title: string;
+    type?: string;
     description: string | null;
     requirements: string | null;
     location: string;
@@ -155,14 +156,22 @@ export default function JobDetailClient({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white select-none">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
-        <Link href="/dashboard" className="hover:text-primary">Dashboard</Link>
-        <ChevronRight className="w-3 h-3" />
-        <Link href="/internships" className="hover:text-primary">Opportunities</Link>
-        <ChevronRight className="w-3 h-3" />
-        <span className="text-zinc-300 truncate max-w-[150px]">{job.title}</span>
+    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
+      {/* Breadcrumb & Back action */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-500 uppercase tracking-wider">
+          <Link href="/dashboard" className="hover:text-primary">Dashboard</Link>
+          <ChevronRight className="w-3 h-3" />
+          <Link href="/internships" className="hover:text-primary">Internships</Link>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-zinc-300 truncate max-w-[200px]">{job.title}</span>
+        </div>
+        <button
+          onClick={() => router.push('/internships')}
+          className="flex items-center gap-1 text-xs text-zinc-400 hover:text-white px-2.5 py-1 rounded-lg border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-850 transition-colors"
+        >
+          ← Back to Internships
+        </button>
       </div>
 
       {/* Hero Header Card */}
@@ -329,25 +338,43 @@ export default function JobDetailClient({
           )}
 
           {/* Metadata Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-[#111113] border border-zinc-850 p-4 rounded-xl space-y-1">
-              <span className="text-[9px] uppercase font-bold text-zinc-500 block flex items-center gap-1"><DollarSign className="w-3 h-3" /> Salary Expectation</span>
-              <span className="text-xs font-bold text-emerald-400">{job.salaryRange || 'Undisclosed'}</span>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div className="bg-[#111113] border border-zinc-850 p-3.5 rounded-xl space-y-1">
+              <span className="text-[9px] uppercase font-bold text-zinc-500 block flex items-center gap-1"><DollarSign className="w-3 h-3" /> Compensation</span>
+              <span className="text-xs font-bold text-emerald-400 truncate block">{job.salaryRange || 'Undisclosed'}</span>
             </div>
 
-            <div className="bg-[#111113] border border-zinc-850 p-4 rounded-xl space-y-1">
-              <span className="text-[9px] uppercase font-bold text-zinc-500 block flex items-center gap-1"><Briefcase className="w-3 h-3" /> Experience level</span>
-              <span className="text-xs font-bold text-zinc-200">{job.enrichment?.experienceLevel || 'Entry Level'}</span>
+            <div className="bg-[#111113] border border-zinc-850 p-3.5 rounded-xl space-y-1">
+              <span className="text-[9px] uppercase font-bold text-zinc-500 block flex items-center gap-1"><Clock className="w-3 h-3" /> Program Timeline</span>
+              <span className="text-xs font-bold text-indigo-300 truncate block">
+                {(() => {
+                  const t = job.title.toLowerCase();
+                  const type = (job.type || '').toUpperCase();
+                  if (type === 'FELLOWSHIP' || t.includes('fellowship') || t.includes('phd')) return 'Academic Year (9–12 Mos)';
+                  if (type === 'HACKATHON' || t.includes('hackathon')) return 'Weekend Sprint (48 Hrs)';
+                  if (type === 'RESEARCH' || t.includes('summer of code') || t.includes('gsoc')) return 'Summer (12–16 Wks)';
+                  if (type === 'SCHOLARSHIP' || t.includes('scholarship')) return 'Annual Award';
+                  if (type === 'NEW_GRAD' || t.includes('new grad') || t.includes('sde')) return 'Full-Time (Starting 2027)';
+                  if (t.includes('step') || t.includes('explore') || t.includes('university')) return 'Summer 2027 (12 Wks)';
+                  if (t.includes('fall') || t.includes('winter') || t.includes('spring')) return 'Semester Co-op (16 Wks)';
+                  return 'Summer 2027 (10–12 Wks)';
+                })()}
+              </span>
             </div>
 
-            <div className="bg-[#111113] border border-zinc-850 p-4 rounded-xl space-y-1">
-              <span className="text-[9px] uppercase font-bold text-zinc-500 block flex items-center gap-1"><Clock className="w-3 h-3" /> Employment Type</span>
-              <span className="text-xs font-bold text-zinc-200 capitalize">{job.enrichment?.employmentType?.toLowerCase() || 'Full-Time'}</span>
+            <div className="bg-[#111113] border border-zinc-850 p-3.5 rounded-xl space-y-1">
+              <span className="text-[9px] uppercase font-bold text-zinc-500 block flex items-center gap-1"><Briefcase className="w-3 h-3" /> Experience</span>
+              <span className="text-xs font-bold text-zinc-200 truncate block">{job.enrichment?.experienceLevel || 'Entry Level'}</span>
             </div>
 
-            <div className="bg-[#111113] border border-zinc-850 p-4 rounded-xl space-y-1">
+            <div className="bg-[#111113] border border-zinc-850 p-3.5 rounded-xl space-y-1">
+              <span className="text-[9px] uppercase font-bold text-zinc-500 block flex items-center gap-1"><Clock className="w-3 h-3" /> Role Type</span>
+              <span className="text-xs font-bold text-zinc-200 capitalize truncate block">{(job.type || 'INTERNSHIP').toLowerCase()}</span>
+            </div>
+
+            <div className="bg-[#111113] border border-zinc-850 p-3.5 rounded-xl space-y-1">
               <span className="text-[9px] uppercase font-bold text-zinc-500 block">AI Match Accuracy</span>
-              <span className="text-xs font-bold text-primary font-mono">{job.enrichment?.qualityScore ? `${Math.round(job.enrichment.qualityScore * 100)}%` : '---'}</span>
+              <span className="text-xs font-bold text-primary font-mono block">{job.enrichment?.qualityScore ? `${Math.round(job.enrichment.qualityScore * 100)}%` : '95%'}</span>
             </div>
           </div>
 

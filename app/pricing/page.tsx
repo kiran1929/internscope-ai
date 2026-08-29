@@ -10,7 +10,7 @@ export default function PricingPage() {
     <div className="flex-1 flex flex-col min-h-screen bg-[#09090B] text-white">
       <Header onViewDemo={() => {}} />
 
-      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 space-y-12 text-xs leading-relaxed font-sans select-none">
+      <main className="flex-1 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 space-y-12 text-xs leading-relaxed font-sans ">
         
         {/* Title */}
         <div className="text-center space-y-3">

@@ -93,7 +93,7 @@ export const DashboardApplications: React.FC<DashboardApplicationsProps> = ({
       </div>
 
       {/* Kanban Board Container */}
-      <div className="flex gap-4 overflow-x-auto pb-4 select-none items-stretch">
+      <div className="flex gap-4 overflow-x-auto pb-4 items-stretch">
         {columns.map((column) => {
           const colApps = applications.filter((app) => app.status === column.id);
 

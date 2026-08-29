@@ -4,7 +4,7 @@ import { Compass, FileQuestion, ArrowRight } from 'lucide-react';
 
 export default function NotFound() {
   return (
-    <div className="flex-1 min-h-screen flex flex-col items-center justify-center bg-[#09090B] relative py-12 px-4 sm:px-6 lg:px-8 select-none text-center">
+    <div className="flex-1 min-h-screen flex flex-col items-center justify-center bg-[#09090B] relative py-12 px-4 sm:px-6 lg:px-8 text-center">
       {/* Background gradients */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:14px_24px] pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-danger/5 rounded-full filter blur-[100px] pointer-events-none" />

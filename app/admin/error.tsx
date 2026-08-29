@@ -14,7 +14,7 @@ export default function AdminError({ error, reset }: ErrorProps) {
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 text-center select-none animate-fade-in">
+    <div className="flex flex-col items-center justify-center min-h-[50vh] p-6 text-center animate-fade-in">
       <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-8 max-w-md w-full shadow-lg space-y-6">
         <div className="flex flex-col items-center gap-3">
           <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">

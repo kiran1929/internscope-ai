@@ -37,7 +37,7 @@ export default function CandidateFeedbackClient() {
   };
 
   return (
-    <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-md text-white select-none">
+    <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-md text-white ">
       
       {/* Title */}
       <div className="flex items-center gap-2 border-b border-zinc-900 pb-3">

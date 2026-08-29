@@ -184,7 +184,7 @@ export const DashboardInternships: React.FC<DashboardInternshipsProps> = ({
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 select-none" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center gap-2 " onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => onToggleSave(role.id)}
                           className={cn(

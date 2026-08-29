@@ -90,7 +90,7 @@ export const SettingsForm: React.FC = () => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 select-none text-white">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-white">
       {/* Sidebar Navigation */}
       <div className="md:col-span-1 bg-[#111113] border border-zinc-800/80 p-3 rounded-xl flex flex-col gap-1 shadow-sm">
         {navItems.map((item) => {

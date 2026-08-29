@@ -37,7 +37,7 @@ export const ApplicationsPagination: React.FC<ApplicationsPaginationProps> = ({ 
   const endRecord = Math.min(meta.total, meta.page * meta.limit);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#111113]/30 border border-zinc-800/80 rounded-xl select-none text-xs text-text-muted">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#111113]/30 border border-zinc-800/80 rounded-xl text-xs text-text-muted">
       <div>
         {meta.total === 0 ? (
           <span>Showing 0 records</span>
