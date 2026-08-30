@@ -48,32 +48,23 @@ export default function CandidateFeedbackClient() {
       <form onSubmit={handleSubmit} className="space-y-4 text-xs font-sans">
         
         {/* Type Select */}
-        <div className="space-y-1.5">
-          <label className="text-text-muted font-bold block text-xs">Feedback Category</label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
-            {(['GENERAL', 'BUG', 'FEATURE_REQUEST', 'AI_RATING'] as const).map((t) => {
-              const labelMap: Record<string, string> = {
-                GENERAL: 'General',
-                BUG: 'Bug',
-                FEATURE_REQUEST: 'Feature',
-                AI_RATING: 'AI Rating',
-              };
-
-              return (
-                <button
-                  type="button"
-                  key={t}
-                  onClick={() => setType(t)}
-                  className={`py-2 px-2.5 rounded-xl border text-center text-[11px] font-bold transition-all truncate cursor-pointer ${
-                    type === t
-                      ? 'border-primary bg-primary/10 text-primary shadow-2xs'
-                      : 'border-border-subtle bg-input-bg text-text-muted hover:bg-surface-muted hover:text-foreground'
-                  }`}
-                >
-                  {labelMap[t]}
-                </button>
-              );
-            })}
+        <div className="space-y-1">
+          <label className="text-zinc-400 font-bold block">Feedback Category</label>
+          <div className="grid grid-cols-4 gap-1 pt-1">
+            {(['GENERAL', 'BUG', 'FEATURE_REQUEST', 'AI_RATING'] as const).map(t => (
+              <button
+                type="button"
+                key={t}
+                onClick={() => setType(t)}
+                className={`py-1.5 px-1 rounded-lg border text-center font-bold tracking-tight uppercase truncate text-[10px] sm:text-[11px] ${
+                  type === t
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-zinc-850 bg-zinc-900/40 text-zinc-450 hover:bg-zinc-900'
+                }`}
+              >
+                {t === 'FEATURE_REQUEST' ? 'Feature' : t === 'AI_RATING' ? 'AI Rating' : t.toLowerCase()}
+              </button>
+            ))}
           </div>
         </div>
 
