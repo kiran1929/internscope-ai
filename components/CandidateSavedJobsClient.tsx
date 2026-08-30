@@ -42,6 +42,8 @@ export default function CandidateSavedJobsClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState('');
+  const [searchBy, setSearchBy] = useState<'all' | 'title' | 'company'>('all');
+  const [typeFilter, setTypeFilter] = useState('');
   const [sortBy, setSortBy] = useState<'newest' | 'title'>('newest');
 
   // Tracking modal state
@@ -78,11 +80,22 @@ export default function CandidateSavedJobsClient({
     });
   };
 
-  // Filter and sort
-  const filtered = savedJobs.filter((item) =>
-    item.opportunity.title.toLowerCase().includes(search.toLowerCase()) ||
-    item.opportunity.company.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const jobTypes = Array.from(new Set(savedJobs.map((item) => item.opportunity.type).filter(Boolean))).sort();
+  const query = search.trim().toLowerCase();
+
+  const filtered = savedJobs.filter((item) => {
+    const title = item.opportunity.title.toLowerCase();
+    const company = item.opportunity.company.name.toLowerCase();
+    const matchesSearch =
+      !query ||
+      (searchBy === 'title'
+        ? title.includes(query)
+        : searchBy === 'company'
+          ? company.includes(query)
+          : title.includes(query) || company.includes(query));
+    const matchesType = !typeFilter || item.opportunity.type === typeFilter;
+    return matchesSearch && matchesType;
+  });
 
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === 'title') {
@@ -98,32 +111,68 @@ export default function CandidateSavedJobsClient({
         <p className="page-header-subtitle">Review opportunities you marked to apply for later.</p>
       </div>
 
-      {/* Filter and stats row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-border-subtle bg-input-bg w-full sm:max-w-md">
-          <Search className="w-4 h-4 text-text-muted shrink-0" />
-          <input
-            type="text"
-            placeholder="Search saved positions..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent border-none outline-none text-xs text-foreground w-full placeholder:text-text-muted/70"
-          />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-full max-w-[20rem]">
+          <div className="flex items-center gap-2 px-2.5 flex-1 min-w-0">
+            <Search className="w-3.5 h-3.5 text-text-muted shrink-0" />
+            <input
+              type="text"
+              placeholder={
+                searchBy === 'title'
+                  ? 'Search by title...'
+                  : searchBy === 'company'
+                    ? 'Search by company...'
+                    : 'Search saved roles...'
+              }
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search saved positions"
+              className="bg-transparent border-none outline-none text-xs text-foreground w-full placeholder:text-text-muted/70 py-2"
+            />
+          </div>
+          <label htmlFor="saved-search-by" className="sr-only">
+            Search by
+          </label>
+          <select
+            id="saved-search-by"
+            value={searchBy}
+            onChange={(e) => setSearchBy(e.target.value as 'all' | 'title' | 'company')}
+            className="shrink-0 border-l border-border-subtle bg-transparent text-xs text-text-muted px-2 outline-none cursor-pointer"
+          >
+            <option value="all">All fields</option>
+            <option value="title">Title</option>
+            <option value="company">Company</option>
+          </select>
         </div>
 
-        <div className="flex items-center gap-3">
+        {jobTypes.length > 0 && (
           <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'newest' | 'title')}
-            className="bg-input-bg border border-border-subtle rounded-lg text-xs p-1.5 text-foreground outline-none focus:border-primary/50"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            aria-label="Filter by job type"
+            className="bg-input-bg border border-border-subtle rounded-lg text-xs p-2 text-foreground outline-none focus:border-primary/50"
           >
-            <option value="newest">Sort by Date Saved</option>
-            <option value="title">Sort by Job Title</option>
+            <option value="">All types</option>
+            {jobTypes.map((type) => (
+              <option key={type} value={type}>
+                {type.replace(/_/g, ' ')}
+              </option>
+            ))}
           </select>
-          <span className="text-xs text-text-muted font-semibold">
-            Bookmarked: {sorted.length} positions
-          </span>
-        </div>
+        )}
+
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as 'newest' | 'title')}
+          className="bg-input-bg border border-border-subtle rounded-lg text-xs p-2 text-foreground outline-none focus:border-primary/50"
+        >
+          <option value="newest">Sort by date saved</option>
+          <option value="title">Sort by job title</option>
+        </select>
+
+        <span className="text-xs text-text-muted font-semibold ml-auto">
+          Bookmarked: {sorted.length} positions
+        </span>
       </div>
 
       {/* Grid list */}

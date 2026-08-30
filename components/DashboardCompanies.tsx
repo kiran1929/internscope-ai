@@ -1,14 +1,48 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Search, Building, Plus, Check, X, Sparkles, AlertCircle } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Search, Building, Plus, Check, X, RotateCcw } from 'lucide-react';
 import { Company } from '@/types';
 import { CompanyLogo } from './CompanyLogo';
 import { cn } from '@/lib/utils';
 
+type SearchBy = 'all' | 'name' | 'industry' | 'country';
+type TrackingFilter = 'all' | 'tracking' | 'not-tracking';
+type OpeningsFilter = 'all' | 'has-openings' | 'no-openings';
+
 interface DashboardCompaniesProps {
   companies: Company[];
   onToggleTrack: (id: string) => void;
+}
+
+const SEARCH_PLACEHOLDERS: Record<SearchBy, string> = {
+  all: 'Search companies...',
+  name: 'Search by name...',
+  industry: 'Search by industry...',
+  country: 'Search by country...',
+};
+
+const HIRING_STATUS_LABELS: Record<string, string> = {
+  HIRING: 'Hiring',
+  FREEZE: 'Hiring freeze',
+  NOT_HIRING: 'Not hiring',
+};
+
+function uniqueSorted(values: Array<string | undefined>) {
+  return Array.from(new Set(values.filter((value): value is string => Boolean(value)))).sort();
+}
+
+function matchesSearchQuery(company: Company, query: string, searchBy: SearchBy) {
+  if (!query) return true;
+
+  const name = company.name.toLowerCase();
+  const industry = company.industry.toLowerCase();
+  const country = (company.country || '').toLowerCase();
+
+  if (searchBy === 'name') return name.includes(query);
+  if (searchBy === 'industry') return industry.includes(query);
+  if (searchBy === 'country') return country.includes(query);
+  return name.includes(query) || industry.includes(query) || country.includes(query);
 }
 
 export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
@@ -16,60 +50,198 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   onToggleTrack
 }) => {
   const [search, setSearch] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'tracking' | 'not-tracking'>('all');
+  const [searchBy, setSearchBy] = useState<SearchBy>('all');
+  const [industryFilter, setIndustryFilter] = useState('');
+  const [countryFilter, setCountryFilter] = useState('');
+  const [hiringStatusFilter, setHiringStatusFilter] = useState('');
+  const [filterType, setFilterType] = useState<TrackingFilter>('all');
+  const [openingsFilter, setOpeningsFilter] = useState<OpeningsFilter>('all');
   const [selectedShowcaseCompany, setSelectedShowcaseCompany] = useState<Company | null>(null);
 
+  const industries = useMemo(() => uniqueSorted(companies.map((company) => company.industry)), [companies]);
+  const countries = useMemo(() => uniqueSorted(companies.map((company) => company.country)), [companies]);
+  const hiringStatuses = useMemo(
+    () => uniqueSorted(companies.map((company) => company.hiringStatus)),
+    [companies]
+  );
+
+  const query = search.trim().toLowerCase();
+
   const filteredCompanies = companies.filter((company) => {
-    const matchesSearch =
-      company.name.toLowerCase().includes(search.toLowerCase()) ||
-      company.industry.toLowerCase().includes(search.toLowerCase());
-    
-    if (filterType === 'tracking') {
-      return matchesSearch && company.isTracking;
-    }
-    if (filterType === 'not-tracking') {
-      return matchesSearch && !company.isTracking;
-    }
-    return matchesSearch;
+    const matchesSearch = matchesSearchQuery(company, query, searchBy);
+    const matchesIndustry = !industryFilter || company.industry === industryFilter;
+    const matchesCountry = !countryFilter || company.country === countryFilter;
+    const matchesHiringStatus = !hiringStatusFilter || company.hiringStatus === hiringStatusFilter;
+    const matchesTracking =
+      filterType === 'all' ||
+      (filterType === 'tracking' ? company.isTracking : !company.isTracking);
+    const matchesOpenings =
+      openingsFilter === 'all' ||
+      (openingsFilter === 'has-openings'
+        ? company.activeOpeningsCount > 0
+        : company.activeOpeningsCount === 0);
+
+    return (
+      matchesSearch &&
+      matchesIndustry &&
+      matchesCountry &&
+      matchesHiringStatus &&
+      matchesTracking &&
+      matchesOpenings
+    );
   });
 
-  return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-3 duration-300">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-base font-bold text-white">Target Companies</h2>
-          <p className="text-xs text-text-muted">Choose which engineering fleets you want our scrapers to monitor</p>
-        </div>
+  const hasActiveFilters =
+    Boolean(search.trim()) ||
+    searchBy !== 'all' ||
+    Boolean(industryFilter) ||
+    Boolean(countryFilter) ||
+    Boolean(hiringStatusFilter) ||
+    filterType !== 'all' ||
+    openingsFilter !== 'all';
 
-        {/* Filter Controls */}
-        <div className="flex gap-2">
-          {(['all', 'tracking', 'not-tracking'] as const).map((type) => (
-            <button
-              key={type}
-              onClick={() => setFilterType(type)}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-semibold border capitalize transition-all duration-200',
-                filterType === type
-                  ? 'bg-primary text-white border-primary shadow-md shadow-primary/10'
-                  : 'bg-zinc-900 border-zinc-800 text-text-muted hover:text-white'
-              )}
-            >
-              {type.replace('-', ' ')}
-            </button>
-          ))}
+  const resetFilters = () => {
+    setSearch('');
+    setSearchBy('all');
+    setIndustryFilter('');
+    setCountryFilter('');
+    setHiringStatusFilter('');
+    setFilterType('all');
+    setOpeningsFilter('all');
+  };
+
+  const selectClassName =
+    'bg-input-bg border border-border-subtle text-xs text-foreground rounded-lg px-2.5 py-2 outline-none focus:border-primary/60 transition-all cursor-pointer';
+
+  return (
+    <div className="page-shell animate-fade-in text-foreground">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <h2 className="page-header-title text-xl sm:text-2xl">Target Companies</h2>
+          <p className="page-header-subtitle">Choose which companies you want our scrapers to monitor.</p>
         </div>
+        <p className="text-xs text-text-muted font-medium">
+          Showing {filteredCompanies.length} of {companies.length}
+        </p>
       </div>
 
-      {/* Search Input */}
-      <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-zinc-800/80 bg-zinc-900/40 max-w-md">
-        <Search className="w-4 h-4 text-text-muted shrink-0" />
-        <input
-          type="text"
-          placeholder="Filter by name or industry..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="bg-transparent border-none outline-none text-sm text-white w-full placeholder:text-text-muted/70"
-        />
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-full max-w-[20rem]">
+          <div className="relative flex items-center gap-2 px-2.5 flex-1 min-w-0">
+            <Search className="w-3.5 h-3.5 text-text-muted shrink-0" />
+            <input
+              type="text"
+              placeholder={SEARCH_PLACEHOLDERS[searchBy]}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search companies"
+              className="bg-transparent border-none outline-none text-sm text-foreground w-full placeholder:text-text-muted/70 py-2"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                aria-label="Clear search"
+                className="text-text-muted hover:text-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+          <label htmlFor="company-search-by" className="sr-only">
+            Search by
+          </label>
+          <select
+            id="company-search-by"
+            value={searchBy}
+            onChange={(e) => setSearchBy(e.target.value as SearchBy)}
+            className="shrink-0 border-l border-border-subtle bg-transparent text-xs text-text-muted px-2 outline-none cursor-pointer"
+          >
+            <option value="all">All fields</option>
+            <option value="name">Name</option>
+            <option value="industry">Industry</option>
+            <option value="country">Country</option>
+          </select>
+        </div>
+
+        <select
+          value={industryFilter}
+          onChange={(e) => setIndustryFilter(e.target.value)}
+          aria-label="Filter by industry"
+          className={selectClassName}
+        >
+          <option value="">All industries</option>
+          {industries.map((industry) => (
+            <option key={industry} value={industry}>
+              {industry}
+            </option>
+          ))}
+        </select>
+
+        {countries.length > 0 && (
+          <select
+            value={countryFilter}
+            onChange={(e) => setCountryFilter(e.target.value)}
+            aria-label="Filter by country"
+            className={selectClassName}
+          >
+            <option value="">All countries</option>
+            {countries.map((country) => (
+              <option key={country} value={country}>
+                {country}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {hiringStatuses.length > 0 && (
+          <select
+            value={hiringStatusFilter}
+            onChange={(e) => setHiringStatusFilter(e.target.value)}
+            aria-label="Filter by hiring status"
+            className={selectClassName}
+          >
+            <option value="">All hiring statuses</option>
+            {hiringStatuses.map((status) => (
+              <option key={status} value={status}>
+                {HIRING_STATUS_LABELS[status] || status}
+              </option>
+            ))}
+          </select>
+        )}
+
+        <select
+          value={filterType}
+          onChange={(e) => setFilterType(e.target.value as TrackingFilter)}
+          aria-label="Filter by tracking status"
+          className={selectClassName}
+        >
+          <option value="all">All companies</option>
+          <option value="tracking">Tracking</option>
+          <option value="not-tracking">Not tracking</option>
+        </select>
+
+        <select
+          value={openingsFilter}
+          onChange={(e) => setOpeningsFilter(e.target.value as OpeningsFilter)}
+          aria-label="Filter by openings"
+          className={selectClassName}
+        >
+          <option value="all">All openings</option>
+          <option value="has-openings">Has openings</option>
+          <option value="no-openings">No openings</option>
+        </select>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-text-muted hover:text-foreground transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset
+          </button>
+        )}
       </div>
 
       {/* Grid of Companies */}
@@ -79,19 +251,19 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             <div
               key={company.id}
               className={cn(
-                'bg-[#18181B] border rounded-xl p-5 flex flex-col justify-between min-h-[13rem] hover:border-zinc-700 transition-all duration-250',
-                company.isTracking ? 'border-primary/45 shadow-[0_0_15px_rgba(37,99,235,0.04)]' : 'border-zinc-800/80'
+                'dashboard-card p-5 flex flex-col justify-between min-h-[13rem]',
+                company.isTracking && 'border-primary/45 shadow-[0_0_15px_rgba(37,99,235,0.04)]'
               )}
             >
               <div className="flex items-start justify-between">
                 <CompanyLogo logo={company.logo} logoUrl={company.logoUrl} websiteUrl={company.website} name={company.name} size="md" />
-                <span className="text-[10px] font-semibold text-text-muted bg-zinc-900 border border-zinc-850 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-full">
                   {company.industry}
                 </span>
               </div>
 
               <div className="mt-4">
-                <h3 className="text-sm font-bold text-white">{company.name}</h3>
+                <h3 className="text-sm font-bold text-foreground">{company.name}</h3>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
                   <span className="text-[11px] text-text-muted font-medium">
@@ -112,10 +284,10 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                 )}
               </div>
 
-              <div className="mt-4 pt-3 border-t border-zinc-900 flex items-center justify-between">
-                {company.website ? (
+              <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
+                {company.careerPage || company.website ? (
                   <a
-                    href={company.website}
+                    href={company.careerPage || company.website}
                     target="_blank"
                     rel="noreferrer"
                     className="text-[10px] text-text-muted hover:text-foreground font-medium underline"
@@ -130,7 +302,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                   className={cn(
                     'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200',
                     company.isTracking
-                      ? 'bg-zinc-800 hover:bg-zinc-700/80 text-white'
+                      ? 'bg-surface-muted hover:bg-border-subtle text-foreground'
                       : 'bg-primary hover:bg-blue-700 text-white shadow-md shadow-primary/10'
                   )}
                 >
@@ -151,10 +323,10 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           ))}
         </div>
       ) : (
-        <div className="border border-dashed border-zinc-800 rounded-xl p-12 text-center max-w-lg mx-auto">
+        <div className="border border-dashed border-border-subtle rounded-xl p-12 text-center max-w-lg mx-auto">
           <Building className="w-8 h-8 text-text-muted mx-auto mb-3" />
-          <h3 className="text-sm font-bold text-white">No companies found</h3>
-          <p className="text-xs text-text-muted mt-1">Try adjusting your filters or query to find the target firm.</p>
+          <h3 className="text-sm font-bold text-foreground">No companies found</h3>
+          <p className="text-xs text-text-muted mt-1">Try a different search field or clear the filters.</p>
         </div>
       )}
 

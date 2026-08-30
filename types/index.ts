@@ -9,6 +9,10 @@ export interface Company {
   activeOpeningsCount: number;
   isTracking: boolean;
   website: string;
+  careerPage?: string;
+  country?: string;
+  hiringStatus?: string;
+  companySize?: string;
 }
 
 export interface Internship {
