@@ -11,12 +11,13 @@ import { getMyNotificationsAction } from '@/app/actions/notifications';
 import Link from 'next/link';
 import { useTheme } from '@/providers/ThemeProvider';
 
+import { SignOutModal } from '@/components/SignOutModal';
+
 interface NavbarProps {
   onMenuToggle: () => void;
-  title?: string;
+  title: string;
 }
 
-// Friendly mapping for route segments
 const routeNameMap: Record<string, string> = {
   dashboard: 'Dashboard',
   overview: 'Overview',
@@ -35,17 +36,34 @@ const routeNameMap: Record<string, string> = {
   analytics: 'Analytics',
   settings: 'Settings',
   profile: 'Profile',
+  career: 'Career Intel',
+};
+
+const TITLE_MAP: Record<string, string> = {
+  overview: 'Candidate Overview',
+  companies: 'Companies Explorer',
+  internships: 'Find Opportunities',
+  saved: 'Saved Positions',
+  applications: 'Applications Tracker',
+  resume: 'Resume Intelligence',
+  'cover-letter': 'Cover Letter Studio',
+  interview: 'Interview Preparation',
+  copilot: 'AI Application Copilot',
+  'email-reports': 'Email Intelligence Reports',
+  analytics: 'Analytics',
+  settings: 'Settings',
+  profile: 'Profile',
   career: 'Career Intelligence',
 };
 
 export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
   const { user } = useUser();
-  const { signOut } = useClerk();
   const router = useRouter();
   const pathname = usePathname();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const isDark = theme === 'dark';
@@ -381,9 +399,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                   <button
                     onClick={() => {
                       setShowProfile(false);
-                      signOut({ redirectUrl: '/' });
+                      setShowSignOutModal(true);
                     }}
-                    className="w-full text-left px-4 py-2 text-xs text-danger hover:bg-surface-muted transition-colors focus-visible:outline-none"
+                    className="w-full text-left px-4 py-2 text-xs text-danger hover:bg-surface-muted transition-colors focus-visible:outline-none cursor-pointer"
                     role="menuitem"
                   >
                     Log out
@@ -394,6 +412,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
           </AnimatePresence>
         </div>
       </div>
+
+      <SignOutModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+      />
     </header>
   );
 };

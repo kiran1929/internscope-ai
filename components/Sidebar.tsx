@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import {
   LayoutDashboard,
@@ -17,9 +17,10 @@ import {
   FileText,
   Award,
   Brain,
-  Home,
+  LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SignOutModal } from '@/components/SignOutModal';
 
 export type DashboardTab =
   | 'overview'
@@ -55,7 +56,6 @@ interface SidebarProps {
   onNavigate?: () => void;
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean) => void;
-  onExitDemo: () => void;
 }
 
 interface SidebarItem {
@@ -72,8 +72,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onNavigate,
   isCollapsed,
   setIsCollapsed,
-  onExitDemo,
 }) => {
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+
+  const handleOpenSignOutModal = () => {
+    if (onNavigate) {
+      onNavigate();
+    }
+    setShowSignOutModal(true);
+  };
+
   const sidebarItems: SidebarItem[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'companies', label: 'Companies', icon: Building },
@@ -181,24 +189,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <button
               type="button"
-              onClick={onExitDemo}
-              className="w-full py-2 rounded-lg border border-border-subtle bg-card-bg hover:bg-surface-muted text-xs font-semibold text-foreground transition-colors"
+              onClick={handleOpenSignOutModal}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-border-subtle bg-card-bg hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 text-xs font-semibold text-foreground transition-colors cursor-pointer"
             >
-              Back to Landing
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sign Out</span>
             </button>
           </div>
         ) : (
           <button
             type="button"
-            onClick={onExitDemo}
-            className="sidebar-nav-link justify-center px-0 py-2.5 w-full"
-            title="Back to Landing Page"
+            onClick={handleOpenSignOutModal}
+            className="sidebar-nav-link justify-center px-0 py-2.5 w-full hover:text-red-500 hover:bg-red-500/10 cursor-pointer"
+            title="Sign Out"
           >
-            <Home className="w-[18px] h-[18px] text-text-muted" />
-            <span className="sidebar-tooltip">Back to Landing</span>
+            <LogOut className="w-[18px] h-[18px] text-text-muted hover:text-red-500" />
+            <span className="sidebar-tooltip">Sign Out</span>
           </button>
         )}
       </div>
+
+      <SignOutModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+      />
     </aside>
   );
 };

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import {
   Briefcase,
   Bookmark,
@@ -13,11 +13,17 @@ import {
   Clock,
   Search,
   Trash2,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { toggleSaveJobAction, deleteApplicationAction } from '@/app/actions/candidate';
+import {
+  toggleSaveJobAction,
+  deleteApplicationAction,
+  deleteRecentSearchAction,
+  clearRecentSearchesAction,
+} from '@/app/actions/candidate';
 
 interface CandidateDashboardClientProps {
   user: {
@@ -83,6 +89,12 @@ export default function CandidateDashboardClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  const [searches, setSearches] = useState(recentSearches);
+
+  useEffect(() => {
+    setSearches(recentSearches);
+  }, [recentSearches]);
+
   // Profile Completion Calculation
   const getProfileCompletion = () => {
     if (!user.profile) return 0;
@@ -122,6 +134,34 @@ export default function CandidateDashboardClient({
         router.refresh();
       } else {
         toast.error(`Error: ${res.error}`);
+      }
+    });
+  };
+
+  const handleDeleteSearch = (e: React.MouseEvent, searchId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSearches((prev) => prev.filter((s) => s.id !== searchId));
+    startTransition(async () => {
+      const res = await deleteRecentSearchAction(searchId);
+      if (res.success) {
+        toast.success('Search query removed.');
+      } else {
+        toast.error(`Error: ${res.error}`);
+        router.refresh();
+      }
+    });
+  };
+
+  const handleClearSearches = () => {
+    setSearches([]);
+    startTransition(async () => {
+      const res = await clearRecentSearchesAction();
+      if (res.success) {
+        toast.success('Search history cleared.');
+      } else {
+        toast.error(`Error: ${res.error}`);
+        router.refresh();
       }
     });
   };
@@ -283,19 +323,41 @@ export default function CandidateDashboardClient({
 
           {/* Recent Search Queries */}
           <div className="dashboard-card p-4 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border-subtle pb-2">Recent Searches</h4>
-            {recentSearches.length === 0 ? (
+            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Recent Searches</h4>
+              {searches.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearSearches}
+                  className="text-[10px] text-text-muted hover:text-red-500 transition-colors font-medium cursor-pointer"
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+            {searches.length === 0 ? (
               <p className="text-[10px] text-text-muted text-center py-2">No recent queries logged.</p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
-                {recentSearches.map((item) => (
-                  <span
+                {searches.map((item) => (
+                  <Link
                     key={item.id}
-                    className="text-[9px] bg-surface-muted text-text-muted border border-border-subtle px-2 py-1 rounded-md flex items-center gap-1 font-mono"
+                    href={`/internships?query=${encodeURIComponent(item.query)}`}
+                    className="group inline-flex items-center gap-1.5 text-[11px] bg-surface-muted hover:bg-primary/10 text-text-muted hover:text-primary border border-border-subtle hover:border-primary/30 px-2.5 py-1 rounded-md font-medium transition-all duration-150 cursor-pointer shadow-2xs"
+                    title={`Search for "${item.query}"`}
                   >
-                    <Search className="w-2.5 h-2.5" />
-                    {item.query}
-                  </span>
+                    <Search className="w-2.5 h-2.5 text-text-muted group-hover:text-primary transition-colors" />
+                    <span className="truncate max-w-[120px]">{item.query}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteSearch(e, item.id)}
+                      className="ml-0.5 opacity-60 group-hover:opacity-100 hover:text-red-500 p-0.5 rounded transition-all"
+                      title="Remove from history"
+                      aria-label="Remove search"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </Link>
                 ))}
               </div>
             )}
