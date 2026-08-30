@@ -148,7 +148,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   };
 
   const selectClassName =
-    'bg-input-bg border border-border-subtle text-xs text-foreground rounded-lg px-2.5 py-2 outline-none focus:border-primary/60 transition-all cursor-pointer';
+    'bg-input-bg border border-border-subtle text-xs text-foreground rounded-lg px-2.5 py-1.5 outline-none focus:border-primary/60 transition-all cursor-pointer h-8';
 
   // Helper for generating pagination buttons
   const getPageNumbers = () => {
@@ -170,45 +170,47 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   };
 
   return (
-    <div className="page-shell animate-fade-in text-foreground space-y-6">
+    <div className="page-shell animate-fade-in text-foreground space-y-4 max-w-7xl mx-auto">
       {/* Top Header & Stat Counters */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border-subtle pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border-subtle">
         <div>
-          <h2 className="page-header-title text-xl sm:text-2xl">Target Companies</h2>
-          <p className="page-header-subtitle mt-0.5">
-            Choose which companies you want our scrapers to monitor.
+          <h2 className="text-xl font-bold text-foreground tracking-tight">Target Companies</h2>
+          <p className="text-xs text-text-muted mt-0.5">
+            Monitor engineering fleets and track active internship opportunities in real-time
           </p>
         </div>
 
         {/* Total stats counters */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-surface-muted/70 border border-border-subtle shadow-2xs">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
-              <Building className="w-4 h-4" />
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-card-bg border border-border-subtle shadow-2xs">
+            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <Building className="w-3.5 h-3.5" />
             </div>
             <div>
-              <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider leading-none">Total Companies</p>
-              <p className="text-base font-bold text-foreground mt-1 leading-none">{totalCompanies}</p>
+              <p className="text-[9px] text-text-muted uppercase font-bold tracking-wider leading-none">Total Companies</p>
+              <p className="text-sm font-bold text-foreground mt-0.5 leading-none">{totalCompanies}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-surface-muted/70 border border-border-subtle shadow-2xs">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
-              <Briefcase className="w-4 h-4" />
+          <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-card-bg border border-border-subtle shadow-2xs">
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+              <Briefcase className="w-3.5 h-3.5" />
             </div>
             <div>
-              <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider leading-none">Total Opportunities</p>
-              <p className="text-base font-bold text-foreground mt-1 leading-none">{totalOpportunities}</p>
+              <p className="text-[9px] text-text-muted uppercase font-bold tracking-wider leading-none">Total Opportunities</p>
+              <p className="text-sm font-bold text-foreground mt-0.5 leading-none">{totalOpportunities}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filter Toolbar & View Mode Switcher */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2 flex-1">
-          <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-full max-w-[18rem]">
-            <div className="relative flex items-center gap-2 px-2.5 flex-1 min-w-0">
+      {/* Filter Toolbar & View Switcher */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 bg-surface-muted/40 p-2.5 rounded-xl border border-border-subtle">
+        {/* Filter items row */}
+        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+          {/* Search bar with inline search-by */}
+          <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-full sm:w-64 h-8 focus-within:border-primary/50 transition-colors">
+            <div className="relative flex items-center gap-1.5 px-2.5 flex-1 min-w-0">
               <Search className="w-3.5 h-3.5 text-text-muted shrink-0" />
               <input
                 type="text"
@@ -216,7 +218,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 aria-label="Search companies"
-                className="bg-transparent border-none outline-none text-sm text-foreground w-full placeholder:text-text-muted/70 py-2"
+                className="bg-transparent border-none outline-none text-xs text-foreground w-full placeholder:text-text-muted/70 py-1"
               />
               {search && (
                 <button
@@ -225,7 +227,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                   aria-label="Clear search"
                   className="text-text-muted hover:text-foreground cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               )}
             </div>
@@ -236,9 +238,9 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               id="company-search-by"
               value={searchBy}
               onChange={(e) => setSearchBy(e.target.value as SearchBy)}
-              className="shrink-0 border-l border-border-subtle bg-transparent text-xs text-text-muted px-2 outline-none cursor-pointer"
+              className="shrink-0 border-l border-border-subtle bg-transparent text-[11px] text-text-muted px-2 outline-none cursor-pointer"
             >
-              <option value="all">All fields</option>
+              <option value="all">All</option>
               <option value="name">Name</option>
               <option value="industry">Industry</option>
               <option value="country">Country</option>
@@ -282,7 +284,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               aria-label="Filter by hiring status"
               className={selectClassName}
             >
-              <option value="">All hiring statuses</option>
+              <option value="">All statuses</option>
               {hiringStatuses.map((status) => (
                 <option key={status} value={status}>
                   {HIRING_STATUS_LABELS[status] || status}
@@ -317,21 +319,21 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             <button
               type="button"
               onClick={resetFilters}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold text-text-muted hover:text-foreground transition-colors cursor-pointer px-1.5 py-1"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-foreground transition-colors cursor-pointer px-2 py-1 rounded-md hover:bg-card-bg"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3 h-3" />
               Reset
             </button>
           )}
         </div>
 
         {/* View Mode Toggle & Counter */}
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-xs text-text-muted font-medium hidden sm:inline">
-            Showing {totalFiltered === 0 ? 0 : startIndex + 1}–{Math.min(startIndex + pageSize, totalFiltered)} of {totalFiltered}
+        <div className="flex items-center justify-between lg:justify-end gap-3 shrink-0 pt-1 lg:pt-0 border-t lg:border-t-0 border-border-subtle">
+          <span className="text-xs text-text-muted font-medium">
+            Showing <span className="text-foreground font-semibold">{totalFiltered === 0 ? 0 : startIndex + 1}–{Math.min(startIndex + pageSize, totalFiltered)}</span> of <span className="text-foreground font-semibold">{totalFiltered}</span>
           </span>
 
-          <div className="flex items-center border border-border-subtle rounded-lg bg-surface-muted/60 p-0.5">
+          <div className="flex items-center border border-border-subtle rounded-lg bg-input-bg p-0.5">
             <button
               type="button"
               onClick={() => setViewMode('grid')}
@@ -340,11 +342,11 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               className={cn(
                 'p-1.5 rounded-md transition-all cursor-pointer',
                 viewMode === 'grid'
-                  ? 'bg-card-bg text-primary shadow-xs'
+                  ? 'bg-card-bg text-primary shadow-2xs font-semibold'
                   : 'text-text-muted hover:text-foreground'
               )}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
@@ -354,11 +356,11 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               className={cn(
                 'p-1.5 rounded-md transition-all cursor-pointer',
                 viewMode === 'table'
-                  ? 'bg-card-bg text-primary shadow-xs'
+                  ? 'bg-card-bg text-primary shadow-2xs font-semibold'
                   : 'text-text-muted hover:text-foreground'
               )}
             >
-              <List className="w-4 h-4" />
+              <List className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -367,87 +369,91 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
       {/* Main Companies Display */}
       {paginatedCompanies.length > 0 ? (
         viewMode === 'grid' ? (
-          /* GRID VIEW */
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          /* GRID VIEW - Compact & Balanced */
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
             {paginatedCompanies.map((company) => {
               const hasOpenings = company.activeOpeningsCount > 0;
               return (
                 <div
                   key={company.id}
                   className={cn(
-                    'group relative bg-card-bg border rounded-2xl p-5 flex flex-col justify-between transition-all duration-250 hover:shadow-md hover:-translate-y-0.5 min-h-[14.5rem]',
+                    'group relative bg-card-bg border rounded-xl p-4 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 gap-3',
                     company.isTracking
-                      ? 'border-primary/50 ring-1 ring-primary/20 shadow-sm shadow-primary/5'
+                      ? 'border-primary/50 ring-1 ring-primary/20 shadow-xs shadow-primary/5'
                       : 'border-border-subtle hover:border-primary/35'
                   )}
                 >
-                  <div>
-                    {/* Header: Logo & Badges */}
-                    <div className="flex items-start justify-between gap-2">
-                      <CompanyLogo
-                        logo={company.logo}
-                        logoUrl={company.logoUrl}
-                        websiteUrl={company.website}
-                        name={company.name}
-                        size="md"
-                      />
-                      <div className="flex flex-col items-end gap-1">
-                        <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-full max-w-[120px] truncate">
-                          {company.industry}
-                        </span>
-                        {company.country && (
-                          <span className="text-[9px] text-text-muted/80 font-medium">
-                            {company.country}
-                          </span>
-                        )}
+                  <div className="space-y-3">
+                    {/* Top Row: Logo + Name & Country + Industry Badge */}
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <CompanyLogo
+                          logo={company.logo}
+                          logoUrl={company.logoUrl}
+                          websiteUrl={company.website}
+                          name={company.name}
+                          size="md"
+                        />
+                        <div className="min-w-0">
+                          <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                            {company.name}
+                          </h3>
+                          <div className="flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
+                            {company.country ? (
+                              <span className="truncate">{company.country}</span>
+                            ) : (
+                              <span>Global</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
+
+                      <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-full shrink-0 max-w-[100px] truncate">
+                        {company.industry}
+                      </span>
                     </div>
 
-                    {/* Company Info */}
-                    <div className="mt-4">
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                          {company.name}
-                        </h3>
-                        {company.hiringStatus === 'FREEZE' && (
-                          <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded">
-                            Freeze
-                          </span>
-                        )}
-                      </div>
+                    {/* Status & Openings Badge */}
+                    <div className="flex items-center justify-between gap-1.5 pt-1">
+                      {hasOpenings ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          {company.activeOpeningsCount} active {company.activeOpeningsCount === 1 ? 'role' : 'roles'}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-surface-muted text-text-muted border border-border-subtle text-[10px] font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-text-muted/60"></span>
+                          0 roles open
+                        </span>
+                      )}
 
-                      {/* Active Roles Indicator */}
-                      <div className="mt-2.5">
-                        {hasOpenings ? (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[11px] font-semibold">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            {company.activeOpeningsCount} active {company.activeOpeningsCount === 1 ? 'role' : 'roles'} monitored
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-surface-muted text-text-muted border border-border-subtle text-[11px] font-medium">
-                            <span className="w-1.5 h-1.5 rounded-full bg-text-muted/60"></span>
-                            0 roles currently open
-                          </span>
-                        )}
-                      </div>
-
-                      {company.name.toLowerCase() === 'razorpay' && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedShowcaseCompany(company);
-                          }}
-                          className="mt-2.5 text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-1 rounded-lg hover:bg-purple-500/20 font-bold block text-center w-full transition-all cursor-pointer"
-                        >
-                          ✨ Razorpay Showcase Mode
-                        </button>
+                      {company.hiringStatus === 'FREEZE' ? (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded">
+                          Freeze
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded">
+                          Hiring
+                        </span>
                       )}
                     </div>
+
+                    {company.name.toLowerCase() === 'razorpay' && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedShowcaseCompany(company);
+                        }}
+                        className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-1 rounded-md hover:bg-purple-500/20 font-bold block text-center w-full transition-all cursor-pointer"
+                      >
+                        ✨ Razorpay Showcase Mode
+                      </button>
+                    )}
                   </div>
 
                   {/* Footer Action Bar */}
-                  <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between gap-2">
+                  <div className="pt-2.5 border-t border-border-subtle flex items-center justify-between gap-2">
                     {company.careerPage || company.website ? (
                       <a
                         href={company.careerPage || company.website}
@@ -459,13 +465,13 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                         <ExternalLink className="w-3 h-3 text-text-muted/70" />
                       </a>
                     ) : (
-                      <span className="text-[11px] text-text-muted/60">No careers page</span>
+                      <span className="text-[11px] text-text-muted/60">No page</span>
                     )}
 
                     <button
                       onClick={() => onToggleTrack(company.id)}
                       className={cn(
-                        'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer shrink-0',
+                        'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer shrink-0',
                         company.isTracking
                           ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle'
                           : 'bg-primary hover:bg-primary-hover text-white shadow-xs shadow-primary/25'
@@ -473,12 +479,12 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                     >
                       {company.isTracking ? (
                         <>
-                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          <Check className="w-3 h-3 text-emerald-500" />
                           <span>Tracking</span>
                         </>
                       ) : (
                         <>
-                          <Plus className="w-3.5 h-3.5" />
+                          <Plus className="w-3 h-3" />
                           <span>Track</span>
                         </>
                       )}
@@ -494,12 +500,12 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-border-subtle bg-surface-muted/50 text-text-muted font-semibold">
-                  <th className="py-3 px-4">Company</th>
-                  <th className="py-3 px-4">Industry</th>
-                  <th className="py-3 px-4">Country</th>
-                  <th className="py-3 px-4">Status</th>
-                  <th className="py-3 px-4">Active Openings</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
+                  <th className="py-2.5 px-4">Company</th>
+                  <th className="py-2.5 px-4">Industry</th>
+                  <th className="py-2.5 px-4">Country</th>
+                  <th className="py-2.5 px-4">Status</th>
+                  <th className="py-2.5 px-4">Active Openings</th>
+                  <th className="py-2.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -508,7 +514,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                     key={company.id}
                     className="hover:bg-surface-muted/40 transition-colors group"
                   >
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-4">
                       <div className="flex items-center gap-3">
                         <CompanyLogo
                           logo={company.logo}
@@ -532,15 +538,15 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-4">
                       <span className="text-[10px] font-medium text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-md">
                         {company.industry}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-text-muted">
+                    <td className="py-2.5 px-4 text-text-muted">
                       {company.country || 'Global'}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-4">
                       <span
                         className={cn(
                           'text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1',
@@ -558,13 +564,13 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                         {HIRING_STATUS_LABELS[company.hiringStatus || 'HIRING'] || 'Hiring'}
                       </span>
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-2.5 px-4">
                       <span className="font-bold text-foreground font-mono">
                         {company.activeOpeningsCount}
                       </span>
                       <span className="text-[10px] text-text-muted ml-1">roles</span>
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-2.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {company.name.toLowerCase() === 'razorpay' && (
                           <button
@@ -578,20 +584,20 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                         <button
                           onClick={() => onToggleTrack(company.id)}
                           className={cn(
-                            'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer',
+                            'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer',
                             company.isTracking
                               ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle'
-                              : 'bg-primary hover:bg-primary-hover text-white shadow-sm shadow-primary/20'
+                              : 'bg-primary hover:bg-primary-hover text-white shadow-xs shadow-primary/20'
                           )}
                         >
                           {company.isTracking ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-emerald-500" />
+                              <Check className="w-3 h-3 text-emerald-500" />
                               <span>Tracking</span>
                             </>
                           ) : (
                             <>
-                              <Plus className="w-3.5 h-3.5" />
+                              <Plus className="w-3 h-3" />
                               <span>Track</span>
                             </>
                           )}
@@ -605,16 +611,16 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           </div>
         )
       ) : (
-        <div className="border border-dashed border-border-subtle rounded-xl p-12 text-center max-w-lg mx-auto">
-          <Building className="w-8 h-8 text-text-muted mx-auto mb-3" />
+        <div className="border border-dashed border-border-subtle rounded-xl p-10 text-center max-w-md mx-auto">
+          <Building className="w-7 h-7 text-text-muted mx-auto mb-2.5" />
           <h3 className="text-sm font-bold text-foreground">No companies found</h3>
-          <p className="text-xs text-text-muted mt-1">Try a different search field or clear the filters.</p>
+          <p className="text-xs text-text-muted mt-1">Try changing your search keywords or resetting filters.</p>
         </div>
       )}
 
       {/* Pagination Controls */}
       {totalFiltered > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border-subtle">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border-subtle">
           <div className="flex items-center gap-3">
             <span className="text-xs text-text-muted">
               Page <span className="font-bold text-foreground">{currentPage}</span> of{' '}
@@ -622,7 +628,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             </span>
 
             {/* Page size picker */}
-            <div className="flex items-center gap-1 text-xs text-text-muted">
+            <div className="flex items-center gap-1.5 text-xs text-text-muted">
               <span>Show</span>
               <select
                 value={pageSize}
@@ -630,7 +636,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                   setPageSize(Number(e.target.value));
                   setPage(1);
                 }}
-                className="bg-input-bg border border-border-subtle text-foreground rounded-md px-2 py-1 text-xs outline-none cursor-pointer"
+                className="bg-input-bg border border-border-subtle text-foreground rounded-md px-2 py-1 text-xs outline-none cursor-pointer h-7"
               >
                 <option value={8}>8 / page</option>
                 <option value={12}>12 / page</option>
@@ -646,7 +652,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               type="button"
               disabled={currentPage <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="p-2 rounded-lg border border-border-subtle bg-card-bg text-text-muted hover:text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg border border-border-subtle bg-card-bg text-text-muted hover:text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
               aria-label="Previous Page"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -654,7 +660,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
 
             {getPageNumbers().map((p, idx) =>
               p === 'ellipsis' ? (
-                <span key={`ellipsis-${idx}`} className="px-2 text-text-muted text-xs">
+                <span key={`ellipsis-${idx}`} className="px-1.5 text-text-muted text-xs">
                   …
                 </span>
               ) : (
@@ -663,7 +669,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                   type="button"
                   onClick={() => setPage(p)}
                   className={cn(
-                    'w-8 h-8 rounded-lg text-xs font-semibold border transition-all cursor-pointer',
+                    'w-7 h-7 rounded-lg text-xs font-semibold border transition-all cursor-pointer',
                     currentPage === p
                       ? 'bg-primary text-white border-primary shadow-xs shadow-primary/20'
                       : 'border-border-subtle bg-card-bg text-text-muted hover:text-foreground hover:bg-surface-muted'
@@ -678,7 +684,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               type="button"
               disabled={currentPage >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="p-2 rounded-lg border border-border-subtle bg-card-bg text-text-muted hover:text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg border border-border-subtle bg-card-bg text-text-muted hover:text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
               aria-label="Next Page"
             >
               <ChevronRight className="w-4 h-4" />
