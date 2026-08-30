@@ -30,8 +30,13 @@ export class CompanyRepository {
   }
 
   static async findByName(name: string) {
-    return prisma.company.findUnique({
-      where: { name },
+    return prisma.company.findFirst({
+      where: {
+        name: {
+          equals: name.trim(),
+          mode: 'insensitive',
+        },
+      },
     });
   }
 
