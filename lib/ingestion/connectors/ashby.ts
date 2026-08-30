@@ -2,6 +2,7 @@ import { Connector } from '../connector';
 import { ScrapeSourceMetadata, RawOpportunity, ParsedOpportunity } from '../types';
 import { ScraperProviderConfig, defaultScraperSettings } from '../config';
 import { FetchError } from '../errors';
+import { ashbyResponseSchema, ashbyJobSchema } from '../schemas';
 
 export class AshbyConnector implements Connector {
   private readonly config: ScraperProviderConfig;
@@ -23,7 +24,7 @@ export class AshbyConnector implements Connector {
     };
   }
 
-  async fetchRaw(): Promise<RawOpportunity[]> {
+  async fetchRaw(since?: Date): Promise<RawOpportunity[]> {
     if (!this.config.enabled) {
       return [];
     }
@@ -44,13 +45,24 @@ export class AshbyConnector implements Connector {
         throw new Error(`HTTP Error Status: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const json = await response.json();
+      const parsed = ashbyResponseSchema.safeParse(json);
       
-      if (!data || !Array.isArray(data.jobs)) {
-        throw new Error('Malformed Ashby API response structure: jobs array is missing.');
+      if (!parsed.success) {
+        throw new Error(`Malformed Ashby API response structure: ${parsed.error.message}`);
       }
 
-      const rawJobs = data.jobs as Array<Record<string, unknown>>;
+      let rawJobs = parsed.data.jobs || parsed.data.results || [];
+
+      // Delta sync filtering (CRIT-002)
+      if (since) {
+        const sinceTime = since.getTime();
+        rawJobs = rawJobs.filter((job) => {
+          if (!job.publishedAt) return true;
+          const publishedAt = new Date(job.publishedAt).getTime();
+          return isNaN(publishedAt) || publishedAt >= sinceTime;
+        });
+      }
 
       return rawJobs.map((job) => ({
         sourceId: this.metadata.id,
@@ -68,38 +80,32 @@ export class AshbyConnector implements Connector {
   }
 
   async parse(raw: RawOpportunity): Promise<ParsedOpportunity> {
-    const payload = raw.payload as {
-      id?: string;
-      title?: string;
-      descriptionHtml?: string;
-      descriptionPlain?: string;
-      employmentType?: string;
-      location?: string;
-      department?: string;
-      applyUrl?: string;
-      jobUrl?: string;
-      compensationTierSummary?: string;
-    };
-
-    if (!payload.id || !payload.title) {
-      throw new Error(`Parse error: Ashby payload is missing ID or Title.`);
+    const parsedPayload = ashbyJobSchema.safeParse(raw.payload);
+    if (!parsedPayload.success) {
+      throw new Error(`Parse error: Invalid Ashby payload structure (${parsedPayload.error.message})`);
     }
+
+    const payload = parsedPayload.data;
 
     const companyDisplayName =
       this.config.companyName ??
       this.config.boardToken.charAt(0).toUpperCase() + this.config.boardToken.slice(1);
+
+    const locationStr = typeof payload.location === 'string'
+      ? payload.location
+      : payload.locationName || 'United States';
 
     return {
       externalJobId: payload.id,
       title: payload.title,
       companyName: companyDisplayName,
       companyWebsite: this.config.websiteUrl,
-      location: payload.location || 'United States',
-      remoteType: payload.location || '',
+      location: locationStr,
+      remoteType: payload.isRemote ? 'REMOTE' : locationStr,
       type: payload.employmentType || '',
       applicationUrl: payload.applyUrl || payload.jobUrl || '',
-      description: payload.descriptionHtml || payload.descriptionPlain || '',
-      salaryRange: payload.compensationTierSummary || undefined,
+      description: payload.descriptionPlain || payload.descriptionHtml || '',
+      salaryRange: typeof (payload as any).compensationTierSummary === 'string' ? (payload as any).compensationTierSummary : undefined,
     };
   }
 }

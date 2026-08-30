@@ -2,6 +2,7 @@ import { Connector } from '../connector';
 import { ScrapeSourceMetadata, RawOpportunity, ParsedOpportunity } from '../types';
 import { ScraperProviderConfig, defaultScraperSettings } from '../config';
 import { FetchError } from '../errors';
+import { greenhouseResponseSchema, greenhouseJobSchema } from '../schemas';
 
 export class GreenhouseConnector implements Connector {
   private readonly config: ScraperProviderConfig;
@@ -23,7 +24,7 @@ export class GreenhouseConnector implements Connector {
     };
   }
 
-  async fetchRaw(): Promise<RawOpportunity[]> {
+  async fetchRaw(since?: Date): Promise<RawOpportunity[]> {
     if (!this.config.enabled) {
       return [];
     }
@@ -44,13 +45,24 @@ export class GreenhouseConnector implements Connector {
         throw new Error(`HTTP Error Status: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const json = await response.json();
+      const parsed = greenhouseResponseSchema.safeParse(json);
       
-      if (!data || !Array.isArray(data.jobs)) {
-        throw new Error('Malformed Greenhouse API response structure: jobs array is missing.');
+      if (!parsed.success) {
+        throw new Error(`Malformed Greenhouse API response structure: ${parsed.error.message}`);
       }
 
-      const rawJobs = data.jobs as Array<Record<string, unknown>>;
+      let rawJobs = parsed.data.jobs;
+
+      // Delta sync filtering (CRIT-002)
+      if (since) {
+        const sinceTime = since.getTime();
+        rawJobs = rawJobs.filter((job) => {
+          if (!job.updated_at) return true;
+          const updatedAt = new Date(job.updated_at).getTime();
+          return isNaN(updatedAt) || updatedAt >= sinceTime;
+        });
+      }
 
       return rawJobs.map((job) => ({
         sourceId: this.metadata.id,
@@ -68,26 +80,24 @@ export class GreenhouseConnector implements Connector {
   }
 
   async parse(raw: RawOpportunity): Promise<ParsedOpportunity> {
-    const payload = raw.payload as {
-      id?: number | string;
-      title?: string;
-      location?: { name?: string };
-      absolute_url?: string;
-      content?: string;
-      updated_at?: string;
-      metadata?: Array<{ name: string; value: string }>;
-    };
-
-    if (!payload.id || !payload.title) {
-      throw new Error(`Parse error: Greenhouse payload is missing ID or Title.`);
+    const parsedPayload = greenhouseJobSchema.safeParse(raw.payload);
+    if (!parsedPayload.success) {
+      throw new Error(`Parse error: Invalid Greenhouse payload structure (${parsedPayload.error.message})`);
     }
+
+    const payload = parsedPayload.data;
 
     // Capitalize the board token for display name unless overridden
     const companyDisplayName =
       this.config.companyName ??
       this.config.boardToken.charAt(0).toUpperCase() + this.config.boardToken.slice(1);
 
-    const metadataDeadline = payload.metadata?.find((m) =>
+    const locationName = typeof payload.location === 'string'
+      ? payload.location
+      : payload.location?.name || 'United States';
+
+    const metadataArray = (payload as any).metadata as Array<{ name: string; value: string }> | undefined;
+    const metadataDeadline = metadataArray?.find((m) =>
       /deadline|close|due/i.test(m.name)
     )?.value;
 
@@ -96,7 +106,7 @@ export class GreenhouseConnector implements Connector {
       title: payload.title,
       companyName: companyDisplayName,
       companyWebsite: this.config.websiteUrl,
-      location: payload.location?.name || 'United States',
+      location: locationName,
       applicationUrl: payload.absolute_url || '',
       description: payload.content || '',
       deadline: metadataDeadline,

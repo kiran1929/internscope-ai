@@ -2,6 +2,7 @@ import { Connector } from '../connector';
 import { ScrapeSourceMetadata, RawOpportunity, ParsedOpportunity } from '../types';
 import { ScraperProviderConfig, defaultScraperSettings } from '../config';
 import { FetchError } from '../errors';
+import { leverResponseSchema, leverJobSchema } from '../schemas';
 
 export class LeverConnector implements Connector {
   private readonly config: ScraperProviderConfig;
@@ -23,7 +24,7 @@ export class LeverConnector implements Connector {
     };
   }
 
-  async fetchRaw(): Promise<RawOpportunity[]> {
+  async fetchRaw(since?: Date): Promise<RawOpportunity[]> {
     if (!this.config.enabled) {
       return [];
     }
@@ -44,13 +45,24 @@ export class LeverConnector implements Connector {
         throw new Error(`HTTP Error Status: ${response.status} ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const json = await response.json();
+      const parsed = leverResponseSchema.safeParse(json);
       
-      if (!data || !Array.isArray(data)) {
-        throw new Error('Malformed Lever API response structure: root is not an array.');
+      if (!parsed.success) {
+        throw new Error(`Malformed Lever API response structure: ${parsed.error.message}`);
       }
 
-      const rawPostings = data as Array<Record<string, unknown>>;
+      let rawPostings = parsed.data;
+
+      // Delta sync filtering
+      if (since) {
+        const sinceTime = since.getTime();
+        rawPostings = rawPostings.filter((post) => {
+          if (!post.createdAt) return true;
+          const createdAt = typeof post.createdAt === 'number' ? post.createdAt : new Date(post.createdAt).getTime();
+          return isNaN(createdAt) || createdAt >= sinceTime;
+        });
+      }
 
       return rawPostings.map((posting) => ({
         sourceId: this.metadata.id,
@@ -68,23 +80,12 @@ export class LeverConnector implements Connector {
   }
 
   async parse(raw: RawOpportunity): Promise<ParsedOpportunity> {
-    const payload = raw.payload as {
-      id?: string;
-      text?: string; // Title
-      hostedUrl?: string;
-      description?: string;
-      descriptionBody?: string;
-      categories?: {
-        location?: string;
-        commitment?: string;
-        team?: string;
-      };
-      workplaceType?: string;
-    };
-
-    if (!payload.id || !payload.text) {
-      throw new Error(`Parse error: Lever payload is missing ID or Title (text).`);
+    const parsedPayload = leverJobSchema.safeParse(raw.payload);
+    if (!parsedPayload.success) {
+      throw new Error(`Parse error: Invalid Lever payload structure (${parsedPayload.error.message})`);
     }
+
+    const payload = parsedPayload.data;
 
     const companyDisplayName =
       this.config.companyName ??
@@ -98,8 +99,8 @@ export class LeverConnector implements Connector {
       location: payload.categories?.location || 'United States',
       remoteType: payload.workplaceType || '',
       type: payload.categories?.commitment || '',
-      applicationUrl: payload.hostedUrl || '',
-      description: payload.description || payload.descriptionBody || '',
+      applicationUrl: payload.hostedUrl || payload.applyUrl || '',
+      description: payload.description || payload.descriptionPlain || '',
     };
   }
 }
