@@ -61,6 +61,8 @@ function matchesSearchQuery(company: Company, query: string, searchBy: SearchBy)
   return name.includes(query) || industry.includes(query) || country.includes(query);
 }
 
+type SortOption = 'openings_desc' | 'name_asc' | 'name_desc' | 'tracking_first';
+
 export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   companies,
   onToggleTrack
@@ -72,7 +74,22 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   const [hiringStatusFilter, setHiringStatusFilter] = useState('');
   const [filterType, setFilterType] = useState<TrackingFilter>('all');
   const [openingsFilter, setOpeningsFilter] = useState<OpeningsFilter>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('openings_desc');
   const [selectedShowcaseCompany, setSelectedShowcaseCompany] = useState<Company | null>(null);
+  const [selectedCompanyJobsModal, setSelectedCompanyJobsModal] = useState<Company | null>(null);
+  const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(new Set());
+
+  const toggleExpandCompany = (id: string) => {
+    setExpandedCompanyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   // View Mode & Pagination states
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -91,8 +108,8 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
 
   const query = search.trim().toLowerCase();
 
-  const filteredCompanies = useMemo(() => {
-    return companies.filter((company) => {
+  const filteredAndSortedCompanies = useMemo(() => {
+    const filtered = companies.filter((company) => {
       const matchesSearch = matchesSearchQuery(company, query, searchBy);
       const matchesIndustry = !industryFilter || company.industry === industryFilter;
       const matchesCountry = !countryFilter || company.country === countryFilter;
@@ -121,18 +138,36 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
         matchesOpenings
       );
     });
-  }, [companies, query, searchBy, industryFilter, countryFilter, hiringStatusFilter, filterType, openingsFilter]);
+
+    // Sort companies according to selected sortBy
+    return filtered.sort((a, b) => {
+      if (sortBy === 'openings_desc') {
+        const diff = (b.activeOpeningsCount || 0) - (a.activeOpeningsCount || 0);
+        if (diff !== 0) return diff;
+        return a.name.localeCompare(b.name);
+      }
+      if (sortBy === 'tracking_first') {
+        if (a.isTracking && !b.isTracking) return -1;
+        if (!a.isTracking && b.isTracking) return 1;
+        return (b.activeOpeningsCount || 0) - (a.activeOpeningsCount || 0);
+      }
+      if (sortBy === 'name_desc') {
+        return b.name.localeCompare(a.name);
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [companies, query, searchBy, industryFilter, countryFilter, hiringStatusFilter, filterType, openingsFilter, sortBy]);
 
   // Reset page to 1 whenever filters change
   useEffect(() => {
     setPage(1);
-  }, [search, searchBy, industryFilter, countryFilter, hiringStatusFilter, filterType, openingsFilter]);
+  }, [search, searchBy, industryFilter, countryFilter, hiringStatusFilter, filterType, openingsFilter, sortBy]);
 
-  const totalFiltered = filteredCompanies.length;
+  const totalFiltered = filteredAndSortedCompanies.length;
   const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
   const currentPage = Math.min(page, totalPages);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + pageSize);
+  const paginatedCompanies = filteredAndSortedCompanies.slice(startIndex, startIndex + pageSize);
 
   const hasActiveFilters =
     Boolean(search.trim()) ||
@@ -141,7 +176,8 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
     Boolean(countryFilter) ||
     Boolean(hiringStatusFilter) ||
     filterType !== 'all' ||
-    openingsFilter !== 'all';
+    openingsFilter !== 'all' ||
+    sortBy !== 'openings_desc';
 
   const resetFilters = () => {
     setSearch('');
@@ -151,6 +187,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
     setHiringStatusFilter('');
     setFilterType('all');
     setOpeningsFilter('all');
+    setSortBy('openings_desc');
   };
 
   const selectClassName =
@@ -317,6 +354,18 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             <option value="no-openings">No openings</option>
           </select>
 
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            aria-label="Sort companies by"
+            className={cn(selectClassName, 'border-primary/40 text-primary font-semibold')}
+          >
+            <option value="openings_desc">Sort: Most Openings</option>
+            <option value="name_asc">Sort: Name (A–Z)</option>
+            <option value="name_desc">Sort: Name (Z–A)</option>
+            <option value="tracking_first">Sort: Tracked First</option>
+          </select>
+
           {hasActiveFilters && (
             <button
               type="button"
@@ -416,17 +465,23 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                     </div>
 
                     {/* Status & Openings - Clean & Minimal */}
-                    <div className="pt-0.5">
+                    <div className="pt-0.5 flex items-center justify-between gap-2">
                       {company.hiringStatus === 'FREEZE' ? (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-semibold">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                           <span>Hiring freeze</span>
                         </div>
                       ) : hasOpenings ? (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-semibold">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCompanyJobsModal(company)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs font-semibold transition-all cursor-pointer text-left"
+                          title="View all opportunities for this company"
+                        >
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                           <span>{company.activeOpeningsCount} active {company.activeOpeningsCount === 1 ? 'opening' : 'openings'}</span>
-                        </div>
+                          <span className="text-[10px] text-emerald-400/80 font-normal ml-0.5">→</span>
+                        </button>
                       ) : (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-muted text-text-muted border border-border-subtle text-xs font-medium">
                           <span className="w-1.5 h-1.5 rounded-full bg-text-muted/50"></span>
@@ -434,6 +489,52 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                         </div>
                       )}
                     </div>
+
+                    {/* Preview of top opportunities for this company */}
+                    {company.opportunities && company.opportunities.length > 0 && (
+                      <div className="space-y-1.5 pt-1 border-t border-border-subtle/60">
+                        <div className="flex items-center justify-between text-[10px] font-semibold text-text-muted">
+                          <span>Listed Roles</span>
+                          <button
+                            type="button"
+                            onClick={() => toggleExpandCompany(company.id)}
+                            className="text-primary hover:underline cursor-pointer"
+                          >
+                            {expandedCompanyIds.has(company.id) ? 'Collapse' : `View all (${company.opportunities.length})`}
+                          </button>
+                        </div>
+                        <div className="space-y-1">
+                          {(expandedCompanyIds.has(company.id)
+                            ? company.opportunities
+                            : company.opportunities.slice(0, 2)
+                          ).map((opp) => (
+                            <a
+                              key={opp.id}
+                              href={`/jobs/${opp.id}`}
+                              className="block p-1.5 rounded-lg bg-surface-muted/60 hover:bg-surface-muted border border-border-subtle/50 transition-colors group/opp"
+                            >
+                              <div className="flex items-center justify-between gap-1.5">
+                                <p className="text-[11px] font-semibold text-foreground group-hover/opp:text-primary transition-colors truncate">
+                                  {opp.title}
+                                </p>
+                                <span className="text-[9px] uppercase px-1.5 py-0.2 bg-card-bg border border-border-subtle text-text-muted rounded shrink-0 font-mono">
+                                  {opp.type.toLowerCase()}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[9px] text-text-muted mt-0.5 font-mono">
+                                <span>{opp.location || opp.remoteType || 'Multiple locations'}</span>
+                                {opp.deadline && (
+                                  <>
+                                    <span>•</span>
+                                    <span>Due {new Date(opp.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                  </>
+                                )}
+                              </div>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {company.name.toLowerCase() === 'razorpay' && (
                       <button
@@ -451,19 +552,31 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
 
                   {/* Footer Action Bar */}
                   <div className="pt-2.5 border-t border-border-subtle flex items-center justify-between gap-2">
-                    {company.careerPage || company.website ? (
-                      <a
-                        href={company.careerPage || company.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline"
-                      >
-                        Careers
-                        <ExternalLink className="w-3 h-3 text-text-muted/70" />
-                      </a>
-                    ) : (
-                      <span className="text-[11px] text-text-muted/60">No page</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {company.careerPage || company.website ? (
+                        <a
+                          href={company.careerPage || company.website}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline"
+                        >
+                          Careers
+                          <ExternalLink className="w-3 h-3 text-text-muted/70" />
+                        </a>
+                      ) : (
+                        <span className="text-[11px] text-text-muted/60">No page</span>
+                      )}
+
+                      {hasOpenings && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCompanyJobsModal(company)}
+                          className="text-[11px] text-primary hover:text-primary-hover font-semibold cursor-pointer"
+                        >
+                          Openings ({company.activeOpeningsCount})
+                        </button>
+                      )}
+                    </div>
 
                     <button
                       onClick={() => onToggleTrack(company.id)}
@@ -562,10 +675,18 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                       )}
                     </td>
                     <td className="py-2.5 px-4">
-                      <span className="font-bold text-foreground font-mono">
-                        {company.activeOpeningsCount}
-                      </span>
-                      <span className="text-[10px] text-text-muted ml-1">roles</span>
+                      {company.activeOpeningsCount > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedCompanyJobsModal(company)}
+                          className="inline-flex items-center gap-1 font-bold text-foreground font-mono hover:text-primary transition-colors cursor-pointer group/tblrole"
+                        >
+                          <span>{company.activeOpeningsCount}</span>
+                          <span className="text-[10px] text-text-muted group-hover/tblrole:text-primary">roles →</span>
+                        </button>
+                      ) : (
+                        <span className="font-mono text-text-muted">0 roles</span>
+                      )}
                     </td>
                     <td className="py-2.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -775,6 +896,137 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                 className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-xs font-bold text-zinc-200 cursor-pointer"
               >
                 Close Target Roadmap
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ALL JOBS MODAL FOR SELECTED COMPANY */}
+      {selectedCompanyJobsModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card-bg border border-border-subtle rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-fade-in flex flex-col max-h-[85vh]">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-5 border-b border-border-subtle bg-surface-muted/30">
+              <div className="flex items-center gap-3">
+                <CompanyLogo
+                  logo={selectedCompanyJobsModal.logo}
+                  logoUrl={selectedCompanyJobsModal.logoUrl}
+                  websiteUrl={selectedCompanyJobsModal.website}
+                  name={selectedCompanyJobsModal.name}
+                  size="md"
+                />
+                <div>
+                  <h3 className="text-base font-bold text-foreground">
+                    {selectedCompanyJobsModal.name} Opportunities
+                  </h3>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    {selectedCompanyJobsModal.opportunities?.length || 0} active listed {selectedCompanyJobsModal.opportunities?.length === 1 ? 'role' : 'roles'} • {selectedCompanyJobsModal.industry}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedCompanyJobsModal(null)}
+                className="p-1.5 rounded-lg text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body: List of Openings */}
+            <div className="p-5 overflow-y-auto space-y-3 flex-1 divide-y divide-border-subtle/50">
+              {selectedCompanyJobsModal.opportunities && selectedCompanyJobsModal.opportunities.length > 0 ? (
+                selectedCompanyJobsModal.opportunities.map((opp, idx) => (
+                  <div key={opp.id} className={cn('space-y-2', idx > 0 && 'pt-3')}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <a
+                          href={`/jobs/${opp.id}`}
+                          className="text-sm font-bold text-foreground hover:text-primary transition-colors leading-snug block"
+                        >
+                          {opp.title}
+                        </a>
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-text-muted">
+                          <span className="px-2 py-0.5 rounded bg-surface-muted border border-border-subtle font-mono text-[10px] uppercase">
+                            {opp.type.toLowerCase()}
+                          </span>
+                          <span>•</span>
+                          <span>{opp.location || opp.remoteType || 'Multiple locations'}</span>
+                          {opp.deadline && (
+                            <>
+                              <span>•</span>
+                              <span className="text-amber-400 font-medium">
+                                Deadline: {new Date(opp.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {opp.applicationUrl && (
+                          <a
+                            href={opp.applicationUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2.5 py-1.5 rounded-lg bg-surface-muted hover:bg-surface-elevated text-text-muted hover:text-foreground text-xs font-semibold border border-border-subtle inline-flex items-center gap-1 transition-colors"
+                          >
+                            <span>Direct Link</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                        <a
+                          href={`/jobs/${opp.id}`}
+                          className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs shadow-primary/20 inline-flex items-center gap-1 transition-colors"
+                        >
+                          <span>Apply on Platform</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-text-muted space-y-2">
+                  <Briefcase className="w-8 h-8 mx-auto text-text-muted/60" />
+                  <p className="text-xs">No currently listed individual roles for this company.</p>
+                  {selectedCompanyJobsModal.careerPage && (
+                    <a
+                      href={selectedCompanyJobsModal.careerPage}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-semibold mt-2"
+                    >
+                      <span>Visit {selectedCompanyJobsModal.name} Official Career Portal</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-border-subtle bg-surface-muted/20 flex items-center justify-between">
+              {selectedCompanyJobsModal.careerPage || selectedCompanyJobsModal.website ? (
+                <a
+                  href={selectedCompanyJobsModal.careerPage || selectedCompanyJobsModal.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-text-muted hover:text-foreground inline-flex items-center gap-1 transition-colors hover:underline"
+                >
+                  <span>Official Careers Portal</span>
+                  <ExternalLink className="w-3 h-3 text-text-muted" />
+                </a>
+              ) : (
+                <span />
+              )}
+              <button
+                type="button"
+                onClick={() => setSelectedCompanyJobsModal(null)}
+                className="px-4 py-1.5 bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>
