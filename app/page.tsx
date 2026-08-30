@@ -294,19 +294,31 @@ export default function Home() {
               return (
                 <div
                   key={feature.title}
-                  className="bg-[#18181B] border border-zinc-850 hover:border-zinc-700 rounded-xl p-6 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgb(0,0,0,0.3)] relative overflow-hidden group flex flex-col justify-between"
+                  className="relative group rounded-2xl p-7 bg-zinc-900/40 border border-zinc-800/80 hover:border-primary/50 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(59,130,246,0.12)] overflow-hidden flex flex-col justify-between"
                 >
-                  <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="space-y-4 relative z-10">
-                    <div className="w-10 h-10 rounded-lg bg-zinc-900 border border-zinc-850 flex items-center justify-center text-primary group-hover:scale-105 transition-transform duration-300">
-                      <Icon className="w-5 h-5" />
+                  {/* Subtle top gradient line highlight */}
+                  <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Soft background ambient glow */}
+                  <div className="absolute -top-12 -right-12 w-28 h-28 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors pointer-events-none" />
+
+                  <div className="space-y-5 relative z-10">
+                    <div className="w-12 h-12 rounded-xl bg-zinc-900/90 border border-zinc-750 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white group-hover:border-primary group-hover:scale-110 transition-all duration-300 shadow-md">
+                      <Icon className="w-6 h-6" />
                     </div>
-                    <h3 className="text-sm font-bold text-white group-hover:text-primary transition-colors">
-                      {feature.title}
-                    </h3>
-                    <p className="text-xs text-text-muted leading-relaxed">
-                      {feature.description}
-                    </p>
+                    <div className="space-y-2">
+                      <h3 className="text-base font-bold text-white group-hover:text-primary transition-colors tracking-tight">
+                        {feature.title}
+                      </h3>
+                      <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 mt-6 border-t border-zinc-800/40 flex items-center justify-between text-[11px] font-semibold text-zinc-500 group-hover:text-primary transition-colors">
+                    <span>Explore capability</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               );
