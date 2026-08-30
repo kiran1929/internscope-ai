@@ -294,6 +294,79 @@ html.light .cl-dividerLine {
   background-color: var(--border-subtle) !important;
 }
 
+/* Marketing pages keep their dark palette when the app theme is light */
+html.light .preserve-dark-theme {
+  --foreground: #FAFAFA;
+  --text-muted: #A1A1AA;
+  --border-subtle: #27272A;
+  --surface-muted: #18181B;
+  --card-bg: #18181B;
+  color: #FAFAFA;
+  background-color: #09090B !important;
+}
+
+html.light .preserve-dark-theme .text-white {
+  color: #ffffff !important;
+}
+
+html.light .preserve-dark-theme .text-zinc-100 {
+  color: #f4f4f5 !important;
+}
+
+html.light .preserve-dark-theme .text-text-muted {
+  color: #A1A1AA !important;
+}
+
+html.light .preserve-dark-theme [class*="bg-[#09090B]"] {
+  background-color: #09090B !important;
+}
+
+html.light .preserve-dark-theme [class*="bg-[#111113]"] {
+  background-color: #111113 !important;
+}
+
+html.light .preserve-dark-theme [class*="bg-[#18181B]"] {
+  background-color: #18181B !important;
+}
+
+html.light .preserve-dark-theme [class*="bg-zinc-900"] {
+  background-color: rgb(24 24 27) !important;
+}
+
+html.light .preserve-dark-theme [class*="bg-zinc-950"] {
+  background-color: rgb(9 9 11) !important;
+}
+
+html.light .preserve-dark-theme [class*="border-zinc-8"],
+html.light .preserve-dark-theme [class*="border-zinc-7"],
+html.light .preserve-dark-theme [class*="border-zinc-9"],
+html.light .preserve-dark-theme [class*="divide-zinc"] {
+  border-color: #27272A !important;
+}
+
+html.light .preserve-dark-theme .glass-navbar {
+  background: rgba(9, 9, 11, 0.88) !important;
+  border-bottom: 1px solid rgba(39, 39, 42, 0.9) !important;
+}
+
+html.light .preserve-dark-theme .btn-ghost {
+  color: #A1A1AA !important;
+}
+
+html.light .preserve-dark-theme .btn-ghost:hover {
+  background-color: rgba(39, 39, 42, 0.55) !important;
+  color: #ffffff !important;
+}
+
+html.light .preserve-dark-theme [class*="hover:text-white"]:hover {
+  color: #ffffff !important;
+}
+
+html.light .preserve-dark-theme .landing-cta-card {
+  background: linear-gradient(to top right, rgb(24 24 27), rgb(9 9 11)) !important;
+  border-color: #27272A !important;
+}
+
 /* Custom utility animations */
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }

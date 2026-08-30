@@ -40,7 +40,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex-1 flex flex-col min-h-screen text-foreground relative overflow-hidden bg-[#09090B]">
+    <div className="preserve-dark-theme flex-1 flex flex-col min-h-screen text-foreground relative overflow-hidden bg-[#09090B]">
       
       {/* Absolute ambient grid glow overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:14px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0" />
@@ -346,7 +346,7 @@ export default function Home() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.8 }}
           id="faq"
-          className="max-w-3xl mx-auto px-4 sm:px-6 py-20 sm:py-28 space-y-8 "
+          className="max-w-3xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 pb-10 sm:pb-14 space-y-8"
         >
           <div className="text-center space-y-3">
             <HelpCircle className="w-6 h-6 text-primary mx-auto" />
@@ -387,9 +387,9 @@ export default function Home() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
           id="pricing"
-          className="max-w-4xl mx-auto px-4 sm:px-6 pb-28 text-center "
+          className="max-w-4xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28 text-center"
         >
-          <div className="bg-gradient-to-tr from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-8 sm:p-12 space-y-6 relative overflow-hidden shadow-2xl">
+          <div className="landing-cta-card bg-gradient-to-tr from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-8 sm:p-12 space-y-6 relative overflow-hidden shadow-2xl">
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full filter blur-[60px]" />
             <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
               PRICING & INTERVIEWS &bull; COMING SOON

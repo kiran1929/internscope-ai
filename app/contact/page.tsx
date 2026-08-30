@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export default function ContactPage() {
   return (
-    <div className="flex-1 flex flex-col min-h-screen bg-[#09090B] text-white">
+    <div className="preserve-dark-theme flex-1 flex flex-col min-h-screen bg-[#09090B] text-white">
       <Header onViewDemo={() => {}} />
 
       <main className="flex-1 max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20 space-y-8 text-xs leading-relaxed font-sans ">
