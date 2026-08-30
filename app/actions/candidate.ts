@@ -342,8 +342,8 @@ export async function getPersonalizedRecommendations() {
       // 1. Skill & Technologies overlap (max 50 points)
       const jobSkills = job.enrichment?.skills || [];
       if (userSkills.length > 0 && jobSkills.length > 0) {
-        const matchingSkills = jobSkills.filter((s) =>
-          userSkills.map((us) => us.toLowerCase()).includes(s.toLowerCase())
+        const matchingSkills = jobSkills.filter((s: string) =>
+          userSkills.map((us: string) => us.toLowerCase()).includes(s.toLowerCase())
         );
         score += (matchingSkills.length / Math.max(userSkills.length, 1)) * 50;
       }
@@ -351,7 +351,7 @@ export async function getPersonalizedRecommendations() {
       // 2. Preferred Location overlap (max 20 points)
       if (userLocations.length > 0) {
         const jobLoc = job.location.toLowerCase();
-        const matchesLocation = userLocations.some((ul) =>
+        const matchesLocation = userLocations.some((ul: string) =>
           jobLoc.includes(ul.toLowerCase())
         );
         if (matchesLocation) score += 20;
@@ -360,7 +360,7 @@ export async function getPersonalizedRecommendations() {
       // 3. Remote Pref overlap (max 15 points)
       if (userRemote.length > 0) {
         const jobRemote = job.remoteType?.toString().toUpperCase();
-        const matchesRemote = userRemote.some((ur) =>
+        const matchesRemote = userRemote.some((ur: string) =>
           ur.toUpperCase() === jobRemote
         );
         if (matchesRemote) score += 15;
@@ -369,7 +369,7 @@ export async function getPersonalizedRecommendations() {
       // 4. Employment Type Pref overlap (max 15 points)
       if (userTypes.length > 0) {
         const jobType = job.type?.toString().toUpperCase();
-        const matchesType = userTypes.some((ut) =>
+        const matchesType = userTypes.some((ut: string) =>
           ut.toUpperCase() === jobType
         );
         if (matchesType) score += 15;
