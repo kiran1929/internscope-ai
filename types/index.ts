@@ -21,9 +21,14 @@ export interface Company {
   website: string;
   careerPage?: string;
   country?: string;
+  city?: string | null;
+  state?: string | null;
+  location?: string;
+  tags?: string[];
+  isVerified?: boolean;
   hiringStatus?: string;
-  companySize?: string;
   opportunities?: CompanyOpportunity[];
+  description?: string;
 }
 
 export interface Internship {

@@ -72,8 +72,13 @@ export async function getCompaniesDirectoryForUser() {
         careerPageUrl: true,
         industry: true,
         country: true,
+        city: true,
+        state: true,
+        tags: true,
+        isVerified: true,
         hiringStatus: true,
         companySize: true,
+        description: true,
         opportunities: {
           where: openOpportunityWhere(),
           orderBy: [
@@ -104,29 +109,40 @@ export async function getCompaniesDirectoryForUser() {
 
   const trackedCompanyIds = new Set(dbTrackedCompanies.map((company) => company.companyId));
 
-  return dbCompanies.map((company) => ({
-    id: company.id,
-    name: company.name,
-    logo: company.logoUrl || company.name.slice(0, 4).toUpperCase(),
-    logoUrl: company.logoUrl,
-    industry: company.industry || 'Tech',
-    activeOpeningsCount: company._count.opportunities,
-    isTracking: trackedCompanyIds.has(company.id),
-    website: company.websiteUrl || '',
-    careerPage: company.careerPageUrl || '',
-    country: company.country || '',
-    hiringStatus: company.hiringStatus || '',
-    companySize: company.companySize || '',
-    opportunities: company.opportunities.map((opp) => ({
-      id: opp.id,
-      title: opp.title,
-      type: opp.type,
-      location: opp.location,
-      remoteType: opp.remoteType,
-      deadline: opp.deadline ? opp.deadline.toISOString() : null,
-      applicationUrl: opp.applicationUrl,
-    })),
-  }));
+  return dbCompanies.map((company) => {
+    const locationParts = [company.city, company.state, company.country].filter(Boolean);
+    const location = locationParts.length > 0 ? locationParts.join(', ') : 'HQ / Global';
+
+    return {
+      id: company.id,
+      name: company.name,
+      logo: company.logoUrl || company.name.slice(0, 4).toUpperCase(),
+      logoUrl: company.logoUrl,
+      industry: company.industry || 'Technology',
+      activeOpeningsCount: company._count.opportunities,
+      isTracking: trackedCompanyIds.has(company.id),
+      website: company.websiteUrl || '',
+      careerPage: company.careerPageUrl || '',
+      country: company.country || '',
+      city: company.city || '',
+      state: company.state || '',
+      location,
+      tags: company.tags || [],
+      isVerified: company.isVerified || false,
+      hiringStatus: company.hiringStatus || '',
+      companySize: company.companySize || '',
+      description: company.description || '',
+      opportunities: company.opportunities.map((opp) => ({
+        id: opp.id,
+        title: opp.title,
+        type: opp.type,
+        location: opp.location,
+        remoteType: opp.remoteType,
+        deadline: opp.deadline ? opp.deadline.toISOString() : null,
+        applicationUrl: opp.applicationUrl,
+      })),
+    };
+  });
 }
 
 // 1. Profile Actions

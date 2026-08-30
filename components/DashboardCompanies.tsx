@@ -7,6 +7,7 @@ import {
   Briefcase,
   Plus,
   Check,
+  CheckCircle2,
   X,
   RotateCcw,
   LayoutGrid,
@@ -435,7 +436,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                   )}
                 >
                   <div className="space-y-3">
-                    {/* Top Row: Logo + Name & Country + Industry Badge */}
+                    {/* Top Row: Logo + Name & Location + Industry Badge */}
                     <div className="flex items-start justify-between gap-2.5">
                       <div className="flex items-center gap-2.5 min-w-0">
                         <CompanyLogo
@@ -446,15 +447,19 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                           size="md"
                         />
                         <div className="min-w-0">
-                          <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                            {company.name}
-                          </h3>
-                          <div className="flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
-                            {company.country ? (
-                              <span className="truncate">{company.country}</span>
-                            ) : (
-                              <span>Global</span>
+                          <div className="flex items-center gap-1">
+                            <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
+                              {company.name}
+                            </h3>
+                            {company.isVerified && (
+                              <span title="Verified Company">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />
+                              </span>
                             )}
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
+                            <MapPin className="w-2.5 h-2.5 text-text-muted/70 shrink-0" />
+                            <span className="truncate">{company.location || company.country || 'HQ / Global'}</span>
                           </div>
                         </div>
                       </div>
@@ -463,6 +468,20 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                         {company.industry}
                       </span>
                     </div>
+
+                    {/* Sub-tags if available */}
+                    {company.tags && company.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {company.tags.slice(0, 3).map((tag) => (
+                          <span
+                            key={tag}
+                            className="text-[9px] font-medium text-text-muted bg-surface-muted/90 border border-border-subtle px-1.5 py-0.2 rounded"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Status & Openings - Clean & Minimal */}
                     <div className="pt-0.5 flex items-center justify-between gap-2">
@@ -634,7 +653,14 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                           size="sm"
                         />
                         <div>
-                          <p className="font-bold text-foreground">{company.name}</p>
+                          <div className="flex items-center gap-1">
+                            <p className="font-bold text-foreground">{company.name}</p>
+                            {company.isVerified && (
+                              <span title="Verified Company">
+                                <CheckCircle2 className="w-3 h-3 text-primary shrink-0" />
+                              </span>
+                            )}
+                          </div>
                           {company.careerPage || company.website ? (
                             <a
                               href={company.careerPage || company.website}
@@ -654,7 +680,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                       </span>
                     </td>
                     <td className="py-2.5 px-4 text-text-muted">
-                      {company.country || 'Global'}
+                      {company.location || company.country || 'HQ / Global'}
                     </td>
                     <td className="py-2.5 px-4">
                       {company.hiringStatus === 'FREEZE' ? (
