@@ -169,7 +169,7 @@ export default function EmailReportsClient({ userEmail, preference }: EmailRepor
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300 max-w-3xl">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300 max-w-7xl mx-auto">
 
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-zinc-900 pb-5">
