@@ -96,7 +96,13 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
       const matchesSearch = matchesSearchQuery(company, query, searchBy);
       const matchesIndustry = !industryFilter || company.industry === industryFilter;
       const matchesCountry = !countryFilter || company.country === countryFilter;
-      const matchesHiringStatus = !hiringStatusFilter || company.hiringStatus === hiringStatusFilter;
+      const matchesHiringStatus =
+        !hiringStatusFilter ||
+        (hiringStatusFilter === 'HIRING'
+          ? company.activeOpeningsCount > 0 && company.hiringStatus !== 'FREEZE'
+          : hiringStatusFilter === 'FREEZE'
+          ? company.hiringStatus === 'FREEZE'
+          : company.activeOpeningsCount === 0 || company.hiringStatus === 'NOT_HIRING');
       const matchesTracking =
         filterType === 'all' ||
         (filterType === 'tracking' ? company.isTracking : !company.isTracking);
@@ -277,21 +283,17 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             </select>
           )}
 
-          {hiringStatuses.length > 0 && (
-            <select
-              value={hiringStatusFilter}
-              onChange={(e) => setHiringStatusFilter(e.target.value)}
-              aria-label="Filter by hiring status"
-              className={selectClassName}
-            >
-              <option value="">All statuses</option>
-              {hiringStatuses.map((status) => (
-                <option key={status} value={status}>
-                  {HIRING_STATUS_LABELS[status] || status}
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            value={hiringStatusFilter}
+            onChange={(e) => setHiringStatusFilter(e.target.value)}
+            aria-label="Filter by hiring status"
+            className={selectClassName}
+          >
+            <option value="">All statuses</option>
+            <option value="HIRING">Hiring</option>
+            <option value="NOT_HIRING">Not hiring</option>
+            <option value="FREEZE">Hiring freeze</option>
+          </select>
 
           <select
             value={filterType}
@@ -431,9 +433,13 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                         <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded">
                           Freeze
                         </span>
-                      ) : (
+                      ) : hasOpenings ? (
                         <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded">
                           Hiring
+                        </span>
+                      ) : (
+                        <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-surface-muted text-text-muted border border-border-subtle rounded">
+                          Not hiring
                         </span>
                       )}
                     </div>
@@ -547,22 +553,22 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                       {company.country || 'Global'}
                     </td>
                     <td className="py-2.5 px-4">
-                      <span
-                        className={cn(
-                          'text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1',
-                          company.hiringStatus === 'FREEZE'
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            'w-1.5 h-1.5 rounded-full',
-                            company.hiringStatus === 'FREEZE' ? 'bg-amber-400' : 'bg-emerald-500'
-                          )}
-                        />
-                        {HIRING_STATUS_LABELS[company.hiringStatus || 'HIRING'] || 'Hiring'}
-                      </span>
+                      {company.hiringStatus === 'FREEZE' ? (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                          Hiring freeze
+                        </span>
+                      ) : company.activeOpeningsCount > 0 ? (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          Hiring
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-surface-muted text-text-muted border border-border-subtle">
+                          <span className="w-1.5 h-1.5 rounded-full bg-text-muted/50" />
+                          Not hiring
+                        </span>
+                      )}
                     </td>
                     <td className="py-2.5 px-4">
                       <span className="font-bold text-foreground font-mono">
