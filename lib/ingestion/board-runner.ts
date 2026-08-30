@@ -7,9 +7,9 @@ import { defaultScraperSettings } from './config';
 import {
   ScrapeBoard,
   ScrapeProvider,
-  getEffectiveBoardsByProvider,
   buildCareerPageUrl,
 } from './company-catalog';
+import { getEffectiveBoardsByProvider } from './dynamic-catalog';
 import { IngestionSummary } from './types';
 
 function sleep(ms: number) {
