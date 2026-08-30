@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { getAuthenticatedUser } from '@/app/actions/candidate';
 import { prisma } from '@/lib/db';
 import { SearchService } from '@/lib/search/search-service';
@@ -6,13 +6,21 @@ import CandidateSearchClient from '@/components/CandidateSearchClient';
 
 export const dynamic = 'force-dynamic';
 
-export default async function InternshipsPage() {
+export default async function InternshipsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ query?: string; q?: string }>;
+}) {
   const user = await getAuthenticatedUser();
+  const resolvedParams = searchParams ? await searchParams : {};
+  const queryParam = resolvedParams.query || resolvedParams.q || '';
 
   // 1. Load initial search results using the backend SearchService
   const initialResults = await SearchService.search({
+    query: queryParam || undefined,
     limit: 10,
     offset: 0,
+    userId: user.id,
   });
 
   // 2. Load candidate's saved list
@@ -52,12 +60,14 @@ export default async function InternshipsPage() {
   }));
 
   return (
-    <CandidateSearchClient
-      initialOpportunities={mappedOpportunities}
-      initialTotal={initialResults.total}
-      initialTotalPages={initialResults.totalPages}
-      savedOpportunityIds={savedOpportunityIds}
-      trackedOpportunityIds={trackedOpportunityIds}
-    />
+    <Suspense fallback={<div className="p-8 text-center text-text-muted">Loading internships...</div>}>
+      <CandidateSearchClient
+        initialOpportunities={mappedOpportunities}
+        initialTotal={initialResults.total}
+        initialTotalPages={initialResults.totalPages}
+        savedOpportunityIds={savedOpportunityIds}
+        trackedOpportunityIds={trackedOpportunityIds}
+      />
+    </Suspense>
   );
 }

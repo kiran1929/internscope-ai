@@ -45,7 +45,6 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
         onNavigate={closeMobileSidebar}
         isCollapsed={sidebarCollapsed}
         setIsCollapsed={setSidebarCollapsed}
-        onExitDemo={() => router.push('/')}
       />
 
       {mobileSidebarOpen && (
@@ -66,7 +65,6 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
           onNavigate={closeMobileSidebar}
           isCollapsed={false}
           setIsCollapsed={() => {}}
-          onExitDemo={() => router.push('/')}
         />
       </div>
 

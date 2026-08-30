@@ -35,9 +35,12 @@ export default async function DashboardPage() {
     }),
     // Recent searches logged by this candidate
     prisma.searchLog.findMany({
-      where: { userId: user.id },
+      where: {
+        userId: user.id,
+        query: { not: '' },
+      },
       orderBy: { createdAt: 'desc' },
-      take: 6,
+      take: 8,
       select: { id: true, query: true, createdAt: true },
     }),
     // Upcoming deadlines in the next 14 days
