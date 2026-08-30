@@ -7,11 +7,18 @@ export class DuplicateDetector {
     companyId: string | null
   ): Promise<DuplicateDetectResult> {
     try {
-      // 1. Match by exact application URL
+      // 1. Match by exact application URL (HIGH-003)
       if (normalized.applicationUrl) {
+        const rawUrl = normalized.applicationUrl.trim();
+        const cleanUrl = rawUrl.split(/[?#]/)[0]; // Canonical base URL
+
         const urlMatch = await prisma.opportunity.findFirst({
           where: {
-            applicationUrl: normalized.applicationUrl,
+            OR: [
+              { applicationUrl: rawUrl },
+              { applicationUrl: cleanUrl },
+              { applicationUrl: { startsWith: cleanUrl } },
+            ],
             isArchived: false,
           },
           include: {
@@ -24,7 +31,7 @@ export class DuplicateDetector {
             isDuplicate: true,
             confidence: 1.0,
             existingOpportunityId: urlMatch.id,
-            message: `Duplicate detected: Exact application URL match with job ID ${urlMatch.id} under ${urlMatch.company.name}`,
+            message: `Duplicate detected: Application URL matched existing opportunity (${urlMatch.id}) under ${urlMatch.company.name}`,
           };
         }
       }

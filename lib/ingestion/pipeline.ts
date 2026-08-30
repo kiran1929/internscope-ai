@@ -16,6 +16,7 @@ import {
   ValidationResult
 } from './types';
 import { ParseError, ValidationError, PersistenceError } from './errors';
+import { DeadLetterQueue } from './dead-letter-queue';
 
 export class IngestionPipeline {
   constructor(private readonly connector: Connector) {}
@@ -159,6 +160,15 @@ export class IngestionPipeline {
         record.status = 'failed';
         record.errors.push(errObj.message);
         
+        // Push to Dead Letter Queue (HIGH-004)
+        DeadLetterQueue.recordFailure(
+          source.id,
+          'PipelineProcessing',
+          errObj.message,
+          raw.externalJobId,
+          raw.payload
+        );
+
         IngestionLogger.error(
           'Failed',
           `Pipeline error processing job record: ${errObj.message}`,
