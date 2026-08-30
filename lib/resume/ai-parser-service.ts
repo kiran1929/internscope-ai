@@ -88,7 +88,7 @@ export class AIParserService {
         // Ensure array structures
         return {
           structuredData: this.sanitizePayload(payload),
-          confidenceScore: payload.confidenceScore ?? 0.85,
+          confidenceScore: Math.min(payload.confidenceScore ?? 0.85, 0.95),
           tokensConsumed: totalTokens,
           aiProvider: 'Gemini',
           parserVersion: this.PARSER_VERSION,
@@ -323,12 +323,12 @@ export class AIParserService {
       technologies: skills.slice(0, 8),
       languages: ['English'],
       links: [{ name: 'Portfolio', url: '' }],
-      confidenceScore: 0.8,
+      confidenceScore: 0.62,
     };
 
     return {
       structuredData,
-      confidenceScore: 0.8,
+      confidenceScore: 0.62,
       tokensConsumed: 0,
       aiProvider: 'Mock-Local',
       parserVersion: this.PARSER_VERSION,
@@ -393,7 +393,7 @@ Extract the data into this JSON schema structure:
     }
   ],
   "experienceLevel": "Intern", // Estimated experience level ('Intern', 'Entry Level', 'Junior', 'Mid Level', 'Senior', 'Lead', 'Manager')
-  "confidenceScore": 0.95
+  "confidenceScore": 0.65
 }
 
 Ensure all lists and arrays are correctly populated. Do not hallucinate fields. Normalize skill names to standard capitalizations (e.g., react -> React, typescript -> TypeScript).
