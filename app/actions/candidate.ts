@@ -14,6 +14,7 @@ import { SearchService, SearchOptions } from '@/lib/search/search-service';
 import { openOpportunityWhere } from '@/lib/opportunities/deadline-utils';
 import { sanitizeGitHubUsername, validateOutboundUrl } from '@/lib/security/ssrf-guard';
 import { sanitizeError } from '@/lib/security/error-handler';
+import { enforceRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/security/rate-limiter';
 
 // Helper to authenticate the candidate user and retrieve DB entity
 async function resolveAuthenticatedUser() {
@@ -496,8 +497,10 @@ export async function getEmailPreferenceAction() {
 export async function searchJobsAction(options: SearchOptions) {
   try {
     const user = await getAuthenticatedUser();
+    const cappedLimit = Math.min(Math.max(1, options.limit || 10), 100);
     const results = await SearchService.search({
       ...options,
+      limit: cappedLimit,
       userId: user.id,
     });
     
@@ -655,6 +658,10 @@ export async function simulateCareerSkillAction(skills: string[]) {
 export async function analyzeGitHubIntelligenceAction(username: string) {
   try {
     const user = await getAuthenticatedUser();
+
+    // Enforce rate limiting (HIGH-002)
+    enforceRateLimit('analyze-github', user.id, RATE_LIMIT_CONFIGS.GITHUB_ANALYSIS);
+
     const cleanUsername = sanitizeGitHubUsername(username);
     if (!cleanUsername) {
       return { success: false, error: 'Invalid GitHub username format. Only alphanumeric characters and single hyphens are allowed.' };
@@ -779,6 +786,9 @@ export async function analyzePortfolioIntelligenceAction(url: string) {
   try {
     const user = await getAuthenticatedUser();
     
+    // Enforce rate limiting (HIGH-002)
+    enforceRateLimit('analyze-portfolio', user.id, RATE_LIMIT_CONFIGS.PORTFOLIO_ANALYSIS);
+
     // SSRF Guard: Validate outbound URL protocol, host, and IP ranges
     const validation = validateOutboundUrl(url);
     if (!validation.isValid || !validation.parsedUrl) {
