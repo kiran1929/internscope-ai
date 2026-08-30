@@ -74,8 +74,12 @@ export function validateResumeUpload(file: File, buffer: Buffer): ValidatedUploa
     }
   }
 
+  if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+    throw new AppError('VALIDATION_ERROR', 'Invalid file name.', { isPublic: true });
+  }
+
   const safeName = path.basename(file.name).replace(/[\x00-\x1f\x7f]/g, '').slice(0, 200);
-  if (safeName.includes('..') || safeName.includes('/') || safeName.includes('\\')) {
+  if (!safeName) {
     throw new AppError('VALIDATION_ERROR', 'Invalid file name.', { isPublic: true });
   }
 
