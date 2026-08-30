@@ -112,20 +112,24 @@ export class OpportunityNotificationService {
       }
     }
 
-    // 6. Duplicate Protection: Check if this user was already notified for this exact opportunity
+    // 6. Duplicate Protection: Check if this user was already notified for this exact opportunity (HIGH-004)
     const oppId = params.opportunityId || params.opportunity.id;
 
     if (oppId && !params.forceSend) {
-      const existingSent = await prisma.emailNotification.findFirst({
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const existing = await prisma.emailNotification.findFirst({
         where: {
           userId: user.id,
           opportunityId: oppId,
-          status: NotificationStatus.SENT,
+          OR: [
+            { status: NotificationStatus.SENT },
+            { status: NotificationStatus.PENDING, createdAt: { gte: fiveMinutesAgo } },
+          ],
         },
       });
 
-      if (existingSent) {
-        console.info(`[NotificationService] Duplicate prevention: User ${user.id} already received email for opportunity ${oppId}`);
+      if (existing) {
+        console.info(`[NotificationService] Concurrency-safe duplicate prevention: User ${user.id} already received or is dispatching email for opportunity ${oppId}`);
         return { sent: false, skipped: true, skipReason: 'DUPLICATE_NOTIFICATION_PREVENTED' };
       }
     }
