@@ -1,7 +1,10 @@
 /**
  * Rate Limiter Utility
- * Protects AI-intensive endpoints from API exhaustion and Denial of Service (HIGH-002).
+ * Uses Redis-backed sliding window when REDIS_URL is configured, otherwise in-memory fallback.
  */
+
+import { RedisCache } from '@/lib/platform/redis';
+import { AppError } from './errors';
 
 interface RateLimitRecord {
   timestamps: number[];
@@ -9,12 +12,11 @@ interface RateLimitRecord {
 
 const memoryStore = new Map<string, RateLimitRecord>();
 
-// Cleanup stale timestamps every 10 minutes to prevent memory leaks
 if (typeof setInterval !== 'undefined') {
   setInterval(() => {
     const now = Date.now();
     for (const [key, record] of memoryStore.entries()) {
-      record.timestamps = record.timestamps.filter(ts => now - ts < 3600 * 1000);
+      record.timestamps = record.timestamps.filter((ts) => now - ts < 3600 * 1000);
       if (record.timestamps.length === 0) {
         memoryStore.delete(key);
       }
@@ -24,22 +26,20 @@ if (typeof setInterval !== 'undefined') {
 
 export interface RateLimitConfig {
   maxRequests: number;
-  windowMs: number; // in milliseconds
+  windowMs: number;
 }
 
 export const RATE_LIMIT_CONFIGS = {
-  GITHUB_ANALYSIS: { maxRequests: 5, windowMs: 60 * 60 * 1000 },       // 5 per hour
-  PORTFOLIO_ANALYSIS: { maxRequests: 5, windowMs: 60 * 60 * 1000 },    // 5 per hour
-  RESUME_OPTIMIZATION: { maxRequests: 10, windowMs: 60 * 60 * 1000 },   // 10 per hour
-  COVER_LETTER: { maxRequests: 10, windowMs: 60 * 60 * 1000 },          // 10 per hour
-  INTERVIEW_PREP: { maxRequests: 20, windowMs: 60 * 60 * 1000 },        // 20 per hour
-  SEARCH_QUERY: { maxRequests: 120, windowMs: 60 * 1000 },              // 120 per minute
+  GITHUB_ANALYSIS: { maxRequests: 5, windowMs: 60 * 60 * 1000 },
+  PORTFOLIO_ANALYSIS: { maxRequests: 5, windowMs: 60 * 60 * 1000 },
+  RESUME_OPTIMIZATION: { maxRequests: 10, windowMs: 60 * 60 * 1000 },
+  COVER_LETTER: { maxRequests: 10, windowMs: 60 * 60 * 1000 },
+  RESUME_UPLOAD: { maxRequests: 20, windowMs: 60 * 60 * 1000 },
+  INTERVIEW_PREP: { maxRequests: 20, windowMs: 60 * 60 * 1000 },
+  SEARCH_QUERY: { maxRequests: 120, windowMs: 60 * 1000 },
 } as const;
 
-/**
- * Checks and consumes a rate limit token for a specific action and user/IP key.
- */
-export function checkRateLimit(
+function checkRateLimitMemory(
   key: string,
   config: RateLimitConfig
 ): { allowed: boolean; remaining: number; resetInMs: number } {
@@ -52,22 +52,15 @@ export function checkRateLimit(
     memoryStore.set(key, record);
   }
 
-  // Filter timestamps within the current sliding window
-  record.timestamps = record.timestamps.filter(ts => ts > windowStart);
+  record.timestamps = record.timestamps.filter((ts) => ts > windowStart);
 
   if (record.timestamps.length >= config.maxRequests) {
     const oldestTimestamp = record.timestamps[0];
     const resetInMs = Math.max(0, oldestTimestamp + config.windowMs - now);
-    return {
-      allowed: false,
-      remaining: 0,
-      resetInMs,
-    };
+    return { allowed: false, remaining: 0, resetInMs };
   }
 
-  // Consume token
   record.timestamps.push(now);
-
   return {
     allowed: true,
     remaining: config.maxRequests - record.timestamps.length,
@@ -75,17 +68,47 @@ export function checkRateLimit(
   };
 }
 
-/**
- * Throws a formatted Error if rate limit is exceeded.
- */
-export function enforceRateLimit(
+export async function checkRateLimit(
+  key: string,
+  config: RateLimitConfig
+): Promise<{ allowed: boolean; remaining: number; resetInMs: number }> {
+  if (process.env.REDIS_URL) {
+    const windowSeconds = Math.ceil(config.windowMs / 1000);
+    const redisResult = await RedisCache.rateLimit(key, config.maxRequests, windowSeconds);
+    if (!redisResult.allowed) {
+      return { allowed: false, remaining: 0, resetInMs: config.windowMs };
+    }
+    return { allowed: true, remaining: redisResult.remaining, resetInMs: config.windowMs };
+  }
+
+  return checkRateLimitMemory(key, config);
+}
+
+export async function enforceRateLimit(
+  actionName: string,
+  identifier: string,
+  config: RateLimitConfig
+): Promise<void> {
+  const key = `${actionName}:${identifier}`;
+  const result = await checkRateLimit(key, config);
+
+  if (!result.allowed) {
+    const minutes = Math.ceil(result.resetInMs / 60000);
+    throw new AppError(
+      'RATE_LIMITED',
+      `Rate limit exceeded for ${actionName}. Please wait ${minutes} minute${minutes > 1 ? 's' : ''} before trying again.`,
+      { isPublic: true, statusCode: 429 }
+    );
+  }
+}
+
+/** @deprecated Use async enforceRateLimit */
+export function enforceRateLimitSync(
   actionName: string,
   identifier: string,
   config: RateLimitConfig
 ): void {
-  const key = `${actionName}:${identifier}`;
-  const result = checkRateLimit(key, config);
-
+  const result = checkRateLimitMemory(`${actionName}:${identifier}`, config);
   if (!result.allowed) {
     const minutes = Math.ceil(result.resetInMs / 60000);
     throw new Error(`Rate limit exceeded for ${actionName}. Please wait ${minutes} minute${minutes > 1 ? 's' : ''} before trying again.`);

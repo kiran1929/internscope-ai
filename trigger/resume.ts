@@ -5,6 +5,7 @@ import { ExtractionService } from '../lib/resume/extraction-service';
 import { AIParserService } from '../lib/resume/ai-parser-service';
 import { QualityService } from '../lib/resume/quality-service';
 import { MatchEngine } from '../lib/resume/match-engine';
+import { withBoundedRetry, isRetryableProviderError } from '../lib/security/processing';
 import { careerAnalysisPipeline, runCareerAnalysisPipeline } from './career';
 
 export interface ResumePipelinePayload {
@@ -25,19 +26,33 @@ export async function runResumeParsePipeline(payload: ResumePipelinePayload) {
     throw new Error(`Resume not found in DB with ID: ${resumeId}`);
   }
 
+  if (resume.userId !== userId) {
+    throw new Error('Forbidden: resume ownership mismatch');
+  }
+
+  await prisma.resume.update({
+    where: { id: resumeId },
+    data: { processingStatus: 'PROCESSING', parsingError: null },
+  });
+
   try {
     // 2. Read file buffer from secure storage
     const buffer = await StorageService.readFile(resume.filePath);
 
     // 3. Document text extraction
-    const extraction = await ExtractionService.extractText(buffer, resume.mimeType);
+    const extraction = await withBoundedRetry(
+      () => ExtractionService.extractText(buffer, resume.mimeType),
+      { shouldRetry: isRetryableProviderError }
+    );
 
     if (extraction.isScanned) {
       throw new Error('Detected scanned PDF containing no indexable text. Please upload a structured text document.');
     }
 
-    // 4. AI parsing pipeline
-    const parserResult = await AIParserService.parseResume(extraction.text);
+    const parserResult = await withBoundedRetry(
+      () => AIParserService.parseResume(extraction.text),
+      { shouldRetry: isRetryableProviderError }
+    );
 
     // 5. Evaluate resume quality metrics
     const qualityReport = QualityService.evaluate(parserResult.structuredData);
@@ -59,6 +74,8 @@ export async function runResumeParsePipeline(payload: ResumePipelinePayload) {
         structuredData: parserResult.structuredData as any,
         qualityScore: qualityReport.overallScore,
         qualityFeedback: qualityReport.feedback as any,
+        processingStatus: 'READY',
+        parsingError: null,
       },
     });
 
@@ -150,6 +167,7 @@ export async function runResumeParsePipeline(payload: ResumePipelinePayload) {
       data: {
         parsingError: errorMsg,
         isParsed: false,
+        processingStatus: 'FAILED',
       },
     });
 

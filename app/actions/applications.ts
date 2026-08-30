@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { ApplicationRepository } from '@/lib/repositories/application';
 import { ApplicationStatus } from '@/lib/generated/prisma/enums';
 import { requireAdmin } from '@/lib/auth/admin';
+import { actionError } from '@/lib/security/error-handler';
 
 export async function updateApplicationStatusAction(id: string, newStatus: ApplicationStatus) {
   try {
@@ -24,7 +25,6 @@ export async function updateApplicationStatusAction(id: string, newStatus: Appli
     return { success: true, data: application };
   } catch (error: unknown) {
     console.error('Failed to update application status:', error);
-    const message = error instanceof Error ? error.message : 'Failed to update application status';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'applicationAction') };
   }
 }

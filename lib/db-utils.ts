@@ -15,13 +15,11 @@ export interface PaginatedResult<T> {
   };
 }
 
-export function getPaginationOptions(params?: PaginationParams) {
-  const page = Math.max(1, params?.page || 1);
-  const limit = Math.max(1, Math.min(100, params?.limit || 10)); // Cap limit at 100
-  const skip = (page - 1) * limit;
-  const take = limit;
+import { validatePagination } from './security/pagination';
+import { SECURITY_LIMITS } from './security/constants';
 
-  return { page, limit, skip, take };
+export function getPaginationOptions(params?: PaginationParams) {
+  return validatePagination(params, SECURITY_LIMITS.DEFAULT_PAGE_MAX);
 }
 
 export function buildPaginatedResult<T>(

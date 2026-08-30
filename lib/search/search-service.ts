@@ -2,6 +2,7 @@ import { prisma } from '../db';
 import { OpportunityType, RemoteType, Prisma } from '../generated/prisma/client';
 import { EnrichedOpportunity } from './recommendation-hooks';
 import { openOpportunityWhere } from '../opportunities/deadline-utils';
+import { validateSearchLimit, validateSearchOffset } from '../security/pagination';
 
 export interface SearchOptions {
   query?: string;
@@ -28,8 +29,8 @@ export interface SearchResult {
 
 export class SearchService {
   static async search(options: SearchOptions): Promise<SearchResult> {
-    const limit = options.limit || 20;
-    const offset = options.offset || 0;
+    const limit = validateSearchLimit(options.limit);
+    const offset = validateSearchOffset(options.offset);
     const query = options.query?.trim() || '';
 
     // 1. Build DB Filtering Conditions

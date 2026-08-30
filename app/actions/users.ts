@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { UserRepository } from '@/lib/repositories/user';
 import { Role } from '@/lib/generated/prisma/enums';
 import { requireAdmin } from '@/lib/auth/admin';
+import { actionError } from '@/lib/security/error-handler';
 
 export async function changeUserRoleAction(id: string, newRole: Role) {
   try {
@@ -18,8 +19,7 @@ export async function changeUserRoleAction(id: string, newRole: Role) {
     return { success: true, data: user };
   } catch (error: unknown) {
     console.error('Failed to change user role:', error);
-    const message = error instanceof Error ? error.message : 'Failed to update user role';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'userAction') };
   }
 }
 
@@ -32,8 +32,7 @@ export async function deactivateUserAction(id: string) {
     return { success: true, data: user };
   } catch (error: unknown) {
     console.error('Failed to deactivate user:', error);
-    const message = error instanceof Error ? error.message : 'Failed to deactivate user';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'userAction') };
   }
 }
 
@@ -46,7 +45,6 @@ export async function reactivateUserAction(id: string) {
     return { success: true, data: user };
   } catch (error: unknown) {
     console.error('Failed to reactivate user:', error);
-    const message = error instanceof Error ? error.message : 'Failed to reactivate user';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'userAction') };
   }
 }

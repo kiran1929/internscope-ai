@@ -3,6 +3,7 @@ import { smtpTransport } from './smtp-transport';
 import { EmailTemplateRenderer, OpportunityEmailData } from './template-renderer';
 import { isDirectApplicationUrl } from './application-url-utils';
 import { NotificationStatus } from '@/lib/generated/prisma/client';
+import { isUniqueConstraintError } from '@/lib/security/errors';
 
 export interface OpportunityNotificationParams {
   userId: string;
@@ -116,20 +117,16 @@ export class OpportunityNotificationService {
     const oppId = params.opportunityId || params.opportunity.id;
 
     if (oppId && !params.forceSend) {
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
       const existing = await prisma.emailNotification.findFirst({
         where: {
           userId: user.id,
           opportunityId: oppId,
-          OR: [
-            { status: NotificationStatus.SENT },
-            { status: NotificationStatus.PENDING, createdAt: { gte: fiveMinutesAgo } },
-          ],
+          status: { in: [NotificationStatus.SENT, NotificationStatus.PENDING] },
         },
       });
 
       if (existing) {
-        console.info(`[NotificationService] Concurrency-safe duplicate prevention: User ${user.id} already received or is dispatching email for opportunity ${oppId}`);
+        console.info(`[NotificationService] Duplicate prevention: User ${user.id} already has notification for opportunity ${oppId}`);
         return { sent: false, skipped: true, skipReason: 'DUPLICATE_NOTIFICATION_PREVENTED' };
       }
     }
@@ -231,19 +228,25 @@ export class OpportunityNotificationService {
 
     // 9. Create PENDING Log in EmailNotification table
     let notificationRecord = null;
-    try {
-      notificationRecord = await prisma.emailNotification.create({
-        data: {
-          userId: user.id,
-          opportunityId: oppId || null,
-          recipientEmail,
-          subject,
-          matchScore: params.matchScore,
-          status: NotificationStatus.PENDING,
-        },
-      });
-    } catch (dbErr) {
-      console.warn('[NotificationService] Failed to create pending EmailNotification log:', dbErr);
+    if (oppId) {
+      try {
+        notificationRecord = await prisma.emailNotification.create({
+          data: {
+            userId: user.id,
+            opportunityId: oppId,
+            recipientEmail,
+            subject,
+            matchScore: params.matchScore,
+            status: NotificationStatus.PENDING,
+          },
+        });
+      } catch (dbErr) {
+        if (isUniqueConstraintError(dbErr)) {
+          console.info(`[NotificationService] Unique constraint prevented duplicate notification for user ${user.id}, opportunity ${oppId}`);
+          return { sent: false, skipped: true, skipReason: 'DUPLICATE_NOTIFICATION_PREVENTED' };
+        }
+        console.warn('[NotificationService] Failed to create pending EmailNotification log:', dbErr);
+      }
     }
 
     // 10. Send through SMTP Transport

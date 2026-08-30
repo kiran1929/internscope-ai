@@ -5,8 +5,8 @@ import { prisma } from '@/lib/db';
 import { AICoverLetterService } from '@/lib/optimize/ai-cover-letter-service';
 import { runResumeOptimizationPipeline } from '@/trigger/optimize';
 import { revalidatePath } from 'next/cache';
+import { actionError, sanitizeError } from '@/lib/security/error-handler';
 import { enforceRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/security/rate-limiter';
-import { sanitizeError } from '@/lib/security/error-handler';
 
 const DEDUP_HOURS = 24;
 
@@ -19,7 +19,7 @@ export async function optimizeResumeAction(params: {
     const user = await getAuthenticatedUser();
 
     // Enforce rate limiting (HIGH-002)
-    enforceRateLimit('optimize-resume', user.id, RATE_LIMIT_CONFIGS.RESUME_OPTIMIZATION);
+    await enforceRateLimit('optimize-resume', user.id, RATE_LIMIT_CONFIGS.RESUME_OPTIMIZATION);
 
     const resume = await prisma.resume.findFirst({
       where: { userId: user.id, isParsed: true },
@@ -105,7 +105,7 @@ export async function generateCoverLetterAction(params: {
     const user = await getAuthenticatedUser();
 
     // Enforce rate limiting (HIGH-002)
-    enforceRateLimit('generate-cover-letter', user.id, RATE_LIMIT_CONFIGS.COVER_LETTER);
+    await enforceRateLimit('generate-cover-letter', user.id, RATE_LIMIT_CONFIGS.COVER_LETTER);
 
     const resume = await prisma.resume.findFirst({
       where: { userId: user.id, isParsed: true },
@@ -163,7 +163,7 @@ export async function generateCoverLetterAction(params: {
     console.error('Failed to generate cover letter:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: actionError(error, 'Failed to optimize resume.', 'optimizeResumeAction'),
     };
   }
 }
@@ -204,7 +204,7 @@ export async function updateCoverLetterAction(params: {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: actionError(error, 'Failed to optimize resume.', 'optimizeResumeAction'),
     };
   }
 }
@@ -222,7 +222,7 @@ export async function deleteCoverLetterAction(id: string) {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: actionError(error, 'Failed to optimize resume.', 'optimizeResumeAction'),
     };
   }
 }

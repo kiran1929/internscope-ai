@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { CompanyRepository } from '@/lib/repositories/company';
 import { companySchema, CompanyFormValues } from '@/lib/validation/company';
 import { requireAdmin } from '@/lib/auth/admin';
+import { actionError } from '@/lib/security/error-handler';
 
 export async function createCompanyAction(formData: CompanyFormValues) {
   try {
@@ -21,8 +22,7 @@ export async function createCompanyAction(formData: CompanyFormValues) {
     return { success: true, data: company };
   } catch (error: unknown) {
     console.error('Failed to create company:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create company';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'companyAction') };
   }
 }
 
@@ -44,8 +44,7 @@ export async function updateCompanyAction(id: string, formData: CompanyFormValue
     return { success: true, data: company };
   } catch (error: unknown) {
     console.error('Failed to update company:', error);
-    const message = error instanceof Error ? error.message : 'Failed to update company';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'companyAction') };
   }
 }
 
@@ -58,8 +57,7 @@ export async function archiveCompanyAction(id: string) {
     return { success: true, data: company };
   } catch (error: unknown) {
     console.error('Failed to archive company:', error);
-    const message = error instanceof Error ? error.message : 'Failed to archive company';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'companyAction') };
   }
 }
 
@@ -72,8 +70,7 @@ export async function verifyCompanyAction(id: string, currentIsVerified: boolean
     return { success: true, data: company };
   } catch (error: unknown) {
     console.error('Failed to toggle verification:', error);
-    const message = error instanceof Error ? error.message : 'Failed to toggle verification';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'companyAction') };
   }
 }
 
@@ -86,8 +83,7 @@ export async function deleteCompanyAction(id: string) {
     return { success: true, data: company };
   } catch (error: unknown) {
     console.error('Failed to delete company:', error);
-    const message = error instanceof Error ? error.message : 'Failed to delete company';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'companyAction') };
   }
 }
 
@@ -135,7 +131,6 @@ export async function duplicateCompanyAction(id: string) {
     return { success: true, data: company };
   } catch (error: unknown) {
     console.error('Failed to duplicate company:', error);
-    const message = error instanceof Error ? error.message : 'Failed to duplicate company';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'companyAction') };
   }
 }
