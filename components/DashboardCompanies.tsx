@@ -176,9 +176,9 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   };
 
   return (
-    <div className="page-shell animate-fade-in text-foreground space-y-4 max-w-7xl mx-auto">
+    <div className="animate-fade-in text-foreground space-y-3.5 max-w-7xl mx-auto">
       {/* Top Header & Stat Counters */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border-subtle">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-foreground tracking-tight">Target Companies</h2>
           <p className="text-xs text-text-muted mt-0.5">
