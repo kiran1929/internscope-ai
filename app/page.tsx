@@ -276,9 +276,9 @@ export default function Home() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7 }}
           id="features"
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 space-y-12 animate-fade-in"
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 space-y-8 animate-fade-in"
         >
-          <div className="text-center max-w-2xl mx-auto space-y-3">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs font-bold text-primary uppercase tracking-widest">Core Capabilities</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Engineered for Ambitious Candidates</h2>
             <p className="text-xs sm:text-sm text-text-muted">
@@ -333,7 +333,7 @@ export default function Home() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7 }}
           id="how-it-works"
-          className="border-t border-zinc-900 bg-zinc-950/20 py-20 sm:py-28"
+          className="border-t border-zinc-900 bg-zinc-950/20 py-12 sm:py-16"
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
             <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -393,16 +393,16 @@ export default function Home() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7 }}
           id="testimonials"
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 sm:py-28 space-y-12 "
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-10 space-y-8"
         >
-          <div className="text-center max-w-2xl mx-auto space-y-3">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
             <span className="text-xs font-bold text-primary uppercase tracking-widest">Reviews</span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white">Loved by Student Builders</h2>
             <p className="text-xs sm:text-sm text-text-muted">Hear from students who used our scraper alert integrations to secure offers</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t, idx) => {
+            {TESTIMONIALS.map((t) => {
               const companyCodeMap: Record<string, string> = {
                 'Sarah Chen': 'STRIPE',
                 'David Kojo': 'GOOG',
@@ -465,31 +465,44 @@ export default function Home() {
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.8 }}
           id="faq"
-          className="max-w-3xl mx-auto px-4 sm:px-6 pt-20 sm:pt-28 pb-10 sm:pb-14 space-y-8"
+          className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-8 space-y-6"
         >
-          <div className="text-center space-y-3">
-            <HelpCircle className="w-6 h-6 text-primary mx-auto" />
-            <h2 className="text-xl sm:text-3xl font-extrabold text-white">Frequently Asked Questions</h2>
+          <div className="text-center space-y-2">
+            <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mx-auto shadow-sm">
+              <HelpCircle className="w-5 h-5" />
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Frequently Asked Questions</h2>
+            <p className="text-xs text-zinc-400">Everything you need to know about InternScope automated scouting.</p>
           </div>
 
-          <div className="divide-y divide-zinc-900 border-t border-b border-zinc-900">
+          <div className="space-y-3">
             {FAQS.map((faq, index) => {
               const isOpen = expandedFaqIndex === index;
               return (
-                <div key={faq.question} className="py-4">
+                <div
+                  key={faq.question}
+                  className={cn(
+                    'group rounded-2xl border transition-all duration-300 overflow-hidden backdrop-blur-xl',
+                    isOpen
+                      ? 'bg-zinc-900/70 border-primary/50 shadow-[0_8px_30px_rgba(59,130,246,0.12)]'
+                      : 'bg-zinc-900/40 border-zinc-800/80 hover:border-zinc-700 hover:bg-zinc-900/60'
+                  )}
+                >
                   <button
                     onClick={() => setExpandedFaqIndex(isOpen ? null : index)}
-                    className="w-full flex items-center justify-between text-left py-2 focus-visible:text-primary focus-visible:outline-none"
+                    className="w-full flex items-center justify-between text-left p-5 focus-visible:outline-none cursor-pointer"
                     aria-expanded={isOpen}
                   >
-                    <span className="text-xs sm:text-sm font-semibold text-zinc-100 hover:text-white transition-colors">
+                    <span className={cn('text-xs sm:text-sm font-bold transition-colors pr-4', isOpen ? 'text-primary' : 'text-zinc-200 group-hover:text-white')}>
                       {faq.question}
                     </span>
-                    <ChevronDown className={cn('w-4 h-4 text-text-muted transition-transform duration-200', isOpen && 'rotate-180')} />
+                    <div className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all duration-300', isOpen ? 'bg-primary text-white' : 'bg-zinc-800/60 text-zinc-400 group-hover:bg-zinc-800 group-hover:text-white')}>
+                      <ChevronDown className={cn('w-4 h-4 transition-transform duration-300', isOpen && 'rotate-180')} />
+                    </div>
                   </button>
                   
                   {isOpen && (
-                    <div className="mt-2 text-xs text-text-muted leading-relaxed py-1 pr-6 animate-in fade-in duration-200">
+                    <div className="px-5 pb-5 pt-0 text-xs sm:text-sm text-zinc-400 leading-relaxed border-t border-zinc-800/40 mt-1 pt-3 animate-in fade-in duration-200">
                       {faq.answer}
                     </div>
                   )}
