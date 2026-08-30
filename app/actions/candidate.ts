@@ -74,22 +74,6 @@ export async function getCompaniesDirectoryForUser() {
         country: true,
         hiringStatus: true,
         companySize: true,
-        opportunities: {
-          where: openOpportunityWhere(),
-          orderBy: [
-            { deadline: 'asc' },
-            { createdAt: 'desc' },
-          ],
-          select: {
-            id: true,
-            title: true,
-            type: true,
-            location: true,
-            remoteType: true,
-            deadline: true,
-            applicationUrl: true,
-          },
-        },
         _count: {
           select: {
             opportunities: {
@@ -117,15 +101,6 @@ export async function getCompaniesDirectoryForUser() {
     country: company.country || '',
     hiringStatus: company.hiringStatus || '',
     companySize: company.companySize || '',
-    opportunities: company.opportunities.map((opp) => ({
-      id: opp.id,
-      title: opp.title,
-      type: opp.type,
-      location: opp.location,
-      remoteType: opp.remoteType,
-      deadline: opp.deadline ? opp.deadline.toISOString() : null,
-      applicationUrl: opp.applicationUrl,
-    })),
   }));
 }
 

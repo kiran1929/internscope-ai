@@ -1,15 +1,5 @@
 export type ApplicationStatus = 'discovered' | 'shortlisted' | 'preparing' | 'applied' | 'oa' | 'interview' | 'offer' | 'rejected' | 'withdrawn';
 
-export interface CompanyOpportunity {
-  id: string;
-  title: string;
-  type: string;
-  location?: string | null;
-  remoteType?: string | null;
-  deadline?: string | null;
-  applicationUrl?: string | null;
-}
-
 export interface Company {
   id: string;
   name: string;
@@ -23,7 +13,6 @@ export interface Company {
   country?: string;
   hiringStatus?: string;
   companySize?: string;
-  opportunities?: CompanyOpportunity[];
 }
 
 export interface Internship {
