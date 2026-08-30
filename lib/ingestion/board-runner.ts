@@ -85,19 +85,38 @@ export async function runBoardsForProvider(
 
   for (const board of boards) {
     onLog?.(`[${provider}] Scraping ${board.name} (${board.boardToken})`);
-    try {
-      const connector = createConnector(board);
-      const summary = await runPipeline(connector);
-      summaries.push(summary);
-      boardsSucceeded += 1;
-      onLog?.(
-        `[${provider}] ${board.name}: fetched ${summary.totalFetched}, persisted ${summary.totalPersisted}`
-      );
-    } catch (error) {
+    
+    let attempts = 0;
+    let success = false;
+    let lastErr: unknown = null;
+
+    // Per-board exponential backoff retry (HIGH-001)
+    while (attempts < 3 && !success) {
+      attempts += 1;
+      try {
+        const connector = createConnector(board);
+        const summary = await runPipeline(connector);
+        summaries.push(summary);
+        boardsSucceeded += 1;
+        success = true;
+        onLog?.(
+          `[${provider}] ${board.name}: fetched ${summary.totalFetched}, persisted ${summary.totalPersisted}`
+        );
+      } catch (error) {
+        lastErr = error;
+        if (attempts < 3) {
+          const backoffMs = Math.pow(2, attempts) * 1000;
+          onLog?.(`[${provider}] ${board.name} encountered transient error, retrying in ${backoffMs / 1000}s (attempt ${attempts}/3)...`);
+          await sleep(backoffMs);
+        }
+      }
+    }
+
+    if (!success) {
       boardsFailed += 1;
-      const message = error instanceof Error ? error.message : String(error);
+      const message = lastErr instanceof Error ? lastErr.message : String(lastErr);
       boardErrors.push({ board: board.name, error: message });
-      onLog?.(`[${provider}] ${board.name} failed: ${message}`);
+      onLog?.(`[${provider}] ${board.name} failed permanently after 3 attempts: ${message}`);
     }
 
     if (rateLimitMs > 0) {
