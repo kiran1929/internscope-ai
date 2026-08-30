@@ -204,74 +204,134 @@ export default function CandidateDashboardClient({
       </div>
 
       {/* KPI Funnels */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Profile completion card */}
-        <div className="bg-card-bg border border-border-subtle hover:border-indigo-500/40 rounded-xl p-4.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between">
-          <div className="flex justify-between items-start">
+        <div className="group relative bg-card-bg border border-border-subtle hover:border-indigo-500/40 rounded-xl p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 flex flex-col justify-between overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-indigo-500/20 transition-all" />
+
+          <div className="flex justify-between items-center">
             <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Profile Setup</span>
-            <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
+            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:scale-105 transition-transform">
               <User className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 space-y-2">
-            <p className="text-2xl font-extrabold text-foreground font-mono leading-none">{completionPct}%</p>
-            <div className="w-full bg-surface-muted rounded-full h-1.5 border border-border-subtle overflow-hidden">
-              <div className="bg-indigo-500 h-full rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
+
+          <div className="mt-4 space-y-2.5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-3xl font-extrabold text-foreground tracking-tight font-sans leading-none">{completionPct}%</span>
+              <span className="text-[10px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+                {completionPct === 100 ? 'Complete' : 'In Progress'}
+              </span>
             </div>
-            <p className="text-[11px] text-text-muted">
-              {completionPct === 100 ? 'All parameters configured.' : 'Complete setup to refine AI matches.'}
+
+            <div className="w-full bg-surface-muted rounded-full h-2 border border-border-subtle overflow-hidden p-0.5">
+              <div
+                className="bg-gradient-to-r from-indigo-500 to-primary h-full rounded-full transition-all duration-700"
+                style={{ width: `${completionPct}%` }}
+              />
+            </div>
+
+            <p className="text-[11px] text-text-muted pt-0.5">
+              <Link href="/profile" className="hover:text-indigo-400 font-medium inline-flex items-center gap-1 transition-colors group-hover:underline">
+                Complete profile setup <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
             </p>
           </div>
         </div>
 
         {/* Saved Jobs Card */}
-        <div className="bg-card-bg border border-border-subtle hover:border-emerald-500/40 rounded-xl p-4.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between">
-          <div className="flex justify-between items-start">
+        <div className="group relative bg-card-bg border border-border-subtle hover:border-emerald-500/40 rounded-xl p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 flex flex-col justify-between overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-emerald-500/20 transition-all" />
+
+          <div className="flex justify-between items-center">
             <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Bookmarks</span>
-            <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Bookmark className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 space-y-1.5">
-            <p className="text-2xl font-extrabold text-foreground font-mono leading-none">{savedCount}</p>
-            <p className="text-[11px] text-text-muted flex items-center gap-1">
-              <Link href="/saved" className="hover:text-emerald-400 font-medium inline-flex items-center gap-0.5 transition-colors">
-                View saved positions <ArrowRight className="w-3 h-3" />
+
+          <div className="mt-4 space-y-2.5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-3xl font-extrabold text-foreground tracking-tight font-sans leading-none">{savedCount}</span>
+              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                {savedCount > 0 ? 'Saved' : 'Empty'}
+              </span>
+            </div>
+
+            <p className="text-[11px] text-text-muted">
+              {savedCount > 0 ? 'Positions shortlisted for review.' : 'No positions saved yet.'}
+            </p>
+
+            <p className="text-[11px] text-text-muted pt-0.5">
+              <Link href="/saved" className="hover:text-emerald-400 font-medium inline-flex items-center gap-1 transition-colors group-hover:underline">
+                View saved positions <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </p>
           </div>
         </div>
 
         {/* Tracked Applications Card */}
-        <div className="bg-card-bg border border-border-subtle hover:border-primary/40 rounded-xl p-4.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between">
-          <div className="flex justify-between items-start">
+        <div className="group relative bg-card-bg border border-border-subtle hover:border-primary/40 rounded-xl p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 flex flex-col justify-between overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/10 rounded-full blur-2xl pointer-events-none group-hover:bg-primary/20 transition-all" />
+
+          <div className="flex justify-between items-center">
             <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Active Funnel</span>
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center group-hover:scale-105 transition-transform">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 space-y-1.5">
-            <p className="text-2xl font-extrabold text-foreground font-mono leading-none">{applicationsCount}</p>
+
+          <div className="mt-4 space-y-2.5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-3xl font-extrabold text-foreground tracking-tight font-sans leading-none">{applicationsCount}</span>
+              <span className="text-[10px] font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
+                Pipeline
+              </span>
+            </div>
+
             <p className="text-[11px] text-text-muted">
-              <Link href="/applications" className="hover:text-primary font-medium inline-flex items-center gap-0.5 transition-colors">
-                Open tracker dashboard <ArrowRight className="w-3 h-3" />
+              {applicationsCount > 0 ? 'Active roles in pipeline stages.' : 'No active applications logged.'}
+            </p>
+
+            <p className="text-[11px] text-text-muted pt-0.5">
+              <Link href="/applications" className="hover:text-primary font-medium inline-flex items-center gap-1 transition-colors group-hover:underline">
+                Open tracker dashboard <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </p>
           </div>
         </div>
 
         {/* Deadlines Card */}
-        <div className="bg-card-bg border border-border-subtle hover:border-amber-500/40 rounded-xl p-4.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between">
-          <div className="flex justify-between items-start">
+        <div className="group relative bg-card-bg border border-border-subtle hover:border-amber-500/40 rounded-xl p-5 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 flex flex-col justify-between overflow-hidden">
+          {/* Ambient Glow */}
+          <div className="absolute -top-10 -right-10 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none group-hover:bg-amber-500/20 transition-all" />
+
+          <div className="flex justify-between items-center">
             <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Deadlines</span>
-            <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3 space-y-1.5">
-            <p className="text-2xl font-extrabold text-foreground font-mono leading-none">{upcomingDeadlines.length}</p>
+
+          <div className="mt-4 space-y-2.5">
+            <div className="flex items-baseline justify-between">
+              <span className="text-3xl font-extrabold text-foreground tracking-tight font-sans leading-none">{upcomingDeadlines.length}</span>
+              <span className="text-[10px] font-semibold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                {upcomingDeadlines.length > 0 ? 'Urgent' : 'Clear'}
+              </span>
+            </div>
+
             <p className="text-[11px] text-text-muted">
-              {upcomingDeadlines.length > 0 ? 'Positions closing soon.' : 'No urgent closures tracked.'}
+              {upcomingDeadlines.length > 0 ? 'Positions closing within 14 days.' : 'No urgent closures tracked.'}
+            </p>
+
+            <p className="text-[11px] text-text-muted pt-0.5">
+              <Link href="/internships" className="hover:text-amber-400 font-medium inline-flex items-center gap-1 transition-colors group-hover:underline">
+                Explore closing roles <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
             </p>
           </div>
         </div>
