@@ -22,11 +22,11 @@ async function resolveAuthenticatedUser() {
   }
 
   let user = await UserRepository.findByClerkId(userId);
-  const clerkUser = await currentUser();
-  const activeClerkEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
 
   if (!user) {
-    // Lazy sync Clerk user to PostgreSQL DB if missing
+    // Lazy sync Clerk user to PostgreSQL DB if missing (only external network trip if first login)
+    const clerkUser = await currentUser();
+    const activeClerkEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
     if (!clerkUser) {
       throw new Error('User not found in Clerk directory');
     }
@@ -36,16 +36,6 @@ async function resolveAuthenticatedUser() {
       firstName: clerkUser.firstName || '',
       lastName: clerkUser.lastName || '',
       avatarUrl: clerkUser.imageUrl || '',
-    });
-  } else if (activeClerkEmail && user.email !== activeClerkEmail) {
-    // Sync updated email if user changed or logged in with a different Clerk email
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { email: activeClerkEmail },
-      include: {
-        profile: true,
-        emailPreference: true,
-      },
     });
   }
   return user;
