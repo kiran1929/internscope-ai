@@ -519,26 +519,39 @@ export default function Home() {
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
           id="pricing"
-          className="max-w-4xl mx-auto px-4 sm:px-6 pb-20 sm:pb-28 text-center"
+          className="max-w-5xl mx-auto px-4 sm:px-6 pb-12 sm:pb-16 text-center"
         >
-          <div className="landing-cta-card bg-gradient-to-tr from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-8 sm:p-12 space-y-6 relative overflow-hidden shadow-2xl">
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full filter blur-[60px]" />
-            <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-              PRICING & INTERVIEWS &bull; COMING SOON
-            </span>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              Ready to Automate Your Internship Hunt?
+          <div className="relative group rounded-3xl p-8 sm:p-14 bg-zinc-900/40 border border-zinc-800/80 hover:border-primary/50 backdrop-blur-2xl transition-all duration-500 hover:shadow-[0_20px_60px_rgba(59,130,246,0.18)] overflow-hidden text-center space-y-6">
+            {/* Top ambient highlight line */}
+            <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/70 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            
+            {/* Soft background ambient radial glows */}
+            <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-48 bg-primary/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 right-10 w-48 h-48 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-400 text-[11px] font-bold uppercase tracking-wider shadow-sm relative z-10">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>PRICING & INTERVIEWS &bull; COMING SOON</span>
+            </div>
+
+            <h2 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight max-w-2xl mx-auto relative z-10">
+              Ready to Automate Your <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-blue-400 to-indigo-300">
+                Internship Scouting?
+              </span>
             </h2>
-            <p className="text-xs sm:text-sm text-text-muted max-w-xl mx-auto leading-relaxed">
+
+            <p className="text-xs sm:text-base text-zinc-300 max-w-xl mx-auto leading-relaxed font-normal relative z-10">
               Join hundreds of CS, Data Science, and Product Management candidates utilizing scraper tracking to skip tedious job boards.
             </p>
-            <div className="pt-2">
+
+            <div className="pt-4 relative z-10">
               <button
                 onClick={handleNavigateToDashboard}
-                className="mx-auto px-6 py-3 rounded-lg bg-primary hover:bg-blue-700 text-xs font-semibold text-white transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-primary/15 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none"
+                className="mx-auto px-8 py-4 rounded-xl bg-primary hover:bg-blue-600 text-sm font-bold text-white transition-all duration-200 flex items-center justify-center gap-2 shadow-xl shadow-primary/25 hover:shadow-primary/40 hover:scale-105 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 focus-visible:outline-none cursor-pointer"
               >
                 <span>Launch Free Live Demo</span>
-                <Play className="w-3.5 h-3.5 fill-current text-white" />
+                <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </div>
