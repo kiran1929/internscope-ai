@@ -187,7 +187,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   };
 
   const selectClassName =
-    'bg-input-bg border border-border-subtle text-xs text-foreground rounded-lg px-2.5 py-1.5 outline-none focus:border-primary/60 transition-all cursor-pointer h-8';
+    'bg-input-bg border border-border-subtle text-[11px] text-foreground rounded-lg px-2 py-1 outline-none focus:border-primary/60 transition-all cursor-pointer h-8 shrink-0 max-w-[130px] truncate';
 
   // Helper for generating pagination buttons
   const getPageNumbers = () => {
@@ -243,12 +243,12 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
         </div>
       </div>
 
-      {/* Filter Toolbar & View Switcher */}
-      <div className="flex flex-wrap items-center justify-between gap-2 bg-surface-muted/40 p-2.5 rounded-xl border border-border-subtle">
+      {/* Filter Toolbar & View Switcher - Strictly Single Line */}
+      <div className="flex items-center justify-between gap-2 bg-surface-muted/40 p-2 rounded-xl border border-border-subtle overflow-x-auto no-scrollbar">
         {/* Search Input & All Select Dropdowns on Single Line */}
-        <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-          <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden flex-1 min-w-[200px] sm:max-w-xs h-8 focus-within:border-primary/50 transition-colors">
-            <div className="relative flex items-center gap-1.5 px-2.5 flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 shrink-0">
+          <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-44 sm:w-48 h-8 focus-within:border-primary/50 transition-colors shrink-0">
+            <div className="relative flex items-center gap-1 px-2 flex-1 min-w-0">
               <Search className="w-3.5 h-3.5 text-text-muted shrink-0" />
               <input
                 type="text"
@@ -256,7 +256,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 aria-label="Search companies"
-                className="bg-transparent border-none outline-none text-xs text-foreground w-full placeholder:text-text-muted/70 py-1"
+                className="bg-transparent border-none outline-none text-[11px] text-foreground w-full placeholder:text-text-muted/70 py-1"
               />
               {search && (
                 <button
@@ -273,7 +273,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               id="company-search-by"
               value={searchBy}
               onChange={(e) => setSearchBy(e.target.value as SearchBy)}
-              className="shrink-0 border-l border-border-subtle bg-transparent text-[11px] text-text-muted px-2 outline-none cursor-pointer"
+              className="shrink-0 border-l border-border-subtle bg-transparent text-[10px] text-text-muted px-1.5 outline-none cursor-pointer"
             >
               <option value="all">All</option>
               <option value="name">Name</option>
@@ -337,7 +337,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
             aria-label="Sort companies by"
-            className={cn(selectClassName, 'border-primary/40 text-primary font-semibold')}
+            className={cn(selectClassName, 'border-primary/40 text-primary font-semibold max-w-[150px]')}
           >
             <option value="openings_desc">Sort: Most Openings</option>
             <option value="name_asc">Sort: Name (A–Z)</option>
@@ -349,7 +349,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             <button
               type="button"
               onClick={resetFilters}
-              className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-foreground transition-colors cursor-pointer px-2 py-1 rounded-md hover:bg-card-bg"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-text-muted hover:text-foreground transition-colors cursor-pointer px-2 py-1 rounded-md hover:bg-card-bg shrink-0"
             >
               <RotateCcw className="w-3 h-3" />
               Reset
@@ -358,12 +358,12 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
         </div>
 
         {/* View Mode Toggle & Counter */}
-        <div className="flex items-center gap-3 shrink-0">
-          <span className="text-xs text-text-muted font-medium whitespace-nowrap">
+        <div className="flex items-center gap-2.5 shrink-0 ml-1">
+          <span className="text-[11px] text-text-muted font-medium whitespace-nowrap">
             Showing <span className="text-foreground font-semibold">{totalFiltered === 0 ? 0 : startIndex + 1}–{Math.min(startIndex + pageSize, totalFiltered)}</span> of <span className="text-foreground font-semibold">{totalFiltered}</span>
           </span>
 
-          <div className="flex items-center border border-border-subtle rounded-lg bg-input-bg p-0.5">
+          <div className="flex items-center border border-border-subtle rounded-lg bg-input-bg p-0.5 shrink-0">
             <button
               type="button"
               onClick={() => setViewMode('grid')}
