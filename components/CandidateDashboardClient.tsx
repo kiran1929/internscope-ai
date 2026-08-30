@@ -14,6 +14,9 @@ import {
   Search,
   Trash2,
   X,
+  ChevronRight,
+  MapPin,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -24,6 +27,7 @@ import {
   deleteRecentSearchAction,
   clearRecentSearchesAction,
 } from '@/app/actions/candidate';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 interface CandidateDashboardClientProps {
   user: {
@@ -70,9 +74,12 @@ interface CandidateDashboardClientProps {
   upcomingDeadlines: {
     id: string;
     title: string;
+    location?: string;
     deadline: Date;
     company: {
       name: string;
+      logoUrl?: string | null;
+      websiteUrl?: string | null;
     };
   }[];
 }
@@ -275,44 +282,120 @@ export default function CandidateDashboardClient({
         {recommendationsSlot}
 
         {/* Right 1 column: Deadlines, Telemetry, and Actions */}
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Quick Actions */}
-          <div className="dashboard-card p-4 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border-subtle pb-2">Quick Actions</h4>
+          <div className="bg-card-bg border border-border-subtle rounded-xl p-4.5 space-y-3.5 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-primary" /> Quick Actions
+              </h4>
+              <span className="text-[10px] text-text-muted">Direct Shortcuts</span>
+            </div>
+
             <div className="grid grid-cols-1 gap-2">
               <Link
                 href="/internships"
-                className="w-full flex items-center justify-between p-2.5 rounded-lg border border-border-subtle bg-input-bg hover:bg-surface-muted text-left transition-all text-xs"
+                className="group flex items-center justify-between p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
               >
-                <span className="text-foreground font-semibold">Search Jobs & Internships</span>
-                <Compass className="w-4 h-4 text-text-muted" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform shrink-0">
+                    <Compass className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">Search Jobs & Internships</p>
+                    <p className="text-[10px] text-text-muted truncate">Explore 850+ live opportunities</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
               </Link>
+
               <Link
                 href="/applications"
-                className="w-full flex items-center justify-between p-2.5 rounded-lg border border-border-subtle bg-input-bg hover:bg-surface-muted text-left transition-all text-xs"
+                className="group flex items-center justify-between p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
               >
-                <span className="text-foreground font-semibold">Track Active Applications</span>
-                <Briefcase className="w-4 h-4 text-text-muted" />
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:scale-105 transition-transform shrink-0">
+                    <Briefcase className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">Application Pipeline</p>
+                    <p className="text-[10px] text-text-muted truncate">Track stages & interviews</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              </Link>
+
+              <Link
+                href="/resume"
+                className="group flex items-center justify-between p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
+              >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">Resume Intel & ATS</p>
+                    <p className="text-[10px] text-text-muted truncate">Optimize keyword match score</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
               </Link>
             </div>
           </div>
 
           {/* Upcoming Deadlines */}
-          <div className="dashboard-card p-4 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border-subtle pb-2">Deadlines Coming Up</h4>
+          <div className="bg-card-bg border border-border-subtle rounded-xl p-4.5 space-y-3 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-amber-500" /> Deadlines Coming Up
+              </h4>
+              <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">
+                Next 14 days
+              </span>
+            </div>
+
             {upcomingDeadlines.length === 0 ? (
-              <p className="text-[10px] text-text-muted text-center py-2">No upcoming job deadlines logged.</p>
+              <div className="py-4 text-center space-y-1">
+                <Clock className="w-5 h-5 text-text-muted/40 mx-auto" />
+                <p className="text-xs text-text-muted font-medium">No urgent deadlines tracked</p>
+                <p className="text-[10px] text-text-muted/70">Save roles to monitor upcoming closing dates</p>
+              </div>
             ) : (
               <div className="space-y-2">
                 {upcomingDeadlines.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-surface-muted border border-border-subtle">
-                    <div>
-                      <Link href={`/jobs/${item.id}`} className="font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[130px]">
-                        {item.title}
-                      </Link>
-                      <span className="text-[10px] text-primary font-semibold truncate max-w-[130px]">{item.company.name}</span>
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between gap-2.5 p-2.5 rounded-lg bg-surface-muted/40 hover:bg-surface-muted border border-border-subtle hover:border-amber-500/30 transition-all group"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <CompanyLogo
+                        logoUrl={item.company.logoUrl}
+                        websiteUrl={item.company.websiteUrl}
+                        name={item.company.name}
+                        size="sm"
+                      />
+                      <div className="min-w-0">
+                        <Link
+                          href={`/jobs/${item.id}`}
+                          className="font-bold text-xs text-foreground group-hover:text-primary transition-colors block line-clamp-1"
+                          title={item.title}
+                        >
+                          {item.title}
+                        </Link>
+                        <div className="flex items-center gap-1.5 text-[10px] text-text-muted mt-0.5">
+                          <span className="font-semibold text-text-muted truncate">{item.company.name}</span>
+                          {item.location && (
+                            <>
+                              <span className="text-border-subtle">•</span>
+                              <span className="truncate">{item.location}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-[9px] text-amber-400 font-mono bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
+
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-md shrink-0 font-mono">
+                      <Clock className="w-2.5 h-2.5" />
                       {new Date(item.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
@@ -322,21 +405,37 @@ export default function CandidateDashboardClient({
           </div>
 
           {/* Recent Search Queries */}
-          <div className="dashboard-card p-4 space-y-3">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">Recent Searches</h4>
+          <div className="bg-card-bg border border-border-subtle rounded-xl p-4.5 space-y-3 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
+                <Search className="w-3.5 h-3.5 text-primary" /> Recent Searches
+              </h4>
               {searches.length > 0 && (
                 <button
                   type="button"
                   onClick={handleClearSearches}
-                  className="text-[10px] text-text-muted hover:text-red-500 transition-colors font-medium cursor-pointer"
+                  className="text-[10px] text-text-muted hover:text-red-500 transition-colors font-semibold cursor-pointer"
                 >
                   Clear all
                 </button>
               )}
             </div>
+
             {searches.length === 0 ? (
-              <p className="text-[10px] text-text-muted text-center py-2">No recent queries logged.</p>
+              <div className="space-y-2">
+                <p className="text-[11px] text-text-muted">Popular searches:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {['Frontend', 'Backend', 'AI / ML', 'Full Stack', 'Data Engineer', 'Remote'].map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/internships?query=${encodeURIComponent(tag)}`}
+                      className="text-[11px] bg-surface-muted hover:bg-primary/10 text-text-muted hover:text-primary border border-border-subtle hover:border-primary/30 px-2.5 py-1 rounded-md font-medium transition-all shadow-2xs cursor-pointer"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {searches.map((item) => (
