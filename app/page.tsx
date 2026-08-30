@@ -258,9 +258,9 @@ export default function Home() {
           id="companies"
           className="py-16 bg-transparent relative overflow-hidden space-y-6"
         >
-          {/* Subtle gradient side fades for smooth entry/exit */}
-          <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background via-background/80 to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background via-background/80 to-transparent z-10 pointer-events-none" />
+          {/* Subtle dark gradient side fades for smooth entry/exit */}
+          <div className="absolute left-0 top-0 bottom-0 w-36 bg-gradient-to-r from-[#09090B] via-[#09090B]/90 to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-36 bg-gradient-to-l from-[#09090B] via-[#09090B]/90 to-transparent z-10 pointer-events-none" />
 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-8">
             <h2 className="text-xs font-bold text-text-muted uppercase tracking-widest">
