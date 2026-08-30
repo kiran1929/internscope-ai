@@ -44,7 +44,11 @@ async function resolveAuthenticatedUser() {
   return user;
 }
 
-export const getAuthenticatedUser = cache(resolveAuthenticatedUser);
+const getCachedUser = cache(resolveAuthenticatedUser);
+
+export async function getAuthenticatedUser() {
+  return getCachedUser();
+}
 
 export async function getCompaniesDirectoryForUser() {
   const user = await getAuthenticatedUser();
