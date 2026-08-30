@@ -167,28 +167,28 @@ export default function CandidateDashboardClient({
   };
 
   return (
-    <div className="page-shell animate-fade-in text-foreground">
+    <div className="animate-fade-in text-foreground space-y-6 max-w-7xl mx-auto">
       {/* Welcome header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border-subtle pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border-subtle pb-4">
         <div>
-          <h2 className="page-header-title text-xl sm:text-2xl">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground tracking-tight">
             Welcome back, {user.profile?.firstName || 'Candidate'} 👋
           </h2>
-          <p className="page-header-subtitle">
+          <p className="text-xs text-text-muted mt-0.5">
             Access matching postings, organize applications, and update preferred settings.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <Link
             href="/internships"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-input-bg text-xs font-semibold text-foreground hover:bg-surface-muted transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-card-bg text-xs font-semibold text-foreground hover:bg-surface-muted transition-all shadow-2xs"
           >
-            <Search className="w-3.5 h-3.5" />
+            <Search className="w-3.5 h-3.5 text-text-muted" />
             <span>Search Jobs</span>
           </Link>
           <Link
             href="/profile"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-xs font-semibold text-white transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-xs font-semibold text-white transition-all shadow-xs shadow-primary/20"
           >
             <User className="w-3.5 h-3.5" />
             <span>Manage Profile</span>
@@ -197,38 +197,38 @@ export default function CandidateDashboardClient({
       </div>
 
       {/* KPI Funnels */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Profile completion card */}
-        <div className="dashboard-card p-5 hover:shadow-md transition-all">
+        <div className="bg-card-bg border border-border-subtle hover:border-indigo-500/40 rounded-xl p-4.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Profile Setup</span>
+            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Profile Setup</span>
             <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
               <User className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 space-y-2">
-            <p className="text-2xl font-extrabold text-foreground font-mono">{completionPct}%</p>
+            <p className="text-2xl font-extrabold text-foreground font-mono leading-none">{completionPct}%</p>
             <div className="w-full bg-surface-muted rounded-full h-1.5 border border-border-subtle overflow-hidden">
-              <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${completionPct}%` }} />
+              <div className="bg-indigo-500 h-full rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
             </div>
-            <p className="text-[10px] text-text-muted">
+            <p className="text-[11px] text-text-muted">
               {completionPct === 100 ? 'All parameters configured.' : 'Complete setup to refine AI matches.'}
             </p>
           </div>
         </div>
 
         {/* Saved Jobs Card */}
-        <div className="dashboard-card p-5 hover:shadow-md transition-all">
+        <div className="bg-card-bg border border-border-subtle hover:border-emerald-500/40 rounded-xl p-4.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Bookmarks</span>
+            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Bookmarks</span>
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
               <Bookmark className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-extrabold text-foreground font-mono">{savedCount}</p>
-            <p className="text-[10px] text-text-muted mt-1.5 flex items-center gap-1">
-              <Link href="/saved" className="hover:text-emerald-400 flex items-center gap-0.5">
+          <div className="mt-3 space-y-1.5">
+            <p className="text-2xl font-extrabold text-foreground font-mono leading-none">{savedCount}</p>
+            <p className="text-[11px] text-text-muted flex items-center gap-1">
+              <Link href="/saved" className="hover:text-emerald-400 font-medium inline-flex items-center gap-0.5 transition-colors">
                 View saved positions <ArrowRight className="w-3 h-3" />
               </Link>
             </p>
@@ -236,17 +236,17 @@ export default function CandidateDashboardClient({
         </div>
 
         {/* Tracked Applications Card */}
-        <div className="dashboard-card p-5 hover:shadow-md transition-all">
+        <div className="bg-card-bg border border-border-subtle hover:border-primary/40 rounded-xl p-4.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Active Funnel</span>
+            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Active Funnel</span>
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-extrabold text-foreground font-mono">{applicationsCount}</p>
-            <p className="text-[10px] text-text-muted mt-1.5">
-              <Link href="/applications" className="hover:text-primary flex items-center gap-0.5">
+          <div className="mt-3 space-y-1.5">
+            <p className="text-2xl font-extrabold text-foreground font-mono leading-none">{applicationsCount}</p>
+            <p className="text-[11px] text-text-muted">
+              <Link href="/applications" className="hover:text-primary font-medium inline-flex items-center gap-0.5 transition-colors">
                 Open tracker dashboard <ArrowRight className="w-3 h-3" />
               </Link>
             </p>
@@ -254,16 +254,16 @@ export default function CandidateDashboardClient({
         </div>
 
         {/* Deadlines Card */}
-        <div className="dashboard-card p-5 hover:shadow-md transition-all">
+        <div className="bg-card-bg border border-border-subtle hover:border-amber-500/40 rounded-xl p-4.5 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 flex flex-col justify-between">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Deadlines</span>
+            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Deadlines</span>
             <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-3">
-            <p className="text-2xl font-extrabold text-foreground font-mono">{upcomingDeadlines.length}</p>
-            <p className="text-[10px] text-text-muted mt-1.5">
+          <div className="mt-3 space-y-1.5">
+            <p className="text-2xl font-extrabold text-foreground font-mono leading-none">{upcomingDeadlines.length}</p>
+            <p className="text-[11px] text-text-muted">
               {upcomingDeadlines.length > 0 ? 'Positions closing soon.' : 'No urgent closures tracked.'}
             </p>
           </div>
@@ -271,7 +271,7 @@ export default function CandidateDashboardClient({
       </div>
 
       {/* Main dashboard body split */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {recommendationsSlot}
 
         {/* Right 1 column: Deadlines, Telemetry, and Actions */}
