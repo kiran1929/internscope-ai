@@ -6,6 +6,7 @@ import { StorageService } from '@/lib/resume/storage-service';
 import { validateResumeUpload } from '@/lib/security/file-validator';
 import { sanitizeError } from '@/lib/security/error-handler';
 import { enforceRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/security/rate-limiter';
+import { rollbackResumeVersion, listResumeVersions } from '@/lib/resume/versioning';
 import { resumeParsePipeline, runResumeParsePipeline } from '@/trigger/resume';
 import { revalidatePath } from 'next/cache';
 
@@ -167,6 +168,34 @@ export async function deleteResumeAction(resumeId: string) {
     return {
       success: false,
       error: sanitizeError(error, 'Failed to delete resume.', { action: 'deleteResumeAction' }),
+    };
+  }
+}
+
+export async function listResumeVersionsAction() {
+  try {
+    const user = await getAuthenticatedUser();
+    const versions = await listResumeVersions(user.id);
+    return { success: true, versions };
+  } catch (error) {
+    return {
+      success: false,
+      error: sanitizeError(error, 'Failed to list resume versions.', { action: 'listResumeVersionsAction' }),
+    };
+  }
+}
+
+export async function rollbackResumeVersionAction(resumeId: string) {
+  try {
+    const user = await getAuthenticatedUser();
+    const rolledBack = await rollbackResumeVersion(user.id, resumeId);
+    revalidatePath('/resume');
+    revalidatePath('/profile');
+    return { success: true, resumeId: rolledBack.id, version: rolledBack.version };
+  } catch (error) {
+    return {
+      success: false,
+      error: sanitizeError(error, 'Failed to rollback resume version.', { action: 'rollbackResumeVersionAction' }),
     };
   }
 }
