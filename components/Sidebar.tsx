@@ -1,8 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { useClerk } from '@clerk/nextjs';
 import {
   LayoutDashboard,
   Building,
@@ -21,6 +20,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { SignOutModal } from '@/components/SignOutModal';
 
 export type DashboardTab =
   | 'overview'
@@ -73,13 +73,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   setIsCollapsed,
 }) => {
-  const { signOut } = useClerk();
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
 
-  const handleSignOut = () => {
+  const handleOpenSignOutModal = () => {
     if (onNavigate) {
       onNavigate();
     }
-    signOut({ redirectUrl: '/' });
+    setShowSignOutModal(true);
   };
 
   const sidebarItems: SidebarItem[] = [
@@ -189,8 +189,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
             <button
               type="button"
-              onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-border-subtle bg-card-bg hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 text-xs font-semibold text-foreground transition-colors"
+              onClick={handleOpenSignOutModal}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg border border-border-subtle bg-card-bg hover:bg-red-500/10 hover:border-red-500/30 hover:text-red-500 text-xs font-semibold text-foreground transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>Sign Out</span>
@@ -199,8 +199,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ) : (
           <button
             type="button"
-            onClick={handleSignOut}
-            className="sidebar-nav-link justify-center px-0 py-2.5 w-full hover:text-red-500 hover:bg-red-500/10"
+            onClick={handleOpenSignOutModal}
+            className="sidebar-nav-link justify-center px-0 py-2.5 w-full hover:text-red-500 hover:bg-red-500/10 cursor-pointer"
             title="Sign Out"
           >
             <LogOut className="w-[18px] h-[18px] text-text-muted hover:text-red-500" />
@@ -208,6 +208,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         )}
       </div>
+
+      <SignOutModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+      />
     </aside>
   );
 };
