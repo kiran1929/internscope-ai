@@ -268,6 +268,8 @@ model Resume {
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   version             Int                  @default(1)
+  processingStatus    String               @default("UPLOADING")
+  isCurrentVersion    Boolean              @default(true)
   rawText             String?
   isParsed            Boolean              @default(false)
   parsedAt            DateTime?
@@ -288,6 +290,8 @@ model Resume {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([userId, isCurrentVersion])
+  @@index([processingStatus])
 }
 
 model JobMatch {
@@ -583,6 +587,7 @@ model CoverLetterVersion {
   coverLetter   CoverLetter @relation(fields: [coverLetterId], references: [id], onDelete: Cascade)
 
   @@index([coverLetterId])
+  @@unique([coverLetterId, version], name: "cover_letter_version_unique")
 }
 
 model CareerGoal {
@@ -805,6 +810,7 @@ model EmailNotification {
   @@index([userId])
   @@index([opportunityId])
   @@index([userId, opportunityId])
+  @@unique([userId, opportunityId], name: "user_opportunity_notification")
   @@index([status])
   @@index([createdAt])
 }

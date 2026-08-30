@@ -25,6 +25,15 @@ export async function runResumeParsePipeline(payload: ResumePipelinePayload) {
     throw new Error(`Resume not found in DB with ID: ${resumeId}`);
   }
 
+  if (resume.userId !== userId) {
+    throw new Error('Forbidden: resume ownership mismatch');
+  }
+
+  await prisma.resume.update({
+    where: { id: resumeId },
+    data: { processingStatus: 'PROCESSING', parsingError: null },
+  });
+
   try {
     // 2. Read file buffer from secure storage
     const buffer = await StorageService.readFile(resume.filePath);
@@ -59,6 +68,8 @@ export async function runResumeParsePipeline(payload: ResumePipelinePayload) {
         structuredData: parserResult.structuredData as any,
         qualityScore: qualityReport.overallScore,
         qualityFeedback: qualityReport.feedback as any,
+        processingStatus: 'READY',
+        parsingError: null,
       },
     });
 
@@ -150,6 +161,7 @@ export async function runResumeParsePipeline(payload: ResumePipelinePayload) {
       data: {
         parsingError: errorMsg,
         isParsed: false,
+        processingStatus: 'FAILED',
       },
     });
 
