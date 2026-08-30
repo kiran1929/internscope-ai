@@ -159,7 +159,7 @@ export function resolveDomain(input: CompanyLogoSourceInput): string | null {
   return null;
 }
 
-/** Best primary logo URL to try first in the UI. */
+/** Best primary logo URL to try first in the UI (Clearbit HD first, then Unavatar, then Favicon). */
 export function resolveCompanyLogoUrl(input: CompanyLogoSourceInput): string | null {
   if (isHttpUrl(input.logoUrl)) {
     return input.logoUrl.trim();
@@ -168,7 +168,7 @@ export function resolveCompanyLogoUrl(input: CompanyLogoSourceInput): string | n
   const domain = resolveDomain(input);
   if (!domain) return null;
 
-  return buildGoogleFaviconUrl(domain, 128);
+  return buildClearbitLogoUrl(domain);
 }
 
 /** Secondary sources tried client-side when the primary image fails to load. */
@@ -182,6 +182,6 @@ export function getCompanyLogoFallbackUrls(input: CompanyLogoSourceInput): strin
   const duck = buildDuckDuckGoIconUrl(domain);
   const primary = resolveCompanyLogoUrl(input);
 
-  const fallbacks = [clearbit, unavatar, google, duck].filter((url) => url && url !== primary);
+  const fallbacks = [unavatar, google, duck, clearbit].filter((url) => url && url !== primary);
   return [...new Set(fallbacks)];
 }

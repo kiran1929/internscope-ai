@@ -415,32 +415,26 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                       </span>
                     </div>
 
-                    {/* Status & Openings Badge */}
-                    <div className="flex items-center justify-between gap-1.5 pt-1">
-                      {hasOpenings ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[10px] font-semibold">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                          {company.activeOpeningsCount} active {company.activeOpeningsCount === 1 ? 'role' : 'roles'}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-surface-muted text-text-muted border border-border-subtle text-[10px] font-medium">
-                          <span className="w-1.5 h-1.5 rounded-full bg-text-muted/60"></span>
-                          0 roles open
-                        </span>
-                      )}
-
+                    {/* Status & Roles - Clean & Layman Friendly */}
+                    <div className="pt-0.5">
                       {company.hiringStatus === 'FREEZE' ? (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded">
-                          Freeze
-                        </span>
+                        <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                          <span>Hiring freeze</span>
+                        </div>
                       ) : hasOpenings ? (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded">
-                          Hiring
-                        </span>
+                        <div className="flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-semibold">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>{company.activeOpeningsCount} {company.activeOpeningsCount === 1 ? 'role open' : 'roles open'}</span>
+                          </div>
+                          <span className="text-[9px] uppercase font-bold tracking-wider bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded">Hiring</span>
+                        </div>
                       ) : (
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 bg-surface-muted text-text-muted border border-border-subtle rounded">
-                          Not hiring
-                        </span>
+                        <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-surface-muted text-text-muted border border-border-subtle text-xs font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full bg-text-muted/50"></span>
+                          <span>No open roles right now</span>
+                        </div>
                       )}
                     </div>
 
