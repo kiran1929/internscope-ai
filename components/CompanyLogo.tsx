@@ -128,14 +128,14 @@ function getDeterministicGradient(name: string) {
   return GRADIENTS[index];
 }
 
-export const CompanyLogo: React.FC<CompanyLogoProps> = ({
+export const CompanyLogo: React.FC<CompanyLogoProps> = React.memo(function CompanyLogo({
   logo,
   logoUrl,
   websiteUrl,
   applicationUrl,
   name,
   size = 'md',
-}) => {
+}) {
   const sourceInput = useMemo(
     () => ({
       logoUrl: logoUrl ?? (isHttpUrl(logo) ? logo : null),
@@ -162,7 +162,7 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
   useEffect(() => {
     setImageIndex(0);
     setImageFailed(false);
-  }, [imageCandidates.join('|')]);
+  }, [primaryUrl]);
 
   if (useLegacyBrand) {
     const brand = getBrandDetails(logo!, name);
@@ -190,6 +190,7 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
           alt={`${name} logo`}
           className="w-full h-full object-contain p-1.5"
           loading="lazy"
+          decoding="async"
           referrerPolicy="no-referrer"
           onError={() => {
             if (imageIndex < imageCandidates.length - 1) {
@@ -220,6 +221,6 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
       <span className="text-[75%] tracking-tight font-extrabold">{initials || name.slice(0, 2).toUpperCase()}</span>
     </div>
   );
-};
+});
 
 export default CompanyLogo;

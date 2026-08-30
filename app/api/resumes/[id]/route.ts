@@ -17,6 +17,16 @@ export async function GET(
 
     const { id } = await props.params;
 
+    // Load the requesting user record
+    const requestingUser = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true, role: true, isActive: true },
+    });
+
+    if (!requestingUser || !requestingUser.isActive) {
+      return NextResponse.json({ error: 'Unauthorized or deactivated account' }, { status: 401 });
+    }
+
     // Load the resume and verify ownership
     const resume = await prisma.resume.findUnique({
       where: { id },
@@ -27,7 +37,10 @@ export async function GET(
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
     }
 
-    if (resume.user.clerkId !== clerkId) {
+    const isOwner = resume.user.clerkId === clerkId;
+    const isAdmin = requestingUser.role === 'ADMIN' || requestingUser.role === 'SUPER_ADMIN';
+
+    if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -46,6 +59,9 @@ export async function GET(
       headers: {
         'Content-Type': contentType,
         'Content-Disposition': `inline; filename="${encodeURIComponent(resume.fileName)}"`,
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+        'Content-Security-Policy': "default-src 'none'",
       },
     });
   } catch (error) {

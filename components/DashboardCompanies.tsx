@@ -8,6 +8,7 @@ import {
   Briefcase,
   Plus,
   Check,
+  CheckCircle2,
   X,
   RotateCcw,
   LayoutGrid,

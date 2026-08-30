@@ -53,13 +53,14 @@ export default async function DashboardPage() {
           lte: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Next 14 days
         },
       },
-      take: 3,
+      take: 4,
       orderBy: { deadline: 'asc' },
       select: {
         id: true,
         title: true,
+        location: true,
         deadline: true,
-        company: { select: { name: true } },
+        company: { select: { name: true, logoUrl: true, websiteUrl: true } },
       },
     }),
   ]);
@@ -103,6 +104,7 @@ export default async function DashboardPage() {
   const mappedDeadlines = upcomingDeadlines.map((item) => ({
     id: item.id,
     title: item.title,
+    location: item.location,
     deadline: item.deadline!,
     company: item.company,
   }));

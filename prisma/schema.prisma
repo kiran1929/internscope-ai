@@ -131,6 +131,8 @@ model Opportunity {
   @@index([location])
   @@index([type])
   @@index([isArchived])
+  @@index([isActive, isArchived, createdAt])
+  @@index([companyId, isActive, isArchived])
 }
 
 model SavedOpportunity {
@@ -159,6 +161,7 @@ model Application {
   @@unique([userId, opportunityId])
   @@index([status])
   @@index([createdAt])
+  @@index([userId, status, updatedAt])
 }
 
 model Notification {

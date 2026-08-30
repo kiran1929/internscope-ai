@@ -242,7 +242,7 @@ export class MockAIProvider implements AIProvider {
       salaryCurrency,
       salaryPeriod,
       tags,
-      qualityScore: 0.95,
+      qualityScore: 0.65,
       reasoning: 'Extracted using local keyword-rules classification engine fallback.',
       tokensUsed: 0,
       estimatedCost: 0,
