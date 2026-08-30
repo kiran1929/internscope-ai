@@ -119,18 +119,18 @@ export class IngestionPipeline {
         }
         summary.totalValidated++;
 
-        // 6. Persistence Stage
-        // Note: As per DB constraints, we skip saving postings where no verified company matches
-        if (!matchResult.companyId) {
-          record.status = 'skipped';
-          record.errors.push('Skipped persistence: No existing matching company found in database.');
-          IngestionLogger.info('Skipped', `Skipped opportunity: "${normalized.title}" - no matching company verified in DB`, source.id, raw.externalJobId);
-          summary.records.push(record);
-          continue;
+        // 6. Persistence Stage (CRIT-003: Zero Data Loss Pipeline)
+        let targetCompanyId = matchResult.companyId;
+        if (!targetCompanyId) {
+          const autoProvision = await CompanyMatcher.getOrCreateCompany(normalized);
+          targetCompanyId = autoProvision.companyId;
+          if (autoProvision.isNew) {
+            IngestionLogger.info('Matched', `Auto-provisioned company record for "${normalized.companyName}"`, source.id, raw.externalJobId);
+          }
         }
 
         try {
-          await OpportunityRepository.create({
+          await OpportunityRepository.upsertByUrl({
             title: normalized.title,
             type: normalized.type,
             location: normalized.location,
@@ -140,14 +140,14 @@ export class IngestionPipeline {
             requirements: normalized.requirements,
             salaryRange: normalized.salaryRange,
             deadline: normalized.deadline,
-            companyId: matchResult.companyId,
+            companyId: targetCompanyId,
             tags: normalized.tags,
             isActive: true,
           });
 
           record.status = 'success';
           summary.totalPersisted++;
-          IngestionLogger.info('Accepted', `Saved opportunity: "${normalized.title}" under matched company ID: ${matchResult.companyId}`, source.id, raw.externalJobId);
+          IngestionLogger.info('Accepted', `Saved opportunity: "${normalized.title}" under company ID: ${targetCompanyId}`, source.id, raw.externalJobId);
         } catch (err) {
           const errObj = err instanceof Error ? err : new Error(String(err));
           throw new PersistenceError(`Database insert failed: ${errObj.message}`, errObj);

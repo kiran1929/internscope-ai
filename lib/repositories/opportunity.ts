@@ -115,6 +115,26 @@ export class OpportunityRepository {
     });
   }
 
+  static async upsertByUrl(
+    data: Prisma.OpportunityCreateWithoutCompanyInput & {
+      companyId: string;
+      tags?: string[];
+      isArchived?: boolean;
+    }
+  ) {
+    if (data.applicationUrl) {
+      const existing = await prisma.opportunity.findFirst({
+        where: { applicationUrl: data.applicationUrl.trim() },
+        include: { company: true },
+      });
+      if (existing) {
+        return existing;
+      }
+    }
+
+    return this.create(data);
+  }
+
   static async update(id: string, data: Prisma.OpportunityUpdateInput) {
     return prisma.opportunity.update({
       where: { id },

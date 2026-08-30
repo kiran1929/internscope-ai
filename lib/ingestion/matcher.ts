@@ -91,4 +91,35 @@ export class CompanyMatcher {
       );
     }
   }
+
+  /**
+   * Ensures an opportunity is never discarded due to an unmatched company (CRIT-003).
+   * Automatically provisions an unverified company entry if none exists.
+   */
+  static async getOrCreateCompany(normalized: NormalizedOpportunity): Promise<{ companyId: string; isNew: boolean }> {
+    const match = await this.match(normalized);
+    if (match.companyId) {
+      return { companyId: match.companyId, isNew: false };
+    }
+
+    try {
+      const created = await CompanyRepository.create({
+        name: normalized.companyName,
+        websiteUrl: normalized.companyWebsite,
+        careerPageUrl: normalized.companyWebsite,
+        isVerified: false,
+        hiringStatus: 'HIRING',
+        industry: 'Technology',
+        tags: ['scraper-auto-created'],
+      });
+      return { companyId: created.id, isNew: true };
+    } catch (err) {
+      // If concurrent insert created it, lookup by name
+      const fallback = await CompanyRepository.findByName(normalized.companyName);
+      if (fallback) {
+        return { companyId: fallback.id, isNew: false };
+      }
+      throw err;
+    }
+  }
 }
