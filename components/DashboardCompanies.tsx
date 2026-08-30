@@ -244,10 +244,10 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
       </div>
 
       {/* Filter Toolbar & View Switcher */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 bg-surface-muted/40 p-2.5 rounded-xl border border-border-subtle">
-        {/* Filter items row */}
+      <div className="flex flex-wrap items-center justify-between gap-2 bg-surface-muted/40 p-2.5 rounded-xl border border-border-subtle">
+        {/* Search Input & All Select Dropdowns on Single Line */}
         <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-          <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-full sm:w-64 h-8 focus-within:border-primary/50 transition-colors">
+          <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden flex-1 min-w-[200px] sm:max-w-xs h-8 focus-within:border-primary/50 transition-colors">
             <div className="relative flex items-center gap-1.5 px-2.5 flex-1 min-w-0">
               <Search className="w-3.5 h-3.5 text-text-muted shrink-0" />
               <input
@@ -357,9 +357,9 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           )}
         </div>
 
-        {/* View Mode Toggle */}
-        <div className="flex items-center justify-between lg:justify-end gap-3 shrink-0 pt-1 lg:pt-0 border-t lg:border-t-0 border-border-subtle">
-          <span className="text-xs text-text-muted font-medium">
+        {/* View Mode Toggle & Counter */}
+        <div className="flex items-center gap-3 shrink-0">
+          <span className="text-xs text-text-muted font-medium whitespace-nowrap">
             Showing <span className="text-foreground font-semibold">{totalFiltered === 0 ? 0 : startIndex + 1}–{Math.min(startIndex + pageSize, totalFiltered)}</span> of <span className="text-foreground font-semibold">{totalFiltered}</span>
           </span>
 
