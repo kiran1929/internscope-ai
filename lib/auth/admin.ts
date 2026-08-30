@@ -18,5 +18,9 @@ export async function requireAdmin() {
     throw new Error('Forbidden: admin access required');
   }
 
+  if (!dbUser.isActive) {
+    throw new Error('Forbidden: user account is deactivated');
+  }
+
   return dbUser;
 }

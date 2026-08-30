@@ -1,43 +1,29 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
-import { UserRepository } from '@/lib/repositories/user';
-import { Role } from '@/lib/generated/prisma/enums';
+import { requireAdmin } from '@/lib/auth/admin';
 import { IngestionQueue } from '@/lib/ingestion/queue';
 import { JobRepository } from '@/lib/repositories/job';
 import { revalidatePath } from 'next/cache';
 import { EnrichmentEngine } from '@/lib/ai/enrichment-engine';
-
-async function checkAdminAuth() {
-  const session = await auth();
-  const userId = session.userId;
-  if (!userId) {
-    throw new Error('Unauthorized');
-  }
-  const dbUser = await UserRepository.findByClerkId(userId);
-  if (!dbUser || (dbUser.role !== Role.ADMIN && dbUser.role !== Role.SUPER_ADMIN)) {
-    throw new Error('Forbidden');
-  }
-}
+import { sanitizeError } from '@/lib/security/error-handler';
 
 export async function triggerSyncAction(provider: string) {
   try {
-    await checkAdminAuth();
+    await requireAdmin();
     const jobId = await IngestionQueue.runJob(provider);
     revalidatePath('/admin/scraper');
     return { success: true, jobId };
   } catch (error) {
-    console.error('Trigger sync error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: sanitizeError(error, 'Failed to trigger scraper sync.'),
     };
   }
 }
 
 export async function retrySyncAction(jobId: string) {
   try {
-    await checkAdminAuth();
+    await requireAdmin();
     const job = await JobRepository.findById(jobId);
     if (!job) {
       return { success: false, error: 'Job not found' };
@@ -46,30 +32,29 @@ export async function retrySyncAction(jobId: string) {
     revalidatePath('/admin/scraper');
     return { success: true, jobId: newJobId };
   } catch (error) {
-    console.error('Retry sync error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: sanitizeError(error, 'Failed to retry sync job.'),
     };
   }
 }
 
 export async function getSyncHistoryAction() {
   try {
-    await checkAdminAuth();
+    await requireAdmin();
     const history = await JobRepository.getHistory();
     return { success: true, history };
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: sanitizeError(error, 'Failed to fetch sync history.'),
     };
   }
 }
 
 export async function triggerEnrichmentAction() {
   try {
-    await checkAdminAuth();
+    await requireAdmin();
     (async () => {
       try {
         await EnrichmentEngine.drainAllPending();
@@ -80,10 +65,9 @@ export async function triggerEnrichmentAction() {
     revalidatePath('/admin/scraper');
     return { success: true };
   } catch (error) {
-    console.error('Trigger enrichment error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: sanitizeError(error, 'Failed to trigger enrichment process.'),
     };
   }
 }
