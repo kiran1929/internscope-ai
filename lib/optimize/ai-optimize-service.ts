@@ -1,4 +1,10 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  analyzeATSKeywords,
+  ATSKeywordAnalysis,
+  buildCompactJobForPrompt,
+  buildCompactResumeForPrompt,
+} from './ats-keyword-engine';
 
 export interface BulletRewriteItem {
   original: string;
@@ -16,6 +22,7 @@ export interface OptimizedSectionItem {
 export interface ATSAnalysisPayload {
   atsScore: number;
   keywordMatchScore: number;
+  matchedKeywords?: string[];
   missingKeywords: string[];
   weakBullets: string[];
   strongBullets: string[];
@@ -39,15 +46,23 @@ export class AIOptimizeService {
   private static MODEL_NAME = 'gemini-1.5-flash';
 
   static async optimize(params: {
-    resumeStructuredData: any;
-    job?: any;
+    resumeStructuredData: Record<string, unknown>;
+    job?: {
+      title?: string;
+      description?: string | null;
+      requirements?: string | null;
+      company?: { name?: string };
+    };
   }): Promise<ATSAnalysisResult> {
     const startTime = Date.now();
     const apiKey = process.env.GEMINI_API_KEY;
 
+    // Phase 1: deterministic keyword + bullet analysis (instant, accurate)
+    const keywordAnalysis = analyzeATSKeywords(params.resumeStructuredData, params.job);
+
     let structuredData: ATSAnalysisPayload;
-    let provider = 'Mock-Local';
-    let model = 'rules-engine';
+    let provider = 'RulesEngine';
+    let model = 'ats-keyword-engine';
     let tokensUsed = 0;
 
     if (apiKey) {
@@ -55,31 +70,39 @@ export class AIOptimizeService {
         const genAI = new GoogleGenerativeAI(apiKey);
         const geminiModel = genAI.getGenerativeModel({ model: this.MODEL_NAME });
 
-        const prompt = this.getPrompt(params.resumeStructuredData, params.job);
-        
+        const prompt = this.getRewritePrompt(
+          params.resumeStructuredData,
+          params.job,
+          keywordAnalysis
+        );
+
         const response = await geminiModel.generateContent({
           contents: [{ role: 'user', parts: [{ text: prompt }] }],
           generationConfig: {
             responseMimeType: 'application/json',
+            maxOutputTokens: 2048,
           },
         });
 
         const text = response.response.text();
         if (!text) throw new Error('Empty payload returned from Gemini optimizer');
 
-        structuredData = JSON.parse(text);
-        provider = 'Gemini';
+        const llmData = JSON.parse(text);
+        structuredData = this.mergeWithKeywordAnalysis(llmData, keywordAnalysis, params.resumeStructuredData);
+        provider = 'Gemini+RulesEngine';
         model = this.MODEL_NAME;
 
         const promptTokens = response.response.usageMetadata?.promptTokenCount || 0;
         const candidatesTokens = response.response.usageMetadata?.candidatesTokenCount || 0;
         tokensUsed = promptTokens + candidatesTokens;
       } catch (error) {
-        console.error('Gemini ATS optimization failed, falling back to mock optimization:', error);
-        structuredData = this.getMockOptimization(params.resumeStructuredData, params.job);
+        console.error('Gemini ATS rewrite failed, using rules-only optimization:', error);
+        structuredData = this.buildFromKeywordAnalysis(keywordAnalysis, params.resumeStructuredData, params.job);
+        provider = 'RulesEngine';
+        model = 'ats-keyword-engine';
       }
     } else {
-      structuredData = this.getMockOptimization(params.resumeStructuredData, params.job);
+      structuredData = this.buildFromKeywordAnalysis(keywordAnalysis, params.resumeStructuredData, params.job);
     }
 
     return {
@@ -91,10 +114,119 @@ export class AIOptimizeService {
     };
   }
 
-  private static sanitizeOptimization(data: any, originalResume: any): ATSAnalysisPayload {
+  private static mergeWithKeywordAnalysis(
+    llmData: Record<string, unknown>,
+    keywordAnalysis: ATSKeywordAnalysis,
+    resume: Record<string, unknown>
+  ): ATSAnalysisPayload {
+    const base = this.buildFromKeywordAnalysis(keywordAnalysis, resume);
+
     return {
-      atsScore: typeof data.atsScore === 'number' ? data.atsScore : 70,
-      keywordMatchScore: typeof data.keywordMatchScore === 'number' ? data.keywordMatchScore : 65,
+      ...base,
+      // Keep deterministic scores — LLM often inflates these
+      atsScore: keywordAnalysis.atsScore,
+      keywordMatchScore: keywordAnalysis.keywordMatchScore,
+      missingKeywords: keywordAnalysis.missingKeywords,
+      weakBullets: keywordAnalysis.weakBullets,
+      strongBullets: keywordAnalysis.strongBullets,
+      missingSkills: keywordAnalysis.missingSkills.length > 0
+        ? keywordAnalysis.missingSkills
+        : (Array.isArray(llmData.missingSkills) ? llmData.missingSkills as string[] : base.missingSkills),
+      suggestedProjects: Array.isArray(llmData.suggestedProjects)
+        ? (llmData.suggestedProjects as string[]).slice(0, 3)
+        : base.suggestedProjects,
+      suggestedCertifications: Array.isArray(llmData.suggestedCertifications)
+        ? (llmData.suggestedCertifications as string[]).slice(0, 3)
+        : base.suggestedCertifications,
+      formattingIssues: keywordAnalysis.formattingIssues,
+      improvementChecklist: Array.from(new Set([
+        ...keywordAnalysis.improvementChecklist,
+        ...(Array.isArray(llmData.improvementChecklist) ? llmData.improvementChecklist as string[] : []),
+      ])).slice(0, 6),
+      sections: Array.isArray(llmData.sections) && (llmData.sections as unknown[]).length > 0
+        ? (llmData.sections as Record<string, unknown>[]).map((s) => ({
+            sectionType: (s.sectionType as OptimizedSectionItem['sectionType']) || 'Experience',
+            originalContent: String(s.originalContent || ''),
+            optimizedContent: String(s.optimizedContent || ''),
+            bulletRewrites: Array.isArray(s.bulletRewrites)
+              ? (s.bulletRewrites as Record<string, string>[]).map((br) => ({
+                  original: br.original || '',
+                  suggested: br.suggested || '',
+                  explanation: br.explanation || '',
+                }))
+              : [],
+          }))
+        : base.sections,
+    };
+  }
+
+  private static buildFromKeywordAnalysis(
+    analysis: ATSKeywordAnalysis,
+    resume: Record<string, unknown>,
+    job?: { title?: string }
+  ): ATSAnalysisPayload {
+    const originalSummary = String(resume.summary || 'Software engineering professional.');
+    const originalSkills = Array.isArray(resume.skills) ? (resume.skills as string[]).join(', ') : '';
+    const addedKeywords = analysis.missingKeywords.slice(0, 5).join(', ');
+
+    const experienceBullets = (Array.isArray(resume.experience) ? resume.experience as Record<string, unknown>[] : [])
+      .flatMap((e) => (Array.isArray(e.bullets) ? e.bullets as string[] : []))
+      .slice(0, 3);
+
+    const bulletRewrites = analysis.weakBullets.slice(0, 3).map((weak) => ({
+      original: weak,
+      suggested: weak
+        .replace(/^(helped|worked on|responsible for|assisted with)\s+/i, 'Engineered ')
+        .replace(/\.$/, '') + ' — add a quantified metric (e.g. 30% improvement, 10K users).',
+      explanation: 'Replace passive phrasing with an action verb and add a measurable result.',
+    }));
+
+    return {
+      atsScore: analysis.atsScore,
+      keywordMatchScore: analysis.keywordMatchScore,
+      matchedKeywords: analysis.matchedKeywords,
+      missingKeywords: analysis.missingKeywords,
+      weakBullets: analysis.weakBullets,
+      strongBullets: analysis.strongBullets,
+      missingSkills: analysis.missingSkills,
+      suggestedProjects: analysis.missingKeywords.length > 0
+        ? [`Build a portfolio project demonstrating ${analysis.missingKeywords.slice(0, 2).join(' and ')}.`]
+        : [],
+      suggestedCertifications: [],
+      formattingIssues: analysis.formattingIssues,
+      improvementChecklist: analysis.improvementChecklist,
+      sections: [
+        {
+          sectionType: 'Summary',
+          originalContent: originalSummary,
+          optimizedContent: addedKeywords
+            ? `${originalSummary} Proficient in ${addedKeywords}.`
+            : originalSummary,
+          bulletRewrites: [],
+        },
+        {
+          sectionType: 'Skills',
+          originalContent: originalSkills,
+          optimizedContent: addedKeywords
+            ? `${originalSkills}${originalSkills ? ', ' : ''}${addedKeywords}`
+            : originalSkills,
+          bulletRewrites: [],
+        },
+        {
+          sectionType: 'Experience',
+          originalContent: experienceBullets.join('\n') || 'Experience bullets',
+          optimizedContent: experienceBullets.join('\n') || 'Experience bullets',
+          bulletRewrites,
+        },
+      ],
+    };
+  }
+
+  private static sanitizeOptimization(data: ATSAnalysisPayload, originalResume: Record<string, unknown>): ATSAnalysisPayload {
+    return {
+      atsScore: typeof data.atsScore === 'number' ? Math.min(100, Math.max(0, data.atsScore)) : 70,
+      keywordMatchScore: typeof data.keywordMatchScore === 'number' ? Math.min(100, Math.max(0, data.keywordMatchScore)) : 65,
+      matchedKeywords: Array.isArray(data.matchedKeywords) ? data.matchedKeywords.map(String) : [],
       missingKeywords: Array.isArray(data.missingKeywords) ? data.missingKeywords.map(String) : [],
       weakBullets: Array.isArray(data.weakBullets) ? data.weakBullets.map(String) : [],
       strongBullets: Array.isArray(data.strongBullets) ? data.strongBullets.map(String) : [],
@@ -102,12 +234,14 @@ export class AIOptimizeService {
       suggestedProjects: Array.isArray(data.suggestedProjects) ? data.suggestedProjects.map(String) : [],
       suggestedCertifications: Array.isArray(data.suggestedCertifications) ? data.suggestedCertifications.map(String) : [],
       formattingIssues: Array.isArray(data.formattingIssues) ? data.formattingIssues.map(String) : [],
-      improvementChecklist: Array.isArray(data.improvementChecklist) ? data.improvementChecklist.map(String) : ['Rewrite experience with action verbs'],
-      sections: Array.isArray(data.sections) ? data.sections.map((s: any) => ({
+      improvementChecklist: Array.isArray(data.improvementChecklist) && data.improvementChecklist.length > 0
+        ? data.improvementChecklist.map(String)
+        : ['Rewrite experience bullet points with quantitative results'],
+      sections: Array.isArray(data.sections) ? data.sections.map((s) => ({
         sectionType: s.sectionType || 'Experience',
         originalContent: s.originalContent || '',
         optimizedContent: s.optimizedContent || '',
-        bulletRewrites: Array.isArray(s.bulletRewrites) ? s.bulletRewrites.map((br: any) => ({
+        bulletRewrites: Array.isArray(s.bulletRewrites) ? s.bulletRewrites.map((br) => ({
           original: br.original || '',
           suggested: br.suggested || '',
           explanation: br.explanation || '',
@@ -116,122 +250,67 @@ export class AIOptimizeService {
     };
   }
 
-  private static getMockOptimization(resume: any, job: any): ATSAnalysisPayload {
-    // Generate mock details based on resume and target job
-    const jobTitle = job?.title || 'Software Engineer';
-    const originalSummary = resume?.summary || 'Experienced developer specializing in frontend and backend systems.';
-    const originalSkills = Array.isArray(resume?.skills) ? resume.skills.join(', ') : 'JavaScript, React, Node.js';
+  /** Focused LLM prompt — scores come from rules engine; LLM only rewrites. */
+  private static getRewritePrompt(
+    resume: Record<string, unknown>,
+    job: {
+      title?: string;
+      description?: string | null;
+      requirements?: string | null;
+      company?: { name?: string };
+    } | undefined,
+    analysis: ATSKeywordAnalysis
+  ): string {
+    const compactResume = buildCompactResumeForPrompt(resume);
+    const compactJob = buildCompactJobForPrompt(job);
 
-    return {
-      atsScore: 72,
-      keywordMatchScore: 68,
-      missingKeywords: ['Docker', 'Kubernetes', 'CI/CD Pipelines', 'AWS Deployment', 'GraphQL'],
-      weakBullets: [
-        'Built dashboard using React.',
-        'Worked on databases.',
-        'Helped teammates fix bugs.'
-      ],
-      strongBullets: [
-        'Integrated multi-source ingestion parsers that synchronized Neon PostgreSQL records.'
-      ],
-      missingSkills: ['Cloud architecture', 'Automated testing', 'Continuous Integration'],
-      suggestedProjects: [
-        'Construct a CI/CD automation workflow deploying simple servers with AWS ECS and Docker.'
-      ],
-      suggestedCertifications: ['AWS Certified Developer - Associate', 'Certified Kubernetes Administrator (CKA)'],
-      formattingIssues: [
-        'Mixed font spacing in work experience detail blocks.',
-        'Missing quantified results percentages in 60% of bullet points.'
-      ],
-      improvementChecklist: [
-        'Insert missing Docker & Kubernetes tags into your skills summary list.',
-        'Rewrite weak React dashboards bullets with action verbs and metrics.',
-        'Integrate a dedicated projects listing section to showcase systems integration skills.'
-      ],
-      sections: [
-        {
-          sectionType: 'Summary',
-          originalContent: originalSummary,
-          optimizedContent: `Highly capable Software Engineer specializing in scalable full-stack development, distributed processing systems, and API design. Expert in JavaScript, React, and Node.js. Passionate about deploying containerized cloud workflows (Docker, Kubernetes) and optimizing latency performance.`,
-          bulletRewrites: []
-        },
-        {
-          sectionType: 'Skills',
-          originalContent: originalSkills,
-          optimizedContent: `${originalSkills}, Docker, Kubernetes, CI/CD, AWS, GraphQL`,
-          bulletRewrites: []
-        },
-        {
-          sectionType: 'Experience',
-          originalContent: `Worked as developer building React dashboard pages. Fixed bugs and collaborated.`,
-          optimizedContent: `Engineered responsive analytical dashboard interfaces using React and Next.js, resulting in a 35% performance improvement in rendering times. Orchestrated distributed bug resolution campaigns that reduced backlog overhead by 20%.`,
-          bulletRewrites: [
-            {
-              original: 'Worked as developer building React dashboard pages',
-              suggested: 'Engineered responsive analytical dashboard interfaces using React and Next.js, reducing rendering times by 35%',
-              explanation: 'Uses technical keywords (Next.js), action verbs (Engineered), and quantified results (reducing render time by 35%).'
-            },
-            {
-              original: 'Fixed bugs and collaborated',
-              suggested: 'Orchestrated distributed bug resolution campaigns that reduced backlog overhead by 20%',
-              explanation: 'Emphasizes leadership qualities (Orchestrated) and quantifies team output impact (reducing backlog by 20%).'
-            }
-          ]
-        }
-      ]
-    };
-  }
-
-  private static getPrompt(resume: any, job: any): string {
     return `
-You are an expert technical recruiter and ATS software architect. Analyze the candidate's resume against this target job description and compile an ATS optimization analysis.
+You are an ATS resume optimization expert. Keyword analysis is ALREADY COMPLETE — do NOT re-score.
+
+Pre-computed ATS Analysis:
+- ATS Score: ${analysis.atsScore}%
+- Keyword Match: ${analysis.keywordMatchScore}%
+- Matched Keywords: ${analysis.matchedKeywords.join(', ') || 'None'}
+- Missing Keywords: ${analysis.missingKeywords.join(', ') || 'None'}
+- Weak Bullets: ${analysis.weakBullets.slice(0, 3).join(' | ') || 'None'}
+- Formatting Issues: ${analysis.formattingIssues.join('; ') || 'None'}
 
 Target Job:
-- Title: ${job?.title || 'General Software Engineer'}
-- Description: ${job?.description || 'N/A'}
-- Requirements: ${job?.requirements || 'N/A'}
+${JSON.stringify(compactJob || { title: 'General Software Engineer' })}
 
-Candidate Resume structured sections:
-${JSON.stringify(resume)}
+Candidate Resume (compact):
+${JSON.stringify(compactResume)}
 
-Analyze:
-1. ATS Score (0-100)
-2. Keyword density and Keyword match score (0-100)
-3. Missing Keywords
-4. Weak bullet points vs strong bullet points
-5. Formatting issues and readability
-6. Specific section-by-section optimization suggestions (Summary, Experience, Projects, Skills, Education, Certifications, Achievements)
-7. Bullet points rewrites containing Action Verbs, Quantified Results, Technical Keywords, and Impact Statements.
+Your task — return ONLY section rewrites and suggestions:
+1. Rewrite Summary and Skills to naturally include missing keywords: ${analysis.missingKeywords.slice(0, 5).join(', ') || 'N/A'}
+2. Provide bullet rewrites for weak bullets using action verbs + metrics
+3. Suggest 1-2 portfolio projects and 0-2 certifications if relevant
+4. Add 2-3 improvement checklist items beyond the pre-computed ones
 
-Return exactly a JSON object matching this schema:
+Return JSON:
 {
-  "atsScore": 75,
-  "keywordMatchScore": 70,
-  "missingKeywords": ["Docker", "TypeScript", "CI/CD"],
-  "weakBullets": ["Worked on a dashboard using React"],
-  "strongBullets": ["Led development of microservices increasing throughput by 25%"],
-  "missingSkills": ["CI/CD pipelines"],
-  "suggestedProjects": ["Build a full-stack Next.js pipeline integrating unit tests"],
-  "suggestedCertifications": ["AWS Cloud Practitioner"],
-  "formattingIssues": ["Mixed font sizes in experience section"],
-  "improvementChecklist": ["Refactor experience bullet points with quantitative results"],
+  "suggestedProjects": ["project idea"],
+  "suggestedCertifications": ["cert if relevant"],
+  "improvementChecklist": ["action item"],
   "sections": [
     {
       "sectionType": "Summary",
-      "originalContent": "Full stack developer with experience in React and Node.",
-      "optimizedContent": "Result-oriented Full Stack Software Engineer with 2+ years of experience specializing in React, Node.js, and TypeScript.",
+      "originalContent": "...",
+      "optimizedContent": "...",
+      "bulletRewrites": []
+    },
+    {
+      "sectionType": "Skills",
+      "originalContent": "...",
+      "optimizedContent": "...",
       "bulletRewrites": []
     },
     {
       "sectionType": "Experience",
-      "originalContent": "- Built dashboard using React.",
-      "optimizedContent": "- Engineered responsive analytics dashboard using React and Tailwind CSS, reducing client render times by 30%.",
+      "originalContent": "...",
+      "optimizedContent": "...",
       "bulletRewrites": [
-        {
-          "original": "Built dashboard using React",
-          "suggested": "Engineered responsive analytics dashboard using React and Tailwind CSS, reducing client render times by 30%",
-          "explanation": "Added action verbs, technical context, and quantified impact."
-        }
+        { "original": "...", "suggested": "...", "explanation": "..." }
       ]
     }
   ]

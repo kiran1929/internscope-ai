@@ -97,6 +97,8 @@ export interface QuestionGenerationInput {
   difficulty: InterviewDifficulty;
   previousAnswerSummary?: CompactAnswerSummary;
   recentQuestions?: string[];
+  /** Short excerpt from the candidate's last answer — used for follow-up questions. */
+  userAnswerSnippet?: string;
 }
 
 export interface GeneratedQuestionPayload {
@@ -119,6 +121,7 @@ export interface AnswerEvaluationInput {
   targetSkill?: string;
   difficulty: InterviewDifficulty;
   intent?: QuestionIntent;
+  expectedConcepts?: string[];
 }
 
 export interface AnswerEvaluationPayload {

@@ -31,7 +31,7 @@ export async function runResumeOptimizationPipeline(payload: OptimizePipelinePay
 
   // 2. Call the AI optimization service
   const optResult = await AIOptimizeService.optimize({
-    resumeStructuredData: resume.structuredData,
+    resumeStructuredData: (resume.structuredData ?? {}) as Record<string, unknown>,
     job: job ? {
       title: job.title,
       description: job.description,
@@ -53,20 +53,18 @@ export async function runResumeOptimizationPipeline(payload: OptimizePipelinePay
     },
   });
 
-  // 4. Create ResumeOptimizationSection records
-  const sectionPromises = data.sections.map((s) =>
-    prisma.resumeOptimizationSection.create({
-      data: {
+  // 4. Create ResumeOptimizationSection records (batch insert)
+  if (data.sections.length > 0) {
+    await prisma.resumeOptimizationSection.createMany({
+      data: data.sections.map((s) => ({
         optimizationId: optimization.id,
         sectionType: s.sectionType,
         originalContent: s.originalContent,
         optimizedContent: s.optimizedContent,
-        bulletRewrites: s.bulletRewrites as any,
-      },
-    })
-  );
-
-  await Promise.all(sectionPromises);
+        bulletRewrites: s.bulletRewrites as object,
+      })),
+    });
+  }
 
   // 5. Create ATSAnalysis report record
   await prisma.aTSAnalysis.create({
@@ -74,6 +72,7 @@ export async function runResumeOptimizationPipeline(payload: OptimizePipelinePay
       optimizationId: optimization.id,
       atsScore: data.atsScore,
       keywordMatchScore: data.keywordMatchScore,
+      matchedKeywords: data.matchedKeywords || [],
       missingKeywords: data.missingKeywords,
       weakBullets: data.weakBullets,
       strongBullets: data.strongBullets,

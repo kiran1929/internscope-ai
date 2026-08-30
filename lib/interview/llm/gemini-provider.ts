@@ -57,6 +57,9 @@ ${input.previousAnswerSummary ? `Previous Answer Summary:
 - Weakness: ${input.previousAnswerSummary.weakness}
 - Missing Concept: ${input.previousAnswerSummary.missingConcept}` : ''}
 
+${input.userAnswerSnippet ? `Candidate's Previous Answer (excerpt — use this to craft a targeted follow-up, do NOT repeat the same question):
+"${input.userAnswerSnippet}"` : ''}
+
 ${input.recentQuestions && input.recentQuestions.length > 0 ? `CRITICAL - Already Asked Questions in this Session (DO NOT repeat or rephrase these):
 ${input.recentQuestions.map((q, idx) => `${idx + 1}. ${q}`).join('\n')}` : ''}
 
@@ -126,24 +129,29 @@ Rules:
     const isBehavioral = input.category.toLowerCase() === 'behavioral';
 
     const prompt = `
-Question: "${input.questionText}"
-Expected Guidelines / Concepts: "${input.sampleAnswer || 'N/A'}"
+Question Asked: "${input.questionText}"
+Expected Concepts to Evaluate Against: ${(input.expectedConcepts && input.expectedConcepts.length > 0) ? input.expectedConcepts.join(', ') : 'See guidelines below'}
+Reference Guidelines / Sample Answer: "${input.sampleAnswer || 'N/A'}"
 Candidate's Submitted Answer: "${input.userAnswer}"
 
 Parameters:
-- Category is Behavioral: ${isBehavioral ? 'YES' : 'NO'}.
+- Category: ${input.category}
+- Question Intent: ${input.intent || 'skill_assessment'}
 - Target Skill: ${input.targetSkill || 'General'}
 - Difficulty: ${input.difficulty}
+- Category is Behavioral: ${isBehavioral ? 'YES' : 'NO'}.
 
 STRICT EVALUATION CRITERIA:
-1. Evaluate based on technical accuracy, required concepts, keywords, and completeness.
-2. Do not inflate score for confidence or grammar.
-3. Accept equivalent valid technical phrasing, but penalize vague buzzwords and missing mechanics.
-4. Scale (0-100):
-   - 0-29 = Incorrect / irrelevant
-   - 30-49 = Very weak understanding
-   - 50-69 = Partially correct (misses key security, internals, or trade-offs)
-   - 70-89 = Good to very good understanding
+1. Score ONLY against what THIS specific question asked — not general knowledge unrelated to the question.
+2. Check whether the candidate's answer addresses the target skill, expected concepts, and question intent.
+3. Penalize answers that are off-topic, generic buzzwords, or do not engage with the question text.
+4. Do not inflate score for confidence or grammar alone.
+5. Accept equivalent valid technical phrasing, but penalize missing key mechanics or trade-offs.
+6. Scale (0-100):
+   - 0-29 = Incorrect / irrelevant to the question
+   - 30-49 = Very weak understanding of what was asked
+   - 50-69 = Partially correct (misses key concepts from the question)
+   - 70-89 = Good to very good answer to this specific question
    - 90-100 = Excellent and complete answer
 
 Return exactly a JSON object:

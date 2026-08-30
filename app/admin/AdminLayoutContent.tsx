@@ -52,7 +52,7 @@ export function AdminLayoutContent({ children }: { children: React.ReactNode }) 
       <div
         className={cn(
           'flex-1 flex flex-col min-h-screen transition-all duration-300',
-          sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+          sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-[260px]'
         )}
       >
         {/* Top CMS Header */}

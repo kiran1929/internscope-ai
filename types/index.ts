@@ -4,6 +4,7 @@ export interface Company {
   id: string;
   name: string;
   logo: string;
+  logoUrl?: string | null;
   industry: string;
   activeOpeningsCount: number;
   isTracking: boolean;
@@ -15,6 +16,7 @@ export interface Internship {
   companyId: string;
   companyName: string;
   companyLogo: string;
+  companyWebsite?: string;
   role: string;
   location: string;
   status: 'open' | 'closed';
@@ -30,6 +32,7 @@ export interface Application {
   internshipId: string;
   companyName: string;
   companyLogo: string;
+  companyWebsite?: string;
   role: string;
   status: ApplicationStatus;
   appliedDate: string;

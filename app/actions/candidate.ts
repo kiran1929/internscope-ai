@@ -87,6 +87,7 @@ export async function getCompaniesDirectoryForUser() {
     id: company.id,
     name: company.name,
     logo: company.logoUrl || company.name.slice(0, 4).toUpperCase(),
+    logoUrl: company.logoUrl,
     industry: company.industry || 'Tech',
     activeOpeningsCount: company._count.opportunities,
     isTracking: trackedCompanyIds.has(company.id),
@@ -442,6 +443,7 @@ export async function searchJobsAction(options: SearchOptions) {
         id: opp.company.id,
         name: opp.company.name,
         logoUrl: opp.company.logoUrl,
+        websiteUrl: opp.company.websiteUrl,
       },
       enrichment: opp.enrichment ? {
         skills: opp.enrichment.skills,
@@ -1017,7 +1019,22 @@ export async function generateApplicationCopilotAction(
       return { success: false, error: 'Job opening not found.' };
     }
 
-    const structuredData = latestResume.structuredData as any;
+    const structuredData = latestResume.structuredData as Record<string, unknown>;
+
+    // Resume ATS checklist — instant deterministic analysis (no LLM needed)
+    if (type === 'resume') {
+      const { analyzeATSKeywords, formatATSChecklistMarkdown } = await import('@/lib/optimize/ats-keyword-engine');
+      const analysis = analyzeATSKeywords(structuredData, {
+        title: job.title,
+        description: job.description,
+        requirements: job.requirements,
+      });
+      return {
+        success: true,
+        text: formatATSChecklistMarkdown(analysis, `${job.title} at ${job.company.name}`),
+      };
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -1032,22 +1049,7 @@ export async function generateApplicationCopilotAction(
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     let prompt = '';
-    if (type === 'resume') {
-      prompt = `
-You are an expert ATS optimization coach. Customize the candidate's resume keywords to match this target job description:
-Job Title: ${job.title} at ${job.company.name}
-Job Description: ${job.description}
-Requirements: ${job.requirements}
-
-Candidate Resume:
-${JSON.stringify(structuredData)}
-
-Generate a detailed markdown checklist indicating:
-1. Bullet points to rewrite or tune (e.g. highlight specific tech stacks like Redis or Next.js).
-2. Keywords to insert into their skills list to pass ATS scanners.
-3. Specific project details to emphasize.
-`;
-    } else if (type === 'cover-letter') {
+    if (type === 'cover-letter') {
       prompt = `
 You are a career services writer. Write a tailored, persuasive, and highly professional Cover Letter for the candidate applying to this role:
 Job Title: ${job.title} at ${job.company.name}

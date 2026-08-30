@@ -2,6 +2,7 @@ import { llmRouter } from './llm/router';
 import {
   AnswerEvaluationPayload,
   InterviewDifficulty,
+  QuestionIntent,
 } from './llm/types';
 
 export interface AIEvalResult {
@@ -20,6 +21,8 @@ export class AIEvalService {
     category: string;
     targetSkill?: string;
     difficulty?: string;
+    intent?: QuestionIntent;
+    expectedConcepts?: string[];
   }): Promise<AIEvalResult> {
     const result = await llmRouter.evaluateAnswer({
       questionText: params.questionText,
@@ -28,6 +31,8 @@ export class AIEvalService {
       category: params.category,
       targetSkill: params.targetSkill,
       difficulty: (params.difficulty as InterviewDifficulty) || 'Medium',
+      intent: params.intent,
+      expectedConcepts: params.expectedConcepts,
     });
 
     return {

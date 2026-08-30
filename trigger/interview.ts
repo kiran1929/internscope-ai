@@ -2,6 +2,7 @@ import { task } from '@trigger.dev/sdk/v3';
 import { prisma } from '../lib/db';
 import { llmRouter } from '../lib/interview/llm/router';
 import { InterviewMemoryService } from '../lib/interview/memory-service';
+import { parseQuestionMeta } from '../lib/interview/question-meta';
 
 export interface InterviewPipelinePayload {
   sessionId: string;
@@ -117,10 +118,13 @@ export async function runInterviewSummaryPipeline(payload: InterviewPipelinePayl
   // 6. Update Longitudinal Candidate Skill Memory
   const sessionCategorySkills = session.questions
     .filter((q) => q.evaluation !== null)
-    .map((q) => ({
-      skill: q.category,
-      score: q.evaluation!.score,
-    }));
+    .map((q) => {
+      const meta = parseQuestionMeta(q.generationMeta);
+      return {
+        skill: meta?.targetSkill || q.category,
+        score: q.evaluation!.score,
+      };
+    });
 
   await InterviewMemoryService.updateLongitudinalSkillMemory(
     session.userId,

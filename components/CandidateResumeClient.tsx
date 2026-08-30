@@ -8,25 +8,22 @@ import {
   Download,
   AlertTriangle,
   CheckCircle,
-  HelpCircle,
   FileDown,
-  Clock,
   Sparkles,
   Award,
   BookOpen,
   Briefcase,
   Compass,
-  ArrowRight,
-  TrendingUp,
-  X,
-  ExternalLink,
-  Plus,
-  Loader2
+  Loader2,
+  History,
+  ShieldCheck,
+  ScanLine,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { uploadResumeAction, deleteResumeAction } from '@/app/actions/resume';
 import { ResumeOptimizerPanel } from '@/components/ResumeOptimizerClient';
+import { cn } from '@/lib/utils';
 
 interface ResumeHistoryItem {
   id: string;
@@ -53,8 +50,8 @@ interface CandidateResumeClientProps {
     confidenceScore: number | null;
     processingTimeMs: number | null;
     qualityScore: number | null;
-    qualityFeedback: any;
-    structuredData: any;
+    qualityFeedback: unknown;
+    structuredData: unknown;
     createdAt: Date;
   } | null;
   optimizations: Array<{
@@ -88,6 +85,15 @@ interface CandidateResumeClientProps {
   preselectedJobId?: string;
 }
 
+type ResumeTab = 'profile' | 'quality' | 'history' | 'ats';
+
+const TABS: { id: ResumeTab; label: string; icon: React.ElementType }[] = [
+  { id: 'profile', label: 'Structured Profile', icon: FileText },
+  { id: 'quality', label: 'Quality Audit', icon: ShieldCheck },
+  { id: 'ats', label: 'ATS Optimizer', icon: ScanLine },
+  { id: 'history', label: 'Upload History', icon: History },
+];
+
 export default function CandidateResumeClient({
   resumes,
   latestResume,
@@ -99,22 +105,18 @@ export default function CandidateResumeClient({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [activeTab, setActiveTab] = useState<'profile' | 'quality' | 'history' | 'ats'>(initialTab);
+  const [activeTab, setActiveTab] = useState<ResumeTab>(initialTab);
 
-  const switchTab = (tab: 'profile' | 'quality' | 'history' | 'ats') => {
+  const switchTab = (tab: ResumeTab) => {
     setActiveTab(tab);
     const params = new URLSearchParams();
-    if (tab !== 'profile') {
-      params.set('tab', tab);
-    }
+    if (tab !== 'profile') params.set('tab', tab);
     const query = params.toString();
     router.replace(query ? `/resume?${query}` : '/resume', { scroll: false });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setUploadFile(e.target.files[0]);
-    }
+    if (e.target.files?.[0]) setUploadFile(e.target.files[0]);
   };
 
   const handleUploadSubmit = (e: React.FormEvent) => {
@@ -128,7 +130,7 @@ export default function CandidateResumeClient({
       toast.info('Uploading resume document...');
       const res = await uploadResumeAction(formData);
       if (res.success) {
-        toast.success('Resume uploaded successfully. Running AI parser...');
+        toast.success('Resume uploaded. Running AI parser...');
         setUploadFile(null);
         router.refresh();
       } else {
@@ -138,65 +140,83 @@ export default function CandidateResumeClient({
   };
 
   const handleDelete = (id: string) => {
-    if (!confirm('Are you sure you want to permanently delete this resume record? This will also remove all associated job matching scores.')) {
-      return;
-    }
+    if (!confirm('Delete this resume version? Associated job match scores will also be removed.')) return;
 
     startTransition(async () => {
       const res = await deleteResumeAction(id);
       if (res.success) {
-        toast.success('Resume deleted successfully.');
+        toast.success('Resume deleted.');
         router.refresh();
       } else {
-        toast.error(`Failed to delete resume: ${res.error}`);
+        toast.error(`Failed to delete: ${res.error}`);
       }
     });
   };
 
-  const parsedData = latestResume?.structuredData;
+  const parsedData = latestResume?.structuredData as Record<string, unknown> | undefined;
+  const qualityFeedback = (latestResume?.qualityFeedback as Array<{ type: string; category: string; message: string }>) || [];
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
-      
-      {/* Title Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-900 pb-5">
+    <div className="page-shell animate-fade-in text-foreground">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">Resume Intelligence</h2>
-          <p className="text-xs text-zinc-400 mt-1">Upload your resume, review parsed data, and optimize it for ATS keyword matching.</p>
+          <h1 className="page-header-title text-xl sm:text-2xl">Resume Intelligence</h1>
+          <p className="page-header-subtitle max-w-xl">
+            Upload your resume, review AI-parsed profile data, and optimize keywords for ATS screening.
+          </p>
         </div>
         {latestResume?.isParsed && (
           <button
+            type="button"
             onClick={() => switchTab('ats')}
-            className="px-4 py-2 bg-primary hover:bg-primary/95 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0"
+            className="px-4 py-2.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-semibold flex items-center gap-2 shrink-0 transition-colors"
           >
             <Sparkles className="w-4 h-4" />
-            Optimize for ATS
+            Run ATS Scan
           </button>
         )}
       </div>
 
+      {/* Quick stats */}
+      {latestResume?.isParsed && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: 'Quality Score', value: latestResume.qualityScore != null ? `${latestResume.qualityScore}%` : '—', accent: 'text-primary' },
+            { label: 'Parse Confidence', value: latestResume.confidenceScore != null ? `${Math.round(latestResume.confidenceScore * 100)}%` : '—', accent: 'text-emerald-500' },
+            { label: 'Versions', value: String(resumes.length), accent: 'text-foreground' },
+            { label: 'ATS Scans', value: String(optimizations.length), accent: 'text-foreground' },
+          ].map((stat) => (
+            <div key={stat.label} className="dashboard-card px-4 py-3">
+              <p className="text-[10px] uppercase font-bold tracking-wider text-text-muted">{stat.label}</p>
+              <p className={cn('text-xl font-bold font-mono mt-0.5', stat.accent)}>{stat.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
-        {/* Left Column: Upload box and history list */}
-        <div className="space-y-6">
-          
-          {/* Upload Card */}
-          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-sm">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">Upload Resume</h3>
-            
+        {/* Sidebar */}
+        <div className="space-y-4">
+          <div className="dashboard-card p-5 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+              <Upload className="w-4 h-4 text-primary" />
+              Upload Resume
+            </h3>
+
             <form onSubmit={handleUploadSubmit} className="space-y-3">
-              <div className="border border-dashed border-zinc-850 hover:border-zinc-800 rounded-lg p-5 text-center relative hover:bg-zinc-950/20 transition-all cursor-pointer">
+              <div className="border border-dashed border-border-subtle hover:border-primary/40 rounded-xl p-6 text-center relative hover:bg-surface-muted/50 transition-all cursor-pointer">
                 <input
                   type="file"
                   accept=".pdf,.docx"
                   onChange={handleFileChange}
                   className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
                 />
-                <Upload className="w-8 h-8 text-zinc-650 mx-auto mb-2" />
-                <p className="text-[10px] font-semibold text-zinc-400">
-                  {uploadFile ? uploadFile.name : 'Select PDF or DOCX'}
+                <Upload className="w-8 h-8 text-text-muted mx-auto mb-2" />
+                <p className="text-sm font-medium text-foreground">
+                  {uploadFile ? uploadFile.name : 'Drop PDF or DOCX here'}
                 </p>
-                <p className="text-[8px] text-zinc-650 mt-1">Max file size 5MB</p>
+                <p className="text-xs text-text-muted mt-1">Max 5 MB</p>
               </div>
 
               {uploadFile && (
@@ -204,210 +224,148 @@ export default function CandidateResumeClient({
                   <button
                     type="button"
                     onClick={() => setUploadFile(null)}
-                    className="px-3 py-1.5 border border-zinc-850 hover:bg-zinc-900 text-zinc-400 rounded-lg text-[10px] font-bold"
+                    className="px-3 py-1.5 border border-border-subtle hover:bg-surface-muted text-text-muted rounded-lg text-xs font-semibold transition-colors"
                   >
                     Clear
                   </button>
                   <button
                     type="submit"
                     disabled={isPending}
-                    className="px-3.5 py-1.5 bg-primary hover:bg-primary/95 text-white rounded-lg text-[10px] font-bold flex items-center gap-1.5"
+                    className="px-4 py-1.5 bg-primary hover:bg-primary/90 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
                   >
-                    {isPending && <Loader2 className="w-3 h-3 animate-spin" />}
-                    <span>Upload & Process</span>
+                    {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Upload &amp; Parse
                   </button>
                 </div>
               )}
             </form>
           </div>
 
-          {/* Quick Metrics */}
           {latestResume && (
-            <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-3.5 shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Parser Metadata</h3>
-              <div className="space-y-2 text-[10px] text-zinc-400 font-mono">
-                <div className="flex justify-between">
-                  <span>AI Parser:</span>
-                  <span className="text-zinc-200 font-bold">{latestResume.aiProvider || 'Unknown'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Version:</span>
-                  <span className="text-zinc-200">{latestResume.parserVersion || 'v1.0'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>AI Confidence:</span>
-                  <span className="text-zinc-200 font-bold">{latestResume.confidenceScore ? `${Math.round(latestResume.confidenceScore * 100)}%` : '---'}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Latency:</span>
-                  <span className="text-zinc-200">{(latestResume.processingTimeMs || 0) / 1000}s</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Quality Audit:</span>
-                  <span className={`font-bold ${latestResume.qualityScore && latestResume.qualityScore >= 85 ? 'text-emerald-400' : 'text-amber-500'}`}>
-                    {latestResume.qualityScore ? `${latestResume.qualityScore}/100` : '---'}
-                  </span>
-                </div>
-              </div>
+            <div className="dashboard-card p-5 space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Parser Metadata</h3>
+              <dl className="space-y-2 text-xs">
+                {[
+                  ['Provider', latestResume.aiProvider || 'Unknown'],
+                  ['Version', latestResume.parserVersion || 'v1.0'],
+                  ['Confidence', latestResume.confidenceScore != null ? `${Math.round(latestResume.confidenceScore * 100)}%` : '—'],
+                  ['Latency', `${((latestResume.processingTimeMs || 0) / 1000).toFixed(1)}s`],
+                  ['File', latestResume.fileName],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between gap-3">
+                    <dt className="text-text-muted">{label}</dt>
+                    <dd className="text-foreground font-medium text-right truncate max-w-[55%]" title={String(value)}>
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           )}
-
         </div>
 
-        {/* Right Column: Parsed resume details and suggestions */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Tabs Menu */}
-          <div className="flex border-b border-zinc-900 pb-px text-xs overflow-x-auto">
-            <button
-              onClick={() => switchTab('profile')}
-              className={`px-4 py-2 font-bold border-b-2 transition-all whitespace-nowrap ${
-                activeTab === 'profile' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              Structured Profile
-            </button>
-            <button
-              onClick={() => switchTab('quality')}
-              className={`px-4 py-2 font-bold border-b-2 transition-all whitespace-nowrap ${
-                activeTab === 'quality' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              Quality Evaluation
-            </button>
-            <button
-              onClick={() => switchTab('ats')}
-              className={`px-4 py-2 font-bold border-b-2 transition-all whitespace-nowrap ${
-                activeTab === 'ats' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              ATS Optimizer
-            </button>
-            <button
-              onClick={() => switchTab('history')}
-              className={`px-4 py-2 font-bold border-b-2 transition-all whitespace-nowrap ${
-                activeTab === 'history' ? 'border-primary text-primary' : 'border-transparent text-zinc-500 hover:text-zinc-300'
-              }`}
-            >
-              Upload History ({resumes.length})
-            </button>
+        {/* Main content */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Tab bar */}
+          <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-surface-muted border border-border-subtle">
+            {TABS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => switchTab(id)}
+                className={cn(
+                  'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all',
+                  activeTab === id
+                    ? 'bg-card-bg text-foreground shadow-sm border border-border-subtle'
+                    : 'text-text-muted hover:text-foreground'
+                )}
+              >
+                <Icon className="w-3.5 h-3.5" />
+                {label}
+                {id === 'history' && (
+                  <span className="ml-0.5 text-[10px] font-mono opacity-70">({resumes.length})</span>
+                )}
+              </button>
+            ))}
           </div>
 
-          {/* TAB 1: Structured Profile */}
+          {/* Profile tab */}
           {activeTab === 'profile' && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {!latestResume ? (
-                <div className="bg-[#111113] border border-zinc-850 rounded-xl p-8 text-center text-zinc-500 space-y-2">
-                  <FileText className="w-8 h-8 text-zinc-700 mx-auto" />
-                  <p className="text-xs">No resume uploaded yet. Complete the upload form to index your profile.</p>
-                </div>
+                <EmptyState icon={FileText} message="No resume uploaded yet. Use the upload panel to index your profile." />
               ) : !latestResume.isParsed && latestResume.parsingError ? (
-                <div className="bg-red-500/5 border border-red-500/20 text-red-400 p-5 rounded-xl space-y-2 text-xs">
-                  <div className="flex items-center gap-2 font-bold">
+                <div className="dashboard-card p-5 border-danger/30 bg-danger/5 space-y-2">
+                  <div className="flex items-center gap-2 text-danger font-semibold text-sm">
                     <AlertTriangle className="w-4 h-4" />
-                    <span>Parsing Failed</span>
+                    Parsing failed
                   </div>
-                  <p className="text-[10px] text-zinc-400 font-mono leading-relaxed">{latestResume.parsingError}</p>
+                  <p className="text-xs text-text-muted font-mono leading-relaxed">{latestResume.parsingError}</p>
                 </div>
               ) : !latestResume.isParsed ? (
-                <div className="bg-[#111113] border border-zinc-850 rounded-xl p-8 text-center text-zinc-500 space-y-3">
+                <div className="dashboard-card p-10 text-center space-y-3">
                   <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
-                  <p className="text-xs font-semibold text-zinc-300">Extracting document details...</p>
-                  <p className="text-[10px] text-zinc-550 max-w-xs mx-auto">This takes a few seconds. The Trigger.dev parser is structured to run metadata normalization in the background.</p>
+                  <p className="text-sm font-semibold text-foreground">Extracting document details…</p>
+                  <p className="text-xs text-text-muted max-w-sm mx-auto">This usually takes a few seconds.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Basic Details Card */}
-                  <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-3">
-                    <div className="flex justify-between items-start">
+                <div className="space-y-4">
+                  <div className="dashboard-card p-5 space-y-3">
+                    <div className="flex justify-between items-start gap-3">
                       <div>
-                        <h4 className="text-sm font-bold text-white leading-tight">{parsedData?.fullName || 'No Name Extracted'}</h4>
-                        <p className="text-[10px] text-primary font-semibold mt-0.5">{parsedData?.location || 'Location undisclosed'}</p>
+                        <h4 className="text-base font-bold text-foreground">{String(parsedData?.fullName || 'No name extracted')}</h4>
+                        <p className="text-xs text-primary font-medium mt-0.5">{String(parsedData?.location || 'Location not found')}</p>
                       </div>
                       <a
                         href={`/api/resumes/${latestResume.id}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2 rounded-lg border border-zinc-850 text-zinc-400 hover:text-white hover:bg-zinc-950 transition-all flex items-center gap-1 text-[10px]"
+                        className="px-3 py-1.5 rounded-lg border border-border-subtle text-text-muted hover:text-foreground hover:bg-surface-muted transition-all flex items-center gap-1.5 text-xs font-medium shrink-0"
                       >
                         <FileDown className="w-3.5 h-3.5" />
-                        <span>Download PDF</span>
+                        Download
                       </a>
                     </div>
-
-                    <p className="text-xs text-zinc-400 leading-relaxed font-sans italic">
-                      &ldquo;{parsedData?.summary || 'No summary extracted.'}&rdquo;
+                    <p className="text-sm text-text-muted leading-relaxed italic border-l-2 border-primary/30 pl-3">
+                      {String(parsedData?.summary || 'No summary extracted.')}
                     </p>
-
-                    <div className="grid grid-cols-2 gap-4 text-[10px] font-mono text-zinc-400 border-t border-zinc-900 pt-3">
+                    <div className="grid grid-cols-2 gap-4 text-xs border-t border-border-subtle pt-3">
                       <div>
-                        <span className="text-zinc-500 block">Email:</span>
-                        <span className="text-zinc-200">{parsedData?.email || '---'}</span>
+                        <span className="text-text-muted block mb-0.5">Email</span>
+                        <span className="text-foreground font-medium">{String(parsedData?.email || '—')}</span>
                       </div>
                       <div>
-                        <span className="text-zinc-500 block">Phone:</span>
-                        <span className="text-zinc-200">{parsedData?.phone || '---'}</span>
+                        <span className="text-text-muted block mb-0.5">Phone</span>
+                        <span className="text-foreground font-medium">{String(parsedData?.phone || '—')}</span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Skills Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-3">
-                      <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                        <Award className="w-4 h-4 text-primary" /> Core Skills
-                      </h5>
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {parsedData?.skills && parsedData.skills.length > 0 ? (
-                          parsedData.skills.map((s: string) => (
-                            <span key={s} className="text-[9px] bg-zinc-950 text-zinc-400 border border-zinc-900 px-2 py-1 rounded">
-                              {s}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-[10px] text-zinc-600">No skills listed.</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-3">
-                      <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-emerald-400" /> Technologies & Tools
-                      </h5>
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {parsedData?.technologies && parsedData.technologies.length > 0 ? (
-                          parsedData.technologies.map((t: string) => (
-                            <span key={t} className="text-[9px] bg-zinc-950 text-zinc-400 border border-zinc-900 px-2 py-1 rounded">
-                              {t}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-[10px] text-zinc-600">No technologies listed.</span>
-                        )}
-                      </div>
-                    </div>
+                    <SkillCard title="Core Skills" icon={Award} items={(parsedData?.skills as string[]) || []} />
+                    <SkillCard title="Technologies" icon={Sparkles} items={(parsedData?.technologies as string[]) || []} accent="emerald" />
                   </div>
 
-                  {/* Work Experience */}
-                  <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                      <Briefcase className="w-4 h-4 text-indigo-400" /> Professional Experience
-                    </h5>
-                    {parsedData?.experience && parsedData.experience.length > 0 ? (
-                      <div className="space-y-4 divide-y divide-zinc-900">
-                        {parsedData.experience.map((exp: any, idx: number) => (
-                          <div key={idx} className={`space-y-2 text-xs ${idx > 0 ? 'pt-4' : ''}`}>
-                            <div className="flex justify-between items-start">
+                  <SectionCard title="Professional Experience" icon={Briefcase} iconColor="text-indigo-400">
+                    {(parsedData?.experience as Array<Record<string, unknown>>)?.length ? (
+                      <div className="space-y-4 divide-y divide-border-subtle">
+                        {(parsedData!.experience as Array<Record<string, unknown>>).map((exp, idx) => (
+                          <div key={idx} className={cn('space-y-2', idx > 0 && 'pt-4')}>
+                            <div className="flex justify-between items-start gap-2">
                               <div>
-                                <h6 className="font-bold text-zinc-200">{exp.title}</h6>
-                                <p className="text-[10px] text-zinc-500 font-semibold">{exp.company}</p>
+                                <h6 className="font-semibold text-foreground text-sm">{String(exp.title)}</h6>
+                                <p className="text-xs text-text-muted">{String(exp.company)}</p>
                               </div>
-                              <span className="text-[9px] font-mono text-zinc-500">{exp.startDate} - {exp.endDate}</span>
+                              <span className="text-[10px] font-mono text-text-muted shrink-0">
+                                {String(exp.startDate)} – {String(exp.endDate)}
+                              </span>
                             </div>
-                            <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">{exp.description}</p>
-                            {exp.bullets && exp.bullets.length > 0 && (
-                              <ul className="list-disc pl-4 space-y-1 text-[10px] text-zinc-450 font-sans leading-relaxed">
-                                {exp.bullets.map((b: string, bidx: number) => (
+                            {Boolean(exp.description) && (
+                              <p className="text-xs text-text-muted leading-relaxed">{String(exp.description)}</p>
+                            )}
+                            {Array.isArray(exp.bullets) && (exp.bullets as string[]).length > 0 && (
+                              <ul className="list-disc pl-4 space-y-1 text-xs text-text-muted">
+                                {(exp.bullets as string[]).map((b, bidx) => (
                                   <li key={bidx}>{b}</li>
                                 ))}
                               </ul>
@@ -416,49 +374,45 @@ export default function CandidateResumeClient({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-zinc-500">No experience parsed.</p>
+                      <p className="text-xs text-text-muted">No experience parsed.</p>
                     )}
-                  </div>
+                  </SectionCard>
 
-                  {/* Education */}
-                  <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                      <BookOpen className="w-4 h-4 text-amber-500" /> Academic History
-                    </h5>
-                    {parsedData?.education && parsedData.education.length > 0 ? (
-                      <div className="space-y-3.5">
-                        {parsedData.education.map((edu: any, idx: number) => (
-                          <div key={idx} className="text-xs flex justify-between items-start">
+                  <SectionCard title="Education" icon={BookOpen} iconColor="text-amber-500">
+                    {(parsedData?.education as Array<Record<string, unknown>>)?.length ? (
+                      <div className="space-y-3">
+                        {(parsedData!.education as Array<Record<string, unknown>>).map((edu, idx) => (
+                          <div key={idx} className="flex justify-between items-start gap-2 text-sm">
                             <div>
-                              <h6 className="font-bold text-zinc-200">{edu.school}</h6>
-                              <p className="text-[10px] text-zinc-400">{edu.degree} {edu.major ? `in ${edu.major}` : ''}</p>
+                              <h6 className="font-semibold text-foreground">{String(edu.school)}</h6>
+                              <p className="text-xs text-text-muted">
+                                {String(edu.degree)}{edu.major ? ` in ${String(edu.major)}` : ''}
+                              </p>
                             </div>
-                            <span className="text-[9px] font-mono text-zinc-500">{edu.startYear} - {edu.endYear}</span>
+                            <span className="text-[10px] font-mono text-text-muted shrink-0">
+                              {String(edu.startYear)} – {String(edu.endYear)}
+                            </span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-zinc-500">No education history parsed.</p>
+                      <p className="text-xs text-text-muted">No education parsed.</p>
                     )}
-                  </div>
+                  </SectionCard>
 
-                  {/* Projects */}
-                  <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-                      <Compass className="w-4 h-4 text-pink-400" /> Featured Projects
-                    </h5>
-                    {parsedData?.projects && parsedData.projects.length > 0 ? (
-                      <div className="space-y-4 divide-y divide-zinc-900">
-                        {parsedData.projects.map((proj: any, idx: number) => (
-                          <div key={idx} className={`space-y-2 text-xs ${idx > 0 ? 'pt-4' : ''}`}>
-                            <h6 className="font-bold text-zinc-200">{proj.title}</h6>
-                            <p className="text-[11px] text-zinc-400 leading-relaxed font-sans">{proj.description}</p>
-                            {proj.technologies && proj.technologies.length > 0 && (
+                  <SectionCard title="Projects" icon={Compass} iconColor="text-pink-400">
+                    {(parsedData?.projects as Array<Record<string, unknown>>)?.length ? (
+                      <div className="space-y-4 divide-y divide-border-subtle">
+                        {(parsedData!.projects as Array<Record<string, unknown>>).map((proj, idx) => (
+                          <div key={idx} className={cn('space-y-2', idx > 0 && 'pt-4')}>
+                            <h6 className="font-semibold text-foreground text-sm">{String(proj.title)}</h6>
+                            {Boolean(proj.description) && (
+                              <p className="text-xs text-text-muted leading-relaxed">{String(proj.description)}</p>
+                            )}
+                            {Array.isArray(proj.technologies) && (
                               <div className="flex flex-wrap gap-1 pt-1">
-                                {proj.technologies.map((pt: string) => (
-                                  <span key={pt} className="text-[8px] bg-zinc-900 text-zinc-400 px-2 py-0.5 rounded">
-                                    {pt}
-                                  </span>
+                                {(proj.technologies as string[]).map((pt) => (
+                                  <Tag key={pt} label={pt} />
                                 ))}
                               </div>
                             )}
@@ -466,100 +420,97 @@ export default function CandidateResumeClient({
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-zinc-500">No projects parsed.</p>
+                      <p className="text-xs text-text-muted">No projects parsed.</p>
                     )}
-                  </div>
-
+                  </SectionCard>
                 </div>
               )}
             </div>
           )}
 
-          {/* TAB 2: Quality Score & Feedback */}
+          {/* Quality tab */}
           {activeTab === 'quality' && (
-            <div className="space-y-6">
-              {!latestResume || !latestResume.isParsed ? (
-                <div className="bg-[#111113] border border-zinc-850 rounded-xl p-8 text-center text-zinc-500">
-                  <p className="text-xs">No parsed quality analysis available. Upload a resume to generate feedback.</p>
-                </div>
+            <div className="space-y-4">
+              {!latestResume?.isParsed ? (
+                <EmptyState icon={ShieldCheck} message="Upload and parse a resume to see quality feedback." />
               ) : (
-                <div className="space-y-6">
-                  {/* Quality Audit Meter */}
-                  <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-6">
-                    <div className="space-y-2 text-center sm:text-left">
-                      <h4 className="text-sm font-bold text-white">Resume Quality Audit</h4>
-                      <p className="text-[10px] text-zinc-500 leading-relaxed max-w-sm">
-                        This score is evaluated by checking formatting density, skills presence, completeness headers, and bullet formats.
+                <>
+                  <div className="dashboard-card p-5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div className="space-y-1.5 text-center sm:text-left">
+                      <h4 className="text-sm font-bold text-foreground">Resume Quality Audit</h4>
+                      <p className="text-xs text-text-muted max-w-sm leading-relaxed">
+                        Evaluates formatting, skills density, section completeness, and bullet structure.
                       </p>
                     </div>
-                    <div className="w-24 h-24 rounded-full border-4 border-zinc-900 bg-zinc-950 flex flex-col items-center justify-center shadow-lg shrink-0">
-                      <span className="text-2xl font-black text-white font-mono leading-none">
-                        {latestResume.qualityScore}
-                      </span>
-                      <span className="text-[9px] uppercase font-bold text-zinc-500 mt-1 font-mono">Score</span>
+                    <div
+                      className={cn(
+                        'w-24 h-24 rounded-full border-4 flex flex-col items-center justify-center shrink-0',
+                        (latestResume.qualityScore ?? 0) >= 85
+                          ? 'border-emerald-500/30 bg-emerald-500/5'
+                          : (latestResume.qualityScore ?? 0) >= 60
+                          ? 'border-amber-500/30 bg-amber-500/5'
+                          : 'border-danger/30 bg-danger/5'
+                      )}
+                    >
+                      <span className="text-2xl font-black text-foreground font-mono">{latestResume.qualityScore}</span>
+                      <span className="text-[9px] uppercase font-bold text-text-muted">/ 100</span>
                     </div>
                   </div>
 
-                  {/* Feedback items splits */}
-                  <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
-                    <h5 className="text-xs font-bold uppercase tracking-wider text-zinc-300">Actionable Suggestions</h5>
-                    
-                    {latestResume.qualityFeedback && latestResume.qualityFeedback.length > 0 ? (
-                      <div className="space-y-3 text-xs leading-relaxed font-sans">
-                        {latestResume.qualityFeedback.map((item: any, idx: number) => {
+                  <div className="dashboard-card p-5 space-y-3">
+                    <h5 className="text-xs font-bold uppercase tracking-wider text-foreground">Suggestions</h5>
+                    {qualityFeedback.length > 0 ? (
+                      <div className="space-y-2">
+                        {qualityFeedback.map((item, idx) => {
                           const isStrength = item.type === 'strength';
                           return (
                             <div
                               key={idx}
-                              className={`flex items-start gap-2.5 p-3 rounded-lg border ${
-                                isStrength 
-                                  ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-400' 
-                                  : 'bg-amber-500/5 border-amber-500/10 text-amber-400'
-                              }`}
+                              className={cn(
+                                'flex items-start gap-2.5 p-3 rounded-lg border text-xs',
+                                isStrength
+                                  ? 'bg-emerald-500/5 border-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                  : 'bg-amber-500/5 border-amber-500/15 text-amber-600 dark:text-amber-400'
+                              )}
                             >
                               {isStrength ? (
-                                <CheckCircle className="w-4.5 h-4.5 shrink-0 mt-0.5" />
+                                <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />
                               ) : (
-                                <AlertTriangle className="w-4.5 h-4.5 shrink-0 mt-0.5" />
+                                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                               )}
                               <div>
-                                <span className="font-bold text-white block text-[10px] uppercase font-mono tracking-wide">
-                                  [{item.category}] {isStrength ? 'Strength' : 'Improvement suggestion'}
+                                <span className="font-semibold text-foreground block text-[10px] uppercase tracking-wide">
+                                  {item.category} · {isStrength ? 'Strength' : 'Improve'}
                                 </span>
-                                <p className="text-[10px] text-zinc-350 mt-1 leading-relaxed">{item.message}</p>
+                                <p className="text-text-muted mt-1 leading-relaxed">{item.message}</p>
                               </div>
                             </div>
                           );
                         })}
                       </div>
                     ) : (
-                      <p className="text-[10px] text-zinc-500 text-center py-4">No suggestions generated.</p>
+                      <p className="text-xs text-text-muted text-center py-4">No suggestions generated.</p>
                     )}
                   </div>
-                </div>
+                </>
               )}
             </div>
           )}
 
-          {/* TAB 4: ATS Optimizer */}
+          {/* ATS tab */}
           {activeTab === 'ats' && (
-            <div className="space-y-6">
+            <div>
               {!latestResume ? (
-                <div className="bg-[#111113] border border-zinc-850 rounded-xl p-8 text-center text-zinc-500 space-y-3">
-                  <Sparkles className="w-8 h-8 text-zinc-700 mx-auto" />
-                  <p className="text-xs">Upload a resume first to run ATS keyword optimization and bullet rewrites.</p>
-                  <button
-                    onClick={() => switchTab('profile')}
-                    className="text-xs text-primary font-bold hover:underline"
-                  >
-                    Go to upload
-                  </button>
-                </div>
+                <EmptyState
+                  icon={ScanLine}
+                  message="Upload a resume first to run ATS keyword optimization."
+                  action={{ label: 'Go to upload', onClick: () => switchTab('profile') }}
+                />
               ) : !latestResume.isParsed ? (
-                <div className="bg-[#111113] border border-zinc-850 rounded-xl p-8 text-center text-zinc-500 space-y-3">
+                <div className="dashboard-card p-10 text-center space-y-3">
                   <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" />
-                  <p className="text-xs font-semibold text-zinc-300">Resume is still being parsed...</p>
-                  <p className="text-[10px] text-zinc-550">ATS optimization will be available once parsing completes.</p>
+                  <p className="text-sm font-semibold text-foreground">Resume is still being parsed…</p>
+                  <p className="text-xs text-text-muted">ATS optimization unlocks once parsing completes.</p>
                 </div>
               ) : (
                 <ResumeOptimizerPanel
@@ -571,59 +522,57 @@ export default function CandidateResumeClient({
             </div>
           )}
 
-          {/* TAB 3: Upload History */}
+          {/* History tab */}
           {activeTab === 'history' && (
-            <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4 shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">Upload Logs & Versions</h3>
-              
+            <div className="dashboard-card p-5 space-y-4 overflow-hidden">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Upload Logs</h3>
               {resumes.length === 0 ? (
-                <p className="text-[10px] text-zinc-550 text-center py-4">No uploaded resume records found.</p>
+                <p className="text-xs text-text-muted text-center py-6">No uploads yet.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-zinc-400">
-                    <thead className="text-[9px] uppercase tracking-wider font-bold border-b border-zinc-900 text-zinc-500">
-                      <tr>
-                        <th className="py-2.5">Version</th>
-                        <th className="py-2.5">Filename</th>
-                        <th className="py-2.5">Status</th>
-                        <th className="py-2.5">Upload Date</th>
-                        <th className="py-2.5 text-right">Actions</th>
+                <div className="overflow-x-auto -mx-1">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="text-[10px] uppercase tracking-wider font-bold text-text-muted border-b border-border-subtle">
+                        <th className="py-2.5 px-1">Ver</th>
+                        <th className="py-2.5 px-1">File</th>
+                        <th className="py-2.5 px-1">Status</th>
+                        <th className="py-2.5 px-1">Quality</th>
+                        <th className="py-2.5 px-1">Date</th>
+                        <th className="py-2.5 px-1 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-900/60 font-mono text-[10px]">
+                    <tbody className="divide-y divide-border-subtle">
                       {resumes.map((item) => (
-                        <tr key={item.id} className="hover:bg-zinc-950/20">
-                          <td className="py-3 text-zinc-300 font-bold">v{item.version}</td>
-                          <td className="py-3 text-zinc-300 max-w-[150px] truncate" title={item.fileName}>
+                        <tr key={item.id} className="hover:bg-surface-muted/50 transition-colors">
+                          <td className="py-3 px-1 font-mono font-bold text-foreground">v{item.version}</td>
+                          <td className="py-3 px-1 text-foreground max-w-[140px] truncate" title={item.fileName}>
                             {item.fileName}
                           </td>
-                          <td className="py-3">
-                            {item.isParsed ? (
-                              <span className="text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/15">Parsed</span>
-                            ) : item.parsingError ? (
-                              <span className="text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/15" title={item.parsingError}>Error</span>
-                            ) : (
-                              <span className="text-zinc-500 bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-850">Processing</span>
-                            )}
+                          <td className="py-3 px-1">
+                            <StatusBadge item={item} />
                           </td>
-                          <td className="py-3 text-zinc-500">
-                            {new Date(item.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          <td className="py-3 px-1 font-mono text-text-muted">
+                            {item.qualityScore != null ? `${item.qualityScore}%` : '—'}
                           </td>
-                          <td className="py-3 text-right space-x-1.5">
+                          <td className="py-3 px-1 text-text-muted whitespace-nowrap">
+                            {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                          <td className="py-3 px-1 text-right space-x-1">
                             <a
                               href={`/api/resumes/${item.id}`}
                               target="_blank"
                               rel="noreferrer"
-                              className="inline-block p-1 text-zinc-400 hover:text-white"
-                              title="Download document"
+                              className="inline-flex p-1.5 rounded-md text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors"
+                              title="Download"
                             >
                               <Download className="w-3.5 h-3.5" />
                             </a>
                             <button
+                              type="button"
                               onClick={() => handleDelete(item.id)}
                               disabled={isPending}
-                              className="p-1 text-zinc-500 hover:text-red-400"
-                              title="Delete version record"
+                              className="inline-flex p-1.5 rounded-md text-text-muted hover:text-danger hover:bg-danger/5 transition-colors"
+                              title="Delete"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -636,10 +585,111 @@ export default function CandidateResumeClient({
               )}
             </div>
           )}
-
         </div>
-
       </div>
     </div>
+  );
+}
+
+function Tag({ label }: { label: string }) {
+  return (
+    <span className="text-[10px] font-medium text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-md">
+      {label}
+    </span>
+  );
+}
+
+function SkillCard({
+  title,
+  icon: Icon,
+  items,
+  accent = 'primary',
+}: {
+  title: string;
+  icon: React.ElementType;
+  items: string[];
+  accent?: 'primary' | 'emerald';
+}) {
+  return (
+    <div className="dashboard-card p-5 space-y-3">
+      <h5 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+        <Icon className={cn('w-4 h-4', accent === 'emerald' ? 'text-emerald-500' : 'text-primary')} />
+        {title}
+      </h5>
+      <div className="flex flex-wrap gap-1.5">
+        {items.length > 0 ? items.map((s) => <Tag key={s} label={s} />) : (
+          <span className="text-xs text-text-muted">None listed.</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  icon: Icon,
+  iconColor,
+  children,
+}: {
+  title: string;
+  icon: React.ElementType;
+  iconColor: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="dashboard-card p-5 space-y-4">
+      <h5 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+        <Icon className={cn('w-4 h-4', iconColor)} />
+        {title}
+      </h5>
+      {children}
+    </div>
+  );
+}
+
+function EmptyState({
+  icon: Icon,
+  message,
+  action,
+}: {
+  icon: React.ElementType;
+  message: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="dashboard-card p-10 text-center space-y-3">
+      <Icon className="w-10 h-10 text-text-muted/40 mx-auto" />
+      <p className="text-sm text-text-muted">{message}</p>
+      {action && (
+        <button type="button" onClick={action.onClick} className="text-sm text-primary font-semibold hover:underline">
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function StatusBadge({ item }: { item: ResumeHistoryItem }) {
+  if (item.isParsed) {
+    return (
+      <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+        Parsed
+      </span>
+    );
+  }
+  if (item.parsingError) {
+    return (
+      <span
+        className="text-[10px] font-semibold text-danger bg-danger/10 px-2 py-0.5 rounded-md border border-danger/20"
+        title={item.parsingError}
+      >
+        Error
+      </span>
+    );
+  }
+  return (
+    <span className="text-[10px] font-semibold text-text-muted bg-surface-muted px-2 py-0.5 rounded-md border border-border-subtle">
+      Processing
+    </span>
   );
 }

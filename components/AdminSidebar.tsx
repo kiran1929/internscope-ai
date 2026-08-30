@@ -9,11 +9,12 @@ import {
   Users,
   Settings as SettingsIcon,
   ChevronLeft,
+  ChevronRight,
   ArrowLeft,
   FileText,
   Cpu,
   MessageSquare,
-  Mail
+  Mail,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -51,7 +52,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const pathname = usePathname();
 
-  // Determine active tab based on path
   const getActiveTab = (): AdminTab => {
     if (pathname === '/admin') return 'overview';
     if (pathname.startsWith('/admin/opportunities')) return 'opportunities';
@@ -83,36 +83,44 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   return (
     <aside
-      className={cn(
-        'fixed top-0 bottom-0 left-0 z-40 flex flex-col bg-[#111113] border-r border-zinc-800/80 transition-all duration-300',
-        isCollapsed ? 'w-[70px]' : 'w-[240px]'
-      )}
+      style={{ width: isCollapsed ? 72 : 260 }}
+      className="fixed top-0 bottom-0 left-0 z-40 flex flex-col bg-sidebar border-r border-border-subtle transition-[width] duration-300 ease-out"
     >
-      {/* Brand Header */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-900">
-        <div className={cn("flex items-center gap-2 overflow-hidden", isCollapsed && "justify-center w-full")}>
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shrink-0 shadow-md shadow-primary/20">
-            <Compass className="w-5 h-5 animate-spin-slow" />
+      <button
+        type="button"
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="sidebar-edge-toggle hidden md:flex"
+        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        {isCollapsed ? (
+          <ChevronRight className="w-3.5 h-3.5" />
+        ) : (
+          <ChevronLeft className="w-3.5 h-3.5" />
+        )}
+      </button>
+
+      <div className="h-16 flex items-center shrink-0 border-b border-border-subtle px-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white shrink-0 shadow-sm shadow-primary/25">
+            <Compass className="w-[18px] h-[18px]" />
           </div>
           {!isCollapsed && (
-            <span className="font-display font-bold text-base tracking-tight text-white animate-fade-in whitespace-nowrap">
-              AdminScope<span className="text-primary font-black">CMS</span>
-            </span>
+            <div className="min-w-0 animate-fade-in">
+              <p className="font-display font-bold text-[15px] tracking-tight text-foreground leading-none">
+                AdminScope<span className="text-primary">CMS</span>
+              </p>
+              <p className="text-[10px] text-text-muted mt-1 font-medium">Control panel</p>
+            </div>
           )}
         </div>
-        {!isCollapsed && (
-          <button
-            onClick={() => setIsCollapsed(true)}
-            className="p-1 rounded-md text-text-muted hover:text-white hover:bg-zinc-800 transition-colors hidden md:block"
-            aria-label="Collapse Sidebar"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-        )}
       </div>
 
-      {/* Navigation Links */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className={cn('flex-1 overflow-y-auto py-3 space-y-0.5', isCollapsed ? 'px-2' : 'px-3')}>
+        {!isCollapsed && (
+          <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-text-muted/70">
+            Admin
+          </p>
+        )}
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -121,36 +129,41 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <Link
               key={item.id}
               href={item.href}
+              title={isCollapsed ? item.label : undefined}
               className={cn(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                isActive
-                  ? 'bg-zinc-900 border border-zinc-800 text-white shadow-md'
-                  : 'text-text-muted hover:text-white hover:bg-zinc-900/50 border border-transparent'
+                'sidebar-nav-link group relative',
+                isCollapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2',
+                isActive && 'sidebar-nav-link-active'
               )}
             >
-              {/* Left glow accent for active item */}
-              {isActive && !isCollapsed && (
-                <div className="absolute left-0 w-1 h-5 bg-primary rounded-r-full" />
+              <Icon
+                className={cn(
+                  'w-[18px] h-[18px] shrink-0 transition-colors',
+                  isActive ? 'text-primary' : 'text-text-muted group-hover:text-foreground'
+                )}
+              />
+              {!isCollapsed && (
+                <span className="truncate text-[13px] font-medium">{item.label}</span>
               )}
-              <Icon className={cn('w-4 h-4 shrink-0 transition-colors', isActive ? 'text-primary' : 'text-text-muted group-hover:text-white')} />
-              {!isCollapsed && <span className="animate-fade-in">{item.label}</span>}
+              {isCollapsed && <span className="sidebar-tooltip">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
-      {/* Exit Button */}
-      <div className="p-3 border-t border-zinc-900">
+      <div className={cn('shrink-0 border-t border-border-subtle', isCollapsed ? 'p-2' : 'p-3')}>
         <button
+          type="button"
           onClick={onExitAdmin}
           className={cn(
-            'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-transparent transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500',
-            isCollapsed && 'justify-center px-0'
+            'sidebar-nav-link text-red-400 hover:text-red-500 hover:bg-red-500/10 w-full',
+            isCollapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2'
           )}
           title="Exit to Dashboard"
         >
-          <ArrowLeft className="w-4 h-4 shrink-0" />
-          {!isCollapsed && <span className="animate-fade-in">Exit CMS</span>}
+          <ArrowLeft className="w-[18px] h-[18px] shrink-0" />
+          {!isCollapsed && <span className="text-[13px] font-medium">Exit CMS</span>}
+          {isCollapsed && <span className="sidebar-tooltip">Exit CMS</span>}
         </button>
       </div>
     </aside>

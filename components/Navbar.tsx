@@ -1,7 +1,7 @@
 'use client';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Search, Bell, Sun, Moon, Menu, ChevronDown, ArrowLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useClerk } from '@clerk/nextjs';
@@ -51,6 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
   const isDark = theme === 'dark';
 
   const [notifications, setNotifications] = useState<any[]>([]);
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     async function loadNotifications() {
@@ -61,6 +62,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
     }
     loadNotifications();
   }, []);
+
+  useEffect(() => {
+    if (!showNotifications && !showProfile) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!navRef.current?.contains(event.target as Node)) {
+        setShowNotifications(false);
+        setShowProfile(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [showNotifications, showProfile]);
 
   // Parse path segments into human-friendly breadcrumbs
   const getBreadcrumbs = () => {
@@ -131,12 +146,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
   };
 
   return (
-    <header className="h-16 bg-background border-b border-zinc-800/80 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 ">
-      <div className="flex items-center gap-3">
+    <header ref={navRef} className="app-navbar">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
         {/* Mobile Toggle Button */}
         <button
           onClick={onMenuToggle}
-          className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-zinc-900 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none md:hidden"
+          className="p-2 rounded-lg text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none md:hidden"
           aria-label="Toggle Navigation Menu"
         >
           <Menu className="w-5 h-5" />
@@ -146,7 +161,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
         {isSubPage && (
           <button
             onClick={() => router.push(getParentPath())}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-800/80 bg-zinc-900/50 hover:bg-zinc-850 hover:border-zinc-700 text-zinc-400 hover:text-white transition-all text-xs font-medium focus-visible:ring-2 focus-visible:ring-primary"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-border-subtle bg-surface-muted hover:bg-border-subtle hover:border-border-hover text-text-muted hover:text-foreground transition-all text-xs font-medium focus-visible:ring-2 focus-visible:ring-primary"
             title="Go back"
             aria-label="Go back to parent page"
           >
@@ -156,18 +171,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
         )}
 
         {/* Current Location Breadcrumb Bar */}
-        <nav className="flex items-center gap-1.5 text-xs text-text-muted font-medium" aria-label="Breadcrumb">
+        <nav className="hidden sm:flex items-center gap-1.5 text-xs text-text-muted font-medium min-w-0" aria-label="Breadcrumb">
           {breadcrumbs.map((crumb, idx) => (
             <React.Fragment key={crumb.href + idx}>
-              {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-zinc-600 shrink-0" />}
+              {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-text-muted shrink-0" />}
               {crumb.isLast ? (
-                <span className="text-white font-semibold font-display tracking-tight text-xs sm:text-sm">
+                <span className="text-foreground font-semibold font-display tracking-tight text-xs sm:text-sm">
                   {crumb.label}
                 </span>
               ) : (
                 <Link
                   href={crumb.href}
-                  className="hover:text-white transition-colors truncate max-w-[120px] sm:max-w-none text-zinc-400"
+                  className="hover:text-foreground transition-colors truncate max-w-[120px] sm:max-w-none text-text-muted"
                 >
                   {crumb.label}
                 </Link>
@@ -177,14 +192,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
         </nav>
       </div>
 
-      {/* Middle Search Input */}
-      <div className="flex-1 max-w-md mx-4 sm:mx-8">
+      {/* Search — desktop only */}
+      <div className="hidden lg:flex flex-1 max-w-md mx-6">
         <div
           className={cn(
-            'flex items-center gap-2.5 px-3 py-1.5 rounded-lg border bg-zinc-900/40 transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/60',
+            'flex items-center gap-2.5 px-3 py-1.5 rounded-lg border bg-surface-muted transition-all duration-200 focus-within:ring-2 focus-within:ring-primary/40 focus-within:border-primary/60',
             searchFocused
-              ? 'border-primary/60 shadow-[0_0_12px_rgba(37,99,235,0.12)] bg-zinc-900/60'
-              : 'border-zinc-800/80 hover:border-zinc-700/60'
+              ? 'border-primary/60 shadow-[0_0_12px_rgba(37,99,235,0.12)] bg-input-bg'
+              : 'border-border-subtle hover:border-border-hover'
           )}
         >
           <Search className="w-4 h-4 text-text-muted shrink-0" />
@@ -193,21 +208,28 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
             placeholder="Search internships, companies, roles..."
             onFocus={() => setSearchFocused(true)}
             onBlur={() => setSearchFocused(false)}
-            className="bg-transparent border-none outline-none text-xs text-white w-full placeholder:text-text-muted/60"
+            className="bg-transparent border-none outline-none text-xs text-foreground w-full placeholder:text-text-muted/60"
             aria-label="Search dashboard"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[9px] font-mono text-text-muted bg-zinc-850 border border-zinc-800 px-1.5 py-0.5 rounded">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[9px] font-mono text-text-muted bg-surface-muted border border-border-subtle px-1.5 py-0.5 rounded">
             ⌘K
           </kbd>
         </div>
       </div>
 
       {/* Right Tools & Avatar */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <Link
+          href="/internships"
+          className="lg:hidden p-2 rounded-lg text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors"
+          aria-label="Search internships"
+        >
+          <Search className="w-4 h-4" />
+        </Link>
         {/* Theme Toggle (Aesthetic Only, Default Dark) */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-text-muted hover:text-white hover:bg-zinc-900 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none hidden sm:block"
+          className="p-2 rounded-lg text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none hidden sm:block"
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
           aria-label="Toggle Theme"
         >
@@ -222,15 +244,15 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
               setShowProfile(false);
             }}
             className={cn(
-              'p-2 rounded-lg text-text-muted hover:text-white hover:bg-zinc-900 transition-colors relative focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
-              showNotifications && 'bg-zinc-900 text-white'
+              'p-2 rounded-lg text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors relative focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+              showNotifications && 'bg-surface-muted text-foreground'
             )}
             aria-expanded={showNotifications}
             aria-haspopup="true"
             aria-label="View notifications"
           >
             <Bell className="w-4.5 h-4.5" />
-            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary ring-2 ring-[#09090B]"></span>
+            <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-primary ring-2 ring-background"></span>
           </button>
 
           {/* Notifications Panel */}
@@ -241,23 +263,23 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -8 }}
                 transition={{ duration: 0.12, ease: 'easeOut' }}
-                className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden py-1 z-50 origin-top-right"
+                className="absolute right-0 mt-2 w-80 bg-card-bg border border-border-subtle rounded-xl shadow-2xl overflow-hidden py-1 z-50 origin-top-right"
                 role="menu"
               >
-                <div className="px-4 py-2.5 border-b border-zinc-800 flex items-center justify-between">
-                  <span className="text-xs font-semibold text-white">Notifications</span>
+                <div className="px-4 py-2.5 border-b border-border-subtle flex items-center justify-between">
+                  <span className="text-xs font-semibold text-foreground">Notifications</span>
                   <button className="text-[10px] text-primary hover:underline font-semibold focus-visible:outline-none">Mark all read</button>
                 </div>
-                <div className="max-h-[300px] overflow-y-auto divide-y divide-zinc-800/40">
+                <div className="max-h-[300px] overflow-y-auto divide-y divide-border-subtle">
                   {notifications.length === 0 ? (
                     <p className="text-[10px] text-zinc-550 py-6 text-center">No notifications logged.</p>
                   ) : (
                     notifications.map((notif) => (
-                      <div key={notif.id} className="p-3.5 hover:bg-zinc-950 transition-colors cursor-pointer group" role="menuitem">
+                      <div key={notif.id} className="p-3.5 hover:bg-surface-muted transition-colors cursor-pointer group" role="menuitem">
                         <div className="flex items-start gap-2.5">
                           <span className={cn('w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 bg-primary', notif.isRead && 'bg-transparent')} />
                           <div className="space-y-0.5">
-                            <p className="text-xs font-medium text-white group-hover:text-primary transition-colors">{notif.title}</p>
+                            <p className="text-xs font-medium text-foreground group-hover:text-primary transition-colors">{notif.title}</p>
                             <p className="text-[11px] text-text-muted leading-relaxed">{notif.message}</p>
                             <p className="text-[9px] text-text-muted/50 font-mono mt-0.5">{new Date(notif.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
@@ -266,8 +288,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                     ))
                   )}
                 </div>
-                <div className="p-2 border-t border-zinc-800 text-center">
-                  <button className="text-xs text-text-muted hover:text-white font-medium w-full py-1 focus-visible:outline-none">View all activity</button>
+                <div className="p-2 border-t border-border-subtle text-center">
+                  <button className="text-xs text-text-muted hover:text-foreground font-medium w-full py-1 focus-visible:outline-none">View all activity</button>
                 </div>
               </motion.div>
             )}
@@ -282,8 +304,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
               setShowNotifications(false);
             }}
             className={cn(
-              'flex items-center gap-1.5 p-1 rounded-lg hover:bg-zinc-900 transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
-              showProfile && 'bg-zinc-900'
+              'flex items-center gap-1.5 p-1 rounded-lg hover:bg-surface-muted transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none',
+              showProfile && 'bg-surface-muted'
             )}
             aria-expanded={showProfile}
             aria-haspopup="true"
@@ -294,7 +316,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
               <img
                 src={user.imageUrl}
                 alt={user.fullName || 'User Avatar'}
-                className="w-7 h-7 rounded-full object-cover ring-1 ring-zinc-850"
+                className="w-7 h-7 rounded-full object-cover ring-1 ring-border-subtle"
               />
             ) : (
               <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center font-bold text-white text-xs ring-1 ring-zinc-800">
@@ -312,11 +334,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: -8 }}
                 transition={{ duration: 0.12, ease: 'easeOut' }}
-                className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl overflow-hidden py-1 z-50 origin-top-right"
+                className="absolute right-0 mt-2 w-56 bg-card-bg border border-border-subtle rounded-xl shadow-2xl overflow-hidden py-1 z-50 origin-top-right"
                 role="menu"
               >
-                <div className="px-4 py-3 border-b border-zinc-800">
-                  <p className="text-xs font-semibold text-white truncate">{user?.fullName || 'Anonymous Candidate'}</p>
+                <div className="px-4 py-3 border-b border-border-subtle">
+                  <p className="text-xs font-semibold text-foreground truncate">{user?.fullName || 'Anonymous Candidate'}</p>
                   <p className="text-[10px] text-text-muted truncate font-mono">{user?.primaryEmailAddress?.emailAddress || 'Not authenticated'}</p>
                 </div>
                 <div className="py-1">
@@ -325,7 +347,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                       setShowProfile(false);
                       router.push('/profile');
                     }}
-                    className="w-full text-left px-4 py-2 text-xs text-text-muted hover:text-white hover:bg-zinc-950 transition-colors focus-visible:outline-none"
+                    className="w-full text-left px-4 py-2 text-xs text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors focus-visible:outline-none"
                     role="menuitem"
                   >
                     Profile Settings
@@ -335,7 +357,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                       setShowProfile(false);
                       router.push('/settings');
                     }}
-                    className="w-full text-left px-4 py-2 text-xs text-text-muted hover:text-white hover:bg-zinc-950 transition-colors focus-visible:outline-none"
+                    className="w-full text-left px-4 py-2 text-xs text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors focus-visible:outline-none"
                     role="menuitem"
                   >
                     Platform Settings
@@ -355,13 +377,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                     </button>
                   )}
                 </div>
-                <div className="border-t border-zinc-800 py-1">
+                <div className="border-t border-border-subtle py-1">
                   <button
                     onClick={() => {
                       setShowProfile(false);
                       signOut({ redirectUrl: '/' });
                     }}
-                    className="w-full text-left px-4 py-2 text-xs text-danger hover:bg-zinc-950 transition-colors focus-visible:outline-none"
+                    className="w-full text-left px-4 py-2 text-xs text-danger hover:bg-surface-muted transition-colors focus-visible:outline-none"
                     role="menuitem"
                   >
                     Log out

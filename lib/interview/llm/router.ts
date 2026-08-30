@@ -11,6 +11,7 @@ import {
   LLMResult,
   LLMCallMetrics,
 } from './types';
+import { normalizeQuestionText } from '../question-meta';
 
 export class LLMRouter implements InterviewLLMProvider {
   name = 'LLMRouter';
@@ -157,6 +158,23 @@ export class LLMRouter implements InterviewLLMProvider {
     } else if (input.pattern === 'security_resilience') {
       category = 'Technical';
       text = `What defensive programming practices, sanitization, or concurrency control mechanisms do you enforce in ${skill} to prevent race conditions and data corruption?`;
+    } else if (input.intent === 'resume_verification') {
+      category = 'Resume-based';
+      const matchedProj = input.candidateProfile.projects.find(p => topic.toLowerCase().includes(p.name.toLowerCase()))
+        || input.candidateProfile.projects.find(p => !recent.has(p.name.toLowerCase()))
+        || input.candidateProfile.projects[0];
+
+      if (matchedProj) {
+        const techs = matchedProj.technologies.slice(0, 3).join(', ') || skill;
+        const variants = [
+          `Your resume mentions "${matchedProj.name}" built with ${techs}. Walk me through your specific contribution and one technical decision you made.`,
+          `On "${matchedProj.name}", what was the hardest technical problem you personally solved, and how did you validate your solution?`,
+          `How would you defend the architecture choices in "${matchedProj.name}" if challenged in a technical review?`,
+        ];
+        text = variants.find(q => !recent.has(normalizeQuestionText(q))) || variants[0];
+      } else {
+        text = `Pick one project from your resume and explain your personal contribution versus the team's work.`;
+      }
     } else if (input.pattern === 'star_behavioral' || input.intent === 'behavioral') {
       category = 'Behavioral';
       const behavioralQuestions = [
@@ -216,21 +234,40 @@ export class LLMRouter implements InterviewLLMProvider {
     const strengths: string[] = [];
     const weaknesses: string[] = [];
 
+    const questionTokens = input.questionText
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((w) => w.length > 3);
+    const answerLower = input.userAnswer.toLowerCase();
+    const conceptHits = (input.expectedConcepts || []).filter((c) =>
+      answerLower.includes(c.toLowerCase())
+    );
+    const questionKeywordHits = questionTokens.filter((t) => answerLower.includes(t)).length;
+    const relevanceRatio = questionTokens.length > 0 ? questionKeywordHits / questionTokens.length : 0;
+
     if (wordCount < 15) {
-      score = 50;
-      weaknesses.push('Response is very brief. Provide more technical depth and architectural reasoning.');
-    } else if (wordCount > 60) {
-      score = 85;
-      strengths.push('Provided a comprehensive and structured technical explanation.');
+      score = 45;
+      weaknesses.push('Response is very brief relative to what the question asked.');
+    } else if (relevanceRatio < 0.15 && conceptHits.length === 0) {
+      score = 35;
+      weaknesses.push('Answer does not appear to address the specific question or expected concepts.');
+    } else if (conceptHits.length >= 2 || relevanceRatio >= 0.35) {
+      score = wordCount > 60 ? 85 : 78;
+      strengths.push('Answer engages with key concepts from the question.');
     } else {
-      score = 75;
-      strengths.push('Clear and direct response addressing the core question.');
+      score = 62;
+      weaknesses.push('Partially addresses the question but misses several expected concepts.');
     }
 
-    const isBehavioral = input.category.toLowerCase() === 'behavioral';
+    const isBehavioral = input.category.toLowerCase() === 'behavioral' || input.intent === 'behavioral';
     const hasSituation = input.userAnswer.toLowerCase().includes('when') || input.userAnswer.toLowerCase().includes('project');
     const hasAction = input.userAnswer.toLowerCase().includes('implemented') || input.userAnswer.toLowerCase().includes('built') || input.userAnswer.toLowerCase().includes('solved');
     const starMethodFollowed = isBehavioral ? (hasSituation && hasAction) : true;
+
+    const missingConcepts = (input.expectedConcepts || []).filter(
+      (c) => !answerLower.includes(c.toLowerCase())
+    ).slice(0, 3);
 
     return {
       data: {
@@ -245,8 +282,9 @@ export class LLMRouter implements InterviewLLMProvider {
         weaknesses,
         improvedAnswer: isBehavioral
           ? 'Structure your story explicitly with Situation, Task, Action, and measurable Result (STAR).'
-          : `Elaborate on specific trade-offs, connection pooling, and error handling strategies for ${input.targetSkill || 'this stack'}.`,
-        missingConcepts: ['trade-off analysis', 'performance metrics'],
+          : `Expand on how your answer directly addresses: "${input.questionText.slice(0, 120)}…"`,
+        missingConcepts: missingConcepts.length > 0 ? missingConcepts : ['trade-off analysis'],
+        nextFocus: input.targetSkill || input.expectedConcepts?.[0] || 'core concepts',
         starMethodFollowed,
         starSituation: isBehavioral ? (hasSituation ? 'Identified context.' : 'Context could be clearer.') : null,
         starTask: isBehavioral ? 'Core task implied.' : null,

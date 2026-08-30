@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { toggleSaveJobAction, upsertApplicationAction, generateApplicationCopilotAction } from '@/app/actions/candidate';
 import { CandidateApplicationStatus } from '@/types/candidate';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 interface JobDetailClientProps {
   job: {
@@ -178,17 +179,13 @@ export default function JobDetailClient({
       <div className="bg-[#111113] border border-zinc-850 rounded-xl p-6 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
           <div className="flex items-start gap-4">
-            {job.company.logoUrl ? (
-              <img
-                src={job.company.logoUrl}
-                alt={job.company.name}
-                className="w-14 h-14 rounded-lg bg-zinc-950 border border-zinc-800 object-contain p-1"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center font-bold text-lg text-primary">
-                {job.company.name[0]}
-              </div>
-            )}
+            <CompanyLogo
+              logoUrl={job.company.logoUrl}
+              websiteUrl={job.company.websiteUrl}
+              applicationUrl={job.applicationUrl}
+              name={job.company.name}
+              size="lg"
+            />
             <div>
               <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white leading-tight">
                 {job.title}

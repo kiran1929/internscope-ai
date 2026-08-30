@@ -50,7 +50,7 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
 
       {mobileSidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-35 md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 bg-foreground/40 backdrop-blur-xs z-35 md:hidden animate-in fade-in duration-200"
           onClick={closeMobileSidebar}
         />
       )}
@@ -72,8 +72,8 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
 
       <div
         className={cn(
-          'flex-1 flex flex-col min-h-screen transition-all duration-300',
-          sidebarCollapsed ? 'md:ml-[70px]' : 'md:ml-[240px]'
+          'flex-1 flex flex-col min-h-screen transition-[margin] duration-300 ease-out',
+          sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-[260px]'
         )}
       >
         <Navbar
@@ -81,8 +81,8 @@ function ProtectedLayoutContent({ children }: { children: React.ReactNode }) {
           title={activeTab}
         />
 
-        <main className="flex-1 p-4 sm:p-6 md:p-8 bg-background overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background overflow-y-auto">
+          <div className="max-w-7xl mx-auto w-full">
             {children}
           </div>
         </main>

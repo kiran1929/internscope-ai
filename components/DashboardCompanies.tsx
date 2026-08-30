@@ -84,7 +84,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               )}
             >
               <div className="flex items-start justify-between">
-                <CompanyLogo logo={company.logo} name={company.name} size="md" />
+                <CompanyLogo logo={company.logo} logoUrl={company.logoUrl} websiteUrl={company.website} name={company.name} size="md" />
                 <span className="text-[10px] font-semibold text-text-muted bg-zinc-900 border border-zinc-850 px-2 py-0.5 rounded-full">
                   {company.industry}
                 </span>

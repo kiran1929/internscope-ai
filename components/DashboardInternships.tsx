@@ -136,7 +136,13 @@ export const DashboardInternships: React.FC<DashboardInternshipsProps> = ({
                     )}
                   >
                     <div className="flex items-start gap-4">
-                      <CompanyLogo logo={role.companyLogo} name={role.companyName} size="md" />
+                      <CompanyLogo
+                        logo={role.companyLogo}
+                        websiteUrl={role.companyWebsite}
+                        applicationUrl={role.url}
+                        name={role.companyName}
+                        size="md"
+                      />
                       <div className="space-y-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="text-sm font-bold text-white group-hover:text-primary transition-colors">
@@ -239,7 +245,13 @@ export const DashboardInternships: React.FC<DashboardInternshipsProps> = ({
           {selectedInternship ? (
             <div className="space-y-4 animate-in fade-in duration-200">
               <div className="flex items-start gap-4">
-                <CompanyLogo logo={selectedInternship.companyLogo} name={selectedInternship.companyName} size="md" />
+                <CompanyLogo
+                  logo={selectedInternship.companyLogo}
+                  websiteUrl={selectedInternship.companyWebsite}
+                  applicationUrl={selectedInternship.url}
+                  name={selectedInternship.companyName}
+                  size="md"
+                />
                 <div>
                   <h3 className="text-base font-bold text-white leading-tight">{selectedInternship.role}</h3>
                   <span className="text-xs text-primary font-semibold block mt-0.5">{selectedInternship.companyName}</span>

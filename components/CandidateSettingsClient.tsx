@@ -232,7 +232,7 @@ export default function CandidateSettingsClient({
                   type="button"
                   onClick={() => setTheme('dark')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                    theme === 'dark' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                    theme === 'dark' ? 'bg-surface-muted text-foreground' : 'text-text-muted hover:text-foreground'
                   }`}
                 >
                   <Moon className="w-3 h-3" />
@@ -242,7 +242,7 @@ export default function CandidateSettingsClient({
                   type="button"
                   onClick={() => setTheme('light')}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[10px] font-bold transition-all ${
-                    theme === 'light' ? 'bg-zinc-900 text-white' : 'text-zinc-500 hover:text-zinc-300'
+                    theme === 'light' ? 'bg-surface-muted text-foreground' : 'text-text-muted hover:text-foreground'
                   }`}
                 >
                   <Sun className="w-3 h-3" />

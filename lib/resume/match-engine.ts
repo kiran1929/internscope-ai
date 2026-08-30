@@ -1,4 +1,5 @@
 import { ParsedResumePayload } from './ai-parser-service';
+import { capitalizeSkill, findMatchingSkill, toCanonicalSkill } from './skill-normalizer';
 
 export interface MatchResults {
   overallScore: number;
@@ -31,29 +32,28 @@ export class MatchEngine {
       } | null;
     }
   ): MatchResults {
-    const resumeSkills = (resume.skills || []).map((s) => s.toLowerCase());
-    const resumeTechs = (resume.technologies || []).map((t) => t.toLowerCase());
+    const resumeSkills = (resume.skills || []);
+    const resumeTechs = (resume.technologies || []);
 
-    const jobSkills = (job.enrichment?.skills || []).map((s) => s.toLowerCase());
-    
-    // Flatten job techStack object into string array
+    const jobSkills = (job.enrichment?.skills || []);
+
     const jobTechs: string[] = [];
     if (job.enrichment?.techStack && typeof job.enrichment.techStack === 'object') {
       Object.values(job.enrichment.techStack).forEach((val) => {
         if (Array.isArray(val)) {
-          val.forEach((v) => jobTechs.push(String(v).toLowerCase()));
+          val.forEach((v) => jobTechs.push(String(v)));
         }
       });
     }
 
-    // 1. Skill Match Score (0 to 100)
+    // 1. Skill Match Score (0 to 100) — fuzzy via canonical normalization
     let skillScore = 100;
     const matchingSkills: string[] = [];
     const missingSkills: string[] = [];
 
     if (jobSkills.length > 0) {
       jobSkills.forEach((s) => {
-        if (resumeSkills.includes(s)) {
+        if (findMatchingSkill(resumeSkills, s)) {
           matchingSkills.push(s);
         } else {
           missingSkills.push(s);
@@ -69,7 +69,7 @@ export class MatchEngine {
 
     if (jobTechs.length > 0) {
       jobTechs.forEach((t) => {
-        if (resumeTechs.includes(t)) {
+        if (findMatchingSkill(resumeTechs, t) || findMatchingSkill(resumeSkills, t)) {
           matchingTechs.push(t);
         } else {
           missingTechnologies.push(t);
@@ -79,7 +79,7 @@ export class MatchEngine {
     }
 
     // 3. Experience Match Score (0 to 100)
-    let experienceScore = 70; // default baseline
+    let experienceScore = 70;
     const jobExp = job.enrichment?.experienceLevel || 'Entry Level';
     const resumeExp = resume.experienceLevel || 'Entry Level';
 
@@ -92,7 +92,6 @@ export class MatchEngine {
     } else if (resumeIdx >= jobIdx) {
       experienceScore = 100;
     } else {
-      // Scale based on order distance
       const diff = jobIdx - resumeIdx;
       experienceScore = Math.max(100 - (diff * 20), 40);
     }
@@ -108,7 +107,6 @@ export class MatchEngine {
     } else if (resumeLocation && (jobLocation.includes(resumeLocation) || resumeLocation.includes(jobLocation))) {
       locationScore = 100;
     } else if (resumeLocation) {
-      // Check state or country overlap
       const stateMatch = resumeLocation.split(',')[1]?.trim();
       if (stateMatch && jobLocation.includes(stateMatch)) {
         locationScore = 85;
@@ -118,20 +116,15 @@ export class MatchEngine {
     }
 
     // 5. Employment Type Match Score (0 to 100)
-    let employmentTypeScore = 80; // default
-    const jobType = job.type.toLowerCase(); // INTERNSHIP or FULL_TIME
-    
+    let employmentTypeScore = 80;
+    const jobType = job.type.toLowerCase();
+
     if (jobType === 'internship' && resumeExp === 'Intern') {
       employmentTypeScore = 100;
     } else if (jobType === 'new_grad' || jobType === 'full_time') {
-      if (resumeExp !== 'Intern') {
-        employmentTypeScore = 100;
-      } else {
-        employmentTypeScore = 60; // intern looking for FT
-      }
+      employmentTypeScore = resumeExp !== 'Intern' ? 100 : 60;
     }
 
-    // Overall Weighted Score
     const overallScore = Math.round(
       (skillScore * 0.35) +
       (techScore * 0.25) +
@@ -140,10 +133,11 @@ export class MatchEngine {
       (employmentTypeScore * 0.10)
     );
 
-    // Nice to have skills (extracted from techs/skills not explicitly listed as job requirements but related)
-    const niceToHaveSkills = resume.skills.filter(s => !jobSkills.includes(s.toLowerCase())).slice(0, 3);
+    const jobSkillCanonical = new Set(jobSkills.map((s) => toCanonicalSkill(s)));
+    const niceToHaveSkills = resumeSkills
+      .filter((s) => !jobSkillCanonical.has(toCanonicalSkill(s)))
+      .slice(0, 3);
 
-    // Gaps and Strengths
     const strengthAreas: string[] = [];
     const improvementSuggestions: string[] = [];
 
@@ -153,28 +147,24 @@ export class MatchEngine {
     if (locationScore === 100) strengthAreas.push('Location matches perfectly (or role is remote).');
 
     if (missingSkills.length > 0) {
-      improvementSuggestions.push(`Incorporate skills: ${missingSkills.slice(0, 3).map(s => s.toUpperCase()).join(', ')} into your resume summary or description.`);
+      improvementSuggestions.push(`Incorporate skills: ${missingSkills.slice(0, 3).map((s) => capitalizeSkill(s)).join(', ')} into your resume summary or description.`);
     }
     if (missingTechnologies.length > 0) {
-      improvementSuggestions.push(`Highlight any projects or courseworks using: ${missingTechnologies.slice(0, 3).map(t => t.toUpperCase()).join(', ')}.`);
+      improvementSuggestions.push(`Highlight any projects or courseworks using: ${missingTechnologies.slice(0, 3).map((t) => capitalizeSkill(t)).join(', ')}.`);
     }
     if (experienceScore < 80) {
       improvementSuggestions.push('Add bullet points detailing leadership roles or project ownership to match required experience.');
     }
 
-    // Map case styles
-    const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-    // Explanation generator
     let matchExplanation = `This position matches your profile at ${overallScore}%. `;
     if (isJobRemote) {
       matchExplanation += `The role is Remote, removing geographical constraints. `;
     }
     if (matchingSkills.length > 0) {
-      matchExplanation += `You possess core requirements like ${matchingSkills.slice(0, 3).map(s => capitalize(s)).join(', ')}. `;
+      matchExplanation += `You possess core requirements like ${matchingSkills.slice(0, 3).map((s) => capitalizeSkill(s)).join(', ')}. `;
     }
     if (missingSkills.length > 0) {
-      matchExplanation += `However, you are missing skills such as ${missingSkills.slice(0, 2).map(s => capitalize(s)).join(', ')}. `;
+      matchExplanation += `However, you are missing skills such as ${missingSkills.slice(0, 2).map((s) => capitalizeSkill(s)).join(', ')}. `;
     }
 
     return {
@@ -184,9 +174,9 @@ export class MatchEngine {
       experienceScore,
       locationScore,
       employmentTypeScore,
-      missingSkills: missingSkills.map(s => capitalize(s)),
-      missingTechnologies: missingTechnologies.map(t => capitalize(t)),
-      niceToHaveSkills: niceToHaveSkills.map(s => capitalize(s)),
+      missingSkills: missingSkills.map((s) => capitalizeSkill(s)),
+      missingTechnologies: missingTechnologies.map((t) => capitalizeSkill(t)),
+      niceToHaveSkills: niceToHaveSkills.map((s) => capitalizeSkill(s)),
       strengthAreas,
       improvementSuggestions,
       matchExplanation,

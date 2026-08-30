@@ -6,6 +6,8 @@ import { AIQuestionService } from '@/lib/interview/ai-question-service';
 import { AIEvalService } from '@/lib/interview/ai-eval-service';
 import { interviewSummaryPipeline, runInterviewSummaryPipeline } from '@/trigger/interview';
 import { INTERVIEW_LIMITS, isInterviewRateLimitExempt } from '@/lib/interview/constants';
+import { buildQuestionMeta, collectTestedItemsFromQuestions, parseQuestionMeta } from '@/lib/interview/question-meta';
+import { InterviewMemoryService } from '@/lib/interview/memory-service';
 import { revalidatePath } from 'next/cache';
 
 export async function createInterviewSessionAction(params: {
@@ -89,6 +91,7 @@ export async function createInterviewSessionAction(params: {
     });
 
     const q1 = generatedQuestions[0];
+    const q1Meta = buildQuestionMeta(q1);
 
     // 7. Save ONLY Question 1 record
     await prisma.interviewQuestion.create({
@@ -98,6 +101,7 @@ export async function createInterviewSessionAction(params: {
         text: q1.text,
         difficulty: q1.difficulty,
         sampleAnswer: q1.sampleAnswer,
+        generationMeta: q1Meta as object,
         order: 1,
       },
     });
@@ -169,13 +173,17 @@ export async function submitAnswerAction(params: {
       },
     });
 
-    // 5. Evaluate answer inline using AI Evaluator
+    // 5. Evaluate answer inline using AI Evaluator (grounded in question metadata)
+    const questionMeta = parseQuestionMeta(question.generationMeta);
     const evalResult = await AIEvalService.evaluate({
       questionText: question.text,
       sampleAnswer: question.sampleAnswer || 'A structured answer detailing situations, actions taken, and final outcomes.',
       userAnswer: trimmedAnswer,
       category: question.category,
       difficulty: question.difficulty,
+      targetSkill: questionMeta?.targetSkill,
+      intent: questionMeta?.intent,
+      expectedConcepts: questionMeta?.expectedConcepts,
     });
 
     const data = evalResult.structuredData;
@@ -260,15 +268,8 @@ export async function submitAnswerAction(params: {
 
         // Collect all previous question texts and categories/topics/project mentions tested so far
         const recentQuestions = allSessionQuestions.map((q) => q.text);
-        const testedSkills = allSessionQuestions.flatMap((q) => {
-          const items = [q.category];
-          // Also extract any quoted project titles or capitalized technology words from previous question texts
-          const quotes = q.text.match(/"([^"]+)"/g);
-          if (quotes) {
-            quotes.forEach(qt => items.push(qt.replace(/"/g, '')));
-          }
-          return items;
-        });
+        const testedSkills = collectTestedItemsFromQuestions(allSessionQuestions);
+        const currentMeta = parseQuestionMeta(question.generationMeta);
 
         const nextQuestionPayload = await AIQuestionService.generateFollowUp({
           resume: resume?.structuredData,
@@ -277,6 +278,7 @@ export async function submitAnswerAction(params: {
           categories: question.session.categories,
           category: question.category,
           previousQuestion: question.text,
+          previousQuestionTopic: currentMeta?.topic,
           recentQuestions,
           userAnswer: trimmedAnswer,
           userId: user.id,
@@ -291,6 +293,8 @@ export async function submitAnswerAction(params: {
           testedSkillsInSession: testedSkills,
         });
 
+        const nextMeta = buildQuestionMeta(nextQuestionPayload);
+
         await prisma.interviewQuestion.create({
           data: {
             sessionId: question.sessionId,
@@ -298,6 +302,7 @@ export async function submitAnswerAction(params: {
             text: nextQuestionPayload.text,
             difficulty: nextQuestionPayload.difficulty,
             sampleAnswer: nextQuestionPayload.sampleAnswer,
+            generationMeta: nextMeta as object,
             order: question.order + 1,
           },
         });

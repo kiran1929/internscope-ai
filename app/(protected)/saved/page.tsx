@@ -42,6 +42,7 @@ export default async function SavedPage() {
       company: {
         name: item.opportunity.company.name,
         logoUrl: item.opportunity.company.logoUrl,
+        websiteUrl: item.opportunity.company.websiteUrl,
       },
       enrichment: item.opportunity.enrichment ? {
         skills: item.opportunity.enrichment.skills,

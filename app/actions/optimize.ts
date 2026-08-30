@@ -3,17 +3,19 @@
 import { getAuthenticatedUser } from './candidate';
 import { prisma } from '@/lib/db';
 import { AICoverLetterService } from '@/lib/optimize/ai-cover-letter-service';
-import { resumeOptimizationPipeline, runResumeOptimizationPipeline } from '@/trigger/optimize';
+import { runResumeOptimizationPipeline } from '@/trigger/optimize';
 import { revalidatePath } from 'next/cache';
+
+const DEDUP_HOURS = 24;
 
 export async function optimizeResumeAction(params: {
   opportunityId?: string;
   title: string;
+  force?: boolean;
 }) {
   try {
     const user = await getAuthenticatedUser();
 
-    // Fetch user's latest parsed resume
     const resume = await prisma.resume.findFirst({
       where: { userId: user.id, isParsed: true },
       orderBy: { version: 'desc' },
@@ -23,25 +25,46 @@ export async function optimizeResumeAction(params: {
       throw new Error('Please upload and parse a resume before running the optimizer.');
     }
 
-    try {
-      await resumeOptimizationPipeline.trigger({
-        resumeId: resume.id,
-        userId: user.id,
-        opportunityId: params.opportunityId,
-        title: params.title,
+    // Return recent result for same resume + job unless forced
+    if (!params.force) {
+      const since = new Date(Date.now() - DEDUP_HOURS * 60 * 60 * 1000);
+      const existing = await prisma.resumeOptimization.findFirst({
+        where: {
+          userId: user.id,
+          resumeId: resume.id,
+          opportunityId: params.opportunityId || null,
+          createdAt: { gte: since },
+        },
+        orderBy: { createdAt: 'desc' },
+        include: { atsAnalysis: true },
       });
-    } catch (triggerError) {
-      console.warn('Trigger.dev job failed, running inline:', triggerError);
-      await runResumeOptimizationPipeline({
-        resumeId: resume.id,
-        userId: user.id,
-        opportunityId: params.opportunityId,
-        title: params.title,
-      });
+
+      if (existing?.atsAnalysis) {
+        revalidatePath('/resume');
+        return {
+          success: true,
+          optimizationId: existing.id,
+          cached: true,
+          atsScore: existing.atsScore,
+        };
+      }
     }
 
+    // Run inline for immediate, reliable results
+    const result = await runResumeOptimizationPipeline({
+      resumeId: resume.id,
+      userId: user.id,
+      opportunityId: params.opportunityId,
+      title: params.title,
+    });
+
     revalidatePath('/resume');
-    return { success: true };
+    return {
+      success: true,
+      optimizationId: result.optimizationId,
+      atsScore: result.atsScore,
+      cached: false,
+    };
   } catch (error) {
     console.error('Failed to tailormade optimize resume:', error);
     return {
@@ -54,7 +77,7 @@ export async function optimizeResumeAction(params: {
 export async function deleteOptimizationAction(id: string) {
   try {
     const user = await getAuthenticatedUser();
-    
+
     await prisma.resumeOptimization.delete({
       where: { id, userId: user.id },
     });
@@ -77,7 +100,6 @@ export async function generateCoverLetterAction(params: {
   try {
     const user = await getAuthenticatedUser();
 
-    // 1. Fetch user's latest parsed resume
     const resume = await prisma.resume.findFirst({
       where: { userId: user.id, isParsed: true },
       orderBy: { version: 'desc' },
@@ -87,7 +109,6 @@ export async function generateCoverLetterAction(params: {
       throw new Error('Please upload and parse a resume first.');
     }
 
-    // 2. Fetch target job details
     let job = null;
     if (params.opportunityId) {
       job = await prisma.opportunity.findUnique({
@@ -96,7 +117,6 @@ export async function generateCoverLetterAction(params: {
       });
     }
 
-    // 3. Call AI Cover Letter Service
     const aiResult = await AICoverLetterService.generate({
       resume: resume.structuredData,
       job: job ? {
@@ -108,7 +128,6 @@ export async function generateCoverLetterAction(params: {
       style: params.style,
     });
 
-    // 4. Save CoverLetter database record
     const coverLetter = await prisma.coverLetter.create({
       data: {
         userId: user.id,
@@ -117,7 +136,6 @@ export async function generateCoverLetterAction(params: {
       },
     });
 
-    // 5. Create CoverLetterVersion database record
     await prisma.coverLetterVersion.create({
       data: {
         coverLetterId: coverLetter.id,

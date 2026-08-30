@@ -2,24 +2,56 @@ import { llmRouter } from './llm/router';
 import {
   CandidateInterviewMemory,
   GeneratedQuestionPayload,
+  QuestionGenerationInput,
 } from './llm/types';
 import { InterviewPlanner } from './interview-planner';
 import { InterviewMemoryService } from './memory-service';
+import { isDuplicateQuestion } from './question-meta';
+
+const MAX_DEDUP_RETRIES = 3;
+
+function truncateSnippet(text: string, maxLen = 400): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxLen) return trimmed;
+  return `${trimmed.slice(0, maxLen)}…`;
+}
+
+async function generateUniqueQuestion(
+  baseInput: QuestionGenerationInput,
+  recentQuestions: string[]
+): Promise<GeneratedQuestionPayload> {
+  let lastPayload: GeneratedQuestionPayload | null = null;
+
+  for (let attempt = 0; attempt < MAX_DEDUP_RETRIES; attempt++) {
+    const result = await llmRouter.generateQuestion({
+      ...baseInput,
+      recentQuestions,
+    });
+
+    lastPayload = result.data;
+
+    if (!isDuplicateQuestion(result.data.text, recentQuestions)) {
+      return result.data;
+    }
+
+    recentQuestions = [...recentQuestions, result.data.text];
+  }
+
+  return lastPayload!;
+}
 
 export class AIQuestionService {
-  /**
-   * Generates a planned, token-optimized single interview question.
-   */
   static async generate(params: {
     resume: unknown;
     job?: unknown;
     difficulty: string;
     categories: string[];
-    count?: number; // Maintained for backwards compatibility, always generates 1 question
+    count?: number;
     userId?: string;
     questionIndex?: number;
     totalSessionQuestions?: number;
     testedSkillsInSession?: string[];
+    sessionRecentQuestions?: string[];
   }): Promise<GeneratedQuestionPayload[]> {
     const candidateProfile = InterviewMemoryService.buildCompactResumeProfile(params.resume);
     const jobProfile = params.job ? InterviewMemoryService.buildCompactJobProfile(params.job) : undefined;
@@ -40,7 +72,6 @@ export class AIQuestionService {
       ? await InterviewMemoryService.getLongitudinalSkills(params.userId)
       : [];
 
-    // Plan the next question deterministically
     const plan = InterviewPlanner.planNextQuestion({
       candidateProfile,
       jobProfile,
@@ -53,33 +84,37 @@ export class AIQuestionService {
       testedSkillsInSession: params.testedSkillsInSession,
     });
 
-    const recentQuestionsList = candidateMemory.pastQuestionTexts || [];
+    const recentQuestionsList = Array.from(new Set([
+      ...(params.sessionRecentQuestions || []),
+      ...(candidateMemory.pastQuestionTexts || []),
+    ])).slice(0, 25);
 
-    const result = await llmRouter.generateQuestion({
-      candidateProfile,
-      jobProfile,
-      candidateMemory,
-      targetSkill: plan.skill,
-      topic: plan.topic,
-      intent: plan.intent,
-      pattern: plan.pattern,
-      difficulty: plan.difficulty,
-      recentQuestions: recentQuestionsList,
-    });
+    const payload = await generateUniqueQuestion(
+      {
+        candidateProfile,
+        jobProfile,
+        candidateMemory,
+        targetSkill: plan.skill,
+        topic: plan.topic,
+        intent: plan.intent,
+        pattern: plan.pattern,
+        difficulty: plan.difficulty,
+        recentQuestions: recentQuestionsList,
+      },
+      recentQuestionsList
+    );
 
-    return [result.data];
+    return [payload];
   }
 
-  /**
-   * Generates an adaptive follow-up or next question based on the candidate's previous evaluated response.
-   */
   static async generateFollowUp(params: {
     resume: unknown;
     job?: unknown;
     difficulty: string;
     categories?: string[];
-    category?: string; // backwards compatibility
+    category?: string;
     previousQuestion?: string;
+    previousQuestionTopic?: string;
     recentQuestions?: string[];
     userAnswer: string;
     userId?: string;
@@ -112,9 +147,10 @@ export class AIQuestionService {
       ? await InterviewMemoryService.getLongitudinalSkills(params.userId)
       : [];
 
+    const evalTopic = params.previousQuestionTopic || params.category || 'Technical';
     const compactPreviousEval = params.previousEvaluation
       ? {
-          topic: params.category || 'Technical',
+          topic: evalTopic,
           score: params.previousEvaluation.score,
           strength: params.previousEvaluation.strengths[0] || 'Good points',
           weakness: params.previousEvaluation.weaknesses[0] || 'Needs depth',
@@ -126,7 +162,6 @@ export class AIQuestionService {
       ? params.categories
       : (params.category ? [params.category] : ['Technical', 'Behavioral', 'Resume-based', 'Problem Solving']);
 
-    // Use planner to decide next question strategically
     const plan = InterviewPlanner.planNextQuestion({
       candidateProfile,
       jobProfile,
@@ -149,19 +184,21 @@ export class AIQuestionService {
       ...(candidateMemory.pastQuestionTexts || []),
     ])).slice(0, 25);
 
-    const result = await llmRouter.generateQuestion({
-      candidateProfile,
-      jobProfile,
-      candidateMemory,
-      targetSkill: plan.skill,
-      topic: plan.topic,
-      intent: plan.intent,
-      pattern: plan.pattern,
-      difficulty: plan.difficulty,
-      previousAnswerSummary: compactPreviousEval,
-      recentQuestions: combinedRecentQuestions,
-    });
-
-    return result.data;
+    return generateUniqueQuestion(
+      {
+        candidateProfile,
+        jobProfile,
+        candidateMemory,
+        targetSkill: plan.skill,
+        topic: plan.topic,
+        intent: plan.intent,
+        pattern: plan.pattern,
+        difficulty: plan.difficulty,
+        previousAnswerSummary: compactPreviousEval,
+        userAnswerSnippet: truncateSnippet(params.userAnswer),
+        recentQuestions: combinedRecentQuestions,
+      },
+      combinedRecentQuestions
+    );
   }
 }

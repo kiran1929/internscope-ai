@@ -8,11 +8,9 @@ import {
   AnswerEvaluationPayload,
 } from './llm/types';
 import { INTERVIEW_LIMITS } from './constants';
+import { parseQuestionMeta } from './question-meta';
 
 export class InterviewMemoryService {
-  /**
-   * Builds a compact candidate profile from parsed resume structured data.
-   */
   static buildCompactResumeProfile(resumeStructuredData: unknown): CandidateResumeProfile {
     if (!resumeStructuredData || typeof resumeStructuredData !== 'object') {
       return {
@@ -60,20 +58,16 @@ export class InterviewMemoryService {
     };
   }
 
-  /**
-   * Builds a compact job interview profile from opportunity entity.
-   */
   static buildCompactJobProfile(opportunity: { title?: string; description?: string | null; requirements?: string | null; company?: { name?: string } } | null): JobInterviewProfile | undefined {
     if (!opportunity) return undefined;
 
     const desc = (opportunity.description || '').toLowerCase();
     const reqs = (opportunity.requirements || '').toLowerCase();
 
-    // Standard skill extractors
     const commonTechs = [
       'react', 'next.js', 'node.js', 'typescript', 'javascript', 'python', 'java', 'go',
       'postgresql', 'mysql', 'mongodb', 'redis', 'docker', 'kubernetes', 'aws', 'gcp',
-      'system design', 'rest api', 'graphql', 'ci/cd', 'microservices'
+      'system design', 'rest api', 'graphql', 'ci/cd', 'microservices',
     ];
 
     const foundSkills = commonTechs.filter((tech) => desc.includes(tech) || reqs.includes(tech));
@@ -92,55 +86,66 @@ export class InterviewMemoryService {
     };
   }
 
-  /**
-   * Compresses an evaluated answer into compact summary tokens.
-   */
-  static compressAnswer(
-    topic: string,
-    evaluation: AnswerEvaluationPayload
-  ): CompactAnswerSummary {
+  static compressAnswer(topic: string, evaluation: AnswerEvaluationPayload): CompactAnswerSummary {
     return {
       topic,
       score: evaluation.score,
       strength: evaluation.strengths[0] || 'Good clarity',
-      weakness: evaluation.weaknesses[0] || 'Lacks deep trade-off analysis',
-      missingConcept: evaluation.missingConcepts?.[0] || 'Core principles',
+      weakness: evaluation.weaknesses[0] || 'Needs more depth',
+      missingConcept: evaluation.missingConcepts?.[0] || evaluation.nextFocus || '',
     };
   }
 
-  /**
-   * Retrieves or builds candidate interview memory across recent sessions.
-   */
   static async getCandidateMemory(userId: string): Promise<CandidateInterviewMemory> {
     const recentSessions = await prisma.interviewSession.findMany({
-      where: { userId, status: 'COMPLETED' },
+      where: {
+        userId,
+        status: { in: ['COMPLETED', 'IN_PROGRESS'] },
+      },
       orderBy: { createdAt: 'desc' },
-      take: 4,
+      take: 5,
       include: {
         questions: {
-          include: {
-            evaluation: true,
-          },
+          include: { evaluation: true },
         },
       },
     });
 
     const skillScores: Record<string, number> = {};
+    const skillScoreCounts: Record<string, number> = {};
     const strongAreasSet = new Set<string>();
     const weakAreasSet = new Set<string>();
     const repeatedWeaknessesCounts: Record<string, number> = {};
     const recentTopics: string[] = [];
-    const projectClaimsTested: string[] = [];
+    const projectClaimsTestedSet = new Set<string>();
     const recentlyAskedQuestionIds: string[] = [];
     const pastQuestionTexts: string[] = [];
 
     recentSessions.forEach((sess) => {
       sess.questions.forEach((q) => {
         recentlyAskedQuestionIds.push(q.id);
-        if (q.text) {
-          pastQuestionTexts.push(q.text);
-        }
+        if (q.text) pastQuestionTexts.push(q.text);
         recentTopics.push(q.category);
+
+        const meta = parseQuestionMeta(q.generationMeta);
+        if (meta) {
+          recentTopics.push(meta.topic, meta.targetSkill);
+          meta.expectedConcepts.forEach((c) => recentTopics.push(c));
+
+          if (meta.intent === 'project_deep_dive' || meta.intent === 'resume_verification') {
+            const projectMatch = q.text.match(/"([^"]+)"/);
+            if (projectMatch) projectClaimsTestedSet.add(projectMatch[1]);
+            else projectClaimsTestedSet.add(meta.topic);
+          }
+
+          if (q.evaluation) {
+            const skillKey = meta.targetSkill.toLowerCase();
+            skillScoreCounts[skillKey] = (skillScoreCounts[skillKey] || 0) + 1;
+            skillScores[skillKey] =
+              ((skillScores[skillKey] || 0) * (skillScoreCounts[skillKey] - 1) + q.evaluation.score)
+              / skillScoreCounts[skillKey];
+          }
+        }
 
         if (q.evaluation) {
           q.evaluation.strengths.forEach((s) => strongAreasSet.add(s));
@@ -161,16 +166,13 @@ export class InterviewMemoryService {
       strongAreas: Array.from(strongAreasSet).slice(0, 5),
       weakAreas: Array.from(weakAreasSet).slice(0, 5),
       repeatedWeaknesses: repeatedWeaknesses.slice(0, 4),
-      recentTopics: Array.from(new Set(recentTopics)).slice(0, 6),
-      projectClaimsTested: Array.from(new Set(projectClaimsTested)),
-      recentlyAskedQuestionIds: recentlyAskedQuestionIds.slice(0, 15),
-      pastQuestionTexts: pastQuestionTexts.slice(0, 20),
+      recentTopics: Array.from(new Set(recentTopics)).slice(0, 10),
+      projectClaimsTested: Array.from(projectClaimsTestedSet).slice(0, 8),
+      recentlyAskedQuestionIds: recentlyAskedQuestionIds.slice(0, 20),
+      pastQuestionTexts: pastQuestionTexts.slice(0, 25),
     };
   }
 
-  /**
-   * Updates longitudinal candidate skill profile in CareerAnalysis.
-   */
   static async updateLongitudinalSkillMemory(
     userId: string,
     completedEvaluations: AnswerEvaluationPayload[],
@@ -183,7 +185,6 @@ export class InterviewMemoryService {
 
       if (!careerAnalysis) return;
 
-      // Extract existing longitudinal records from careerPaths JSON field or initialize
       let skillRecords: Record<string, LongitudinalSkillRecord> = {};
       if (careerAnalysis.careerPaths && typeof careerAnalysis.careerPaths === 'object') {
         const stored = (careerAnalysis.careerPaths as Record<string, unknown>).longitudinalSkills;
@@ -226,7 +227,6 @@ export class InterviewMemoryService {
         }
       });
 
-      // Persist safely in CareerAnalysis as JSON
       const updatedCareerPaths = JSON.parse(JSON.stringify({
         ...(typeof careerAnalysis.careerPaths === 'object' && careerAnalysis.careerPaths !== null
           ? (careerAnalysis.careerPaths as Record<string, unknown>)
@@ -236,18 +236,13 @@ export class InterviewMemoryService {
 
       await prisma.careerAnalysis.update({
         where: { userId },
-        data: {
-          careerPaths: updatedCareerPaths,
-        },
+        data: { careerPaths: updatedCareerPaths },
       });
     } catch (err) {
       console.warn('[InterviewMemoryService] Failed to update longitudinal skill memory:', err);
     }
   }
 
-  /**
-   * Retrieves candidate's longitudinal skill records.
-   */
   static async getLongitudinalSkills(userId: string): Promise<LongitudinalSkillRecord[]> {
     const careerAnalysis = await prisma.careerAnalysis.findUnique({
       where: { userId },

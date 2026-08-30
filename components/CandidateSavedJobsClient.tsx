@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { toggleSaveJobAction, upsertApplicationAction } from '@/app/actions/candidate';
 import { CandidateApplicationStatus } from '@/types/candidate';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 interface SavedOpportunity {
   id: string;
@@ -20,6 +21,7 @@ interface SavedOpportunity {
     company: {
       name: string;
       logoUrl: string | null;
+      websiteUrl: string | null;
     };
     enrichment: {
       skills: string[];
@@ -138,17 +140,13 @@ export default function CandidateSavedJobsClient({
                 <div>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
-                      {item.opportunity.company.logoUrl ? (
-                        <img
-                          src={item.opportunity.company.logoUrl}
-                          alt={item.opportunity.company.name}
-                          className="w-10 h-10 rounded-lg bg-zinc-950 border border-zinc-900 object-contain p-1"
-                        />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-zinc-950 border border-zinc-900 flex items-center justify-center font-bold text-sm text-primary">
-                          {item.opportunity.company.name[0]}
-                        </div>
-                      )}
+                      <CompanyLogo
+                        logoUrl={item.opportunity.company.logoUrl}
+                        websiteUrl={item.opportunity.company.websiteUrl}
+                        applicationUrl={item.opportunity.applicationUrl}
+                        name={item.opportunity.company.name}
+                        size="md"
+                      />
                       <div>
                         <Link href={`/jobs/${item.opportunity.id}`} className="text-xs font-bold text-zinc-100 hover:text-primary transition-colors block truncate max-w-[170px]">
                           {item.opportunity.title}

@@ -41,6 +41,7 @@ export default async function InternshipsPage() {
       id: opp.company.id,
       name: opp.company.name,
       logoUrl: opp.company.logoUrl,
+      websiteUrl: opp.company.websiteUrl,
     },
     enrichment: opp.enrichment ? {
       skills: opp.enrichment.skills,
