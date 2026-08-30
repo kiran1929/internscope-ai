@@ -159,24 +159,80 @@ export default function Home() {
               <span className="ml-4 font-mono font-medium opacity-65">https://app.internscope.ai/dashboard</span>
             </div>
 
-            <div className="opacity-80 scale-[0.99] origin-top bg-background p-4 min-h-[300px] pointer-events-none">
-              {/* Miniature dashboard mockup layout */}
-              <div className="flex gap-4">
-                <div className="w-[120px] h-[250px] border border-zinc-800 rounded-lg p-2 space-y-3">
-                  <div className="w-12 h-3 bg-zinc-800 rounded" />
-                  <div className="space-y-1">
-                    <div className="w-full h-5 bg-zinc-850 rounded" />
-                    <div className="w-full h-5 bg-zinc-900 rounded" />
-                    <div className="w-full h-5 bg-zinc-900 rounded" />
+            <div className="bg-zinc-950 p-4 sm:p-6 min-h-[360px] pointer-events-none select-none">
+              {/* High-fidelity interactive dashboard mockup preview */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-5 text-left">
+                {/* Sidebar Mockup */}
+                <div className="hidden md:block md:col-span-3 space-y-3 p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800/80">
+                  <div className="flex items-center gap-2 pb-3 border-b border-zinc-800/60">
+                    <div className="w-6 h-6 rounded-lg bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                      ⚡
+                    </div>
+                    <span className="text-xs font-bold text-white">Live Pipeline</span>
+                  </div>
+                  <div className="space-y-1.5 pt-1">
+                    {[
+                      { label: 'Active Opportunities', count: '142', active: true },
+                      { label: 'Resume Match (90%+)', count: '28', active: false },
+                      { label: 'Saved Roles', count: '16', active: false },
+                      { label: 'Applications', count: '9', active: false },
+                    ].map((nav, i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          'flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors',
+                          nav.active ? 'bg-primary/15 text-primary border border-primary/25' : 'text-zinc-400 bg-zinc-900/30'
+                        )}
+                      >
+                        <span>{nav.label}</span>
+                        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800/80 text-zinc-300">
+                          {nav.count}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="flex-1 space-y-4">
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="h-14 border border-zinc-800 rounded-lg p-2" />
-                    <div className="h-14 border border-zinc-800 rounded-lg p-2" />
-                    <div className="h-14 border border-zinc-800 rounded-lg p-2" />
+
+                {/* Main Content Feed Preview */}
+                <div className="md:col-span-9 space-y-4">
+                  {/* Top Stats Banner */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { label: 'Tracked Target Hubs', val: '120+' },
+                      { label: 'New Roles (24h)', val: '+14' },
+                      { label: 'Avg Match Score', val: '94%' },
+                    ].map((stat, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-zinc-900/60 border border-zinc-800/80">
+                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider block">{stat.label}</span>
+                        <span className="text-lg font-extrabold text-white mt-0.5 block">{stat.val}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="h-28 border border-zinc-800 rounded-lg" />
+
+                  {/* Sample Role Cards */}
+                  <div className="space-y-2.5">
+                    {[
+                      { company: 'Stripe', logo: 'STRIPE', role: 'Software Engineering Intern (Backend)', match: '96%', location: 'San Francisco, CA', time: '2h ago' },
+                      { company: 'Google', logo: 'GOOG', role: 'STEP Intern 2026', match: '94%', location: 'Mountain View, CA', time: '5h ago' },
+                      { company: 'OpenAI', logo: 'OPENAI', role: 'Research Engineer Intern (ML)', match: '91%', location: 'San Francisco, CA', time: '8h ago' },
+                    ].map((role, i) => (
+                      <div key={i} className="p-3.5 rounded-xl bg-zinc-900/50 border border-zinc-800/70 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <CompanyLogo logo={role.logo} name={role.company} size="sm" />
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="text-xs font-bold text-white truncate">{role.role}</h4>
+                              <span className="text-[9px] font-extrabold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded-full">
+                                {role.match} Match
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-zinc-400 mt-0.5">{role.company} &bull; {role.location}</p>
+                          </div>
+                        </div>
+                        <span className="text-[10px] font-mono text-zinc-500 whitespace-nowrap hidden sm:block">{role.time}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

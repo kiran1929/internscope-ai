@@ -110,10 +110,6 @@ export const Footer: React.FC = () => {
           <p className="text-xs text-zinc-500">
             &copy; {currentYear} InternScope AI. All rights reserved. Made for ambitious student builders.
           </p>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>All systems operational</span>
-          </div>
         </div>
       </div>
     </footer>
