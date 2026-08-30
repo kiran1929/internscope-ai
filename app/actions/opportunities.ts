@@ -5,6 +5,7 @@ import { OpportunityRepository } from '@/lib/repositories/opportunity';
 import { opportunitySchema, OpportunityFormValues } from '@/lib/validation/opportunity';
 import { scheduleNewOpportunityNotifications } from '@/lib/email/new-opportunity-dispatcher';
 import { requireAdmin } from '@/lib/auth/admin';
+import { actionError } from '@/lib/security/error-handler';
 
 export async function createOpportunityAction(formData: OpportunityFormValues) {
   try {
@@ -18,8 +19,7 @@ export async function createOpportunityAction(formData: OpportunityFormValues) {
     return { success: true, data: opp };
   } catch (error: unknown) {
     console.error('Failed to create opportunity:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create opportunity';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'opportunityAction') };
   }
 }
 
@@ -34,8 +34,7 @@ export async function updateOpportunityAction(id: string, formData: OpportunityF
     return { success: true, data: opp };
   } catch (error: unknown) {
     console.error('Failed to update opportunity:', error);
-    const message = error instanceof Error ? error.message : 'Failed to update opportunity';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'opportunityAction') };
   }
 }
 
@@ -51,8 +50,7 @@ export async function togglePublishOpportunityAction(id: string, currentIsActive
     return { success: true, data: opp };
   } catch (error: unknown) {
     console.error('Failed to toggle publish status:', error);
-    const message = error instanceof Error ? error.message : 'Failed to update publication status';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'opportunityAction') };
   }
 }
 
@@ -65,8 +63,7 @@ export async function archiveOpportunityAction(id: string) {
     return { success: true, data: opp };
   } catch (error: unknown) {
     console.error('Failed to archive opportunity:', error);
-    const message = error instanceof Error ? error.message : 'Failed to archive opportunity';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'opportunityAction') };
   }
 }
 
@@ -79,8 +76,7 @@ export async function unarchiveOpportunityAction(id: string) {
     return { success: true, data: opp };
   } catch (error: unknown) {
     console.error('Failed to unarchive opportunity:', error);
-    const message = error instanceof Error ? error.message : 'Failed to unarchive opportunity';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'opportunityAction') };
   }
 }
 
@@ -93,7 +89,6 @@ export async function deleteOpportunityAction(id: string) {
     return { success: true, data: opp };
   } catch (error: unknown) {
     console.error('Failed to delete opportunity:', error);
-    const message = error instanceof Error ? error.message : 'Failed to delete opportunity';
-    return { success: false, error: message };
+    return { success: false, error: actionError(error, 'Operation failed.', 'opportunityAction') };
   }
 }

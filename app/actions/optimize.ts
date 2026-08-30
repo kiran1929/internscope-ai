@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { AICoverLetterService } from '@/lib/optimize/ai-cover-letter-service';
 import { runResumeOptimizationPipeline } from '@/trigger/optimize';
 import { revalidatePath } from 'next/cache';
+import { actionError } from '@/lib/security/error-handler';
 import { enforceRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/security/rate-limiter';
 import { sanitizeError } from '@/lib/security/error-handler';
 
@@ -163,7 +164,7 @@ export async function generateCoverLetterAction(params: {
     console.error('Failed to generate cover letter:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: actionError(error, 'Failed to optimize resume.', 'optimizeResumeAction'),
     };
   }
 }
@@ -204,7 +205,7 @@ export async function updateCoverLetterAction(params: {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: actionError(error, 'Failed to optimize resume.', 'optimizeResumeAction'),
     };
   }
 }
@@ -222,7 +223,7 @@ export async function deleteCoverLetterAction(id: string) {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: actionError(error, 'Failed to optimize resume.', 'optimizeResumeAction'),
     };
   }
 }

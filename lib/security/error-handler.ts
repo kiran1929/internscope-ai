@@ -77,3 +77,7 @@ export function toPublicError(error: unknown, fallbackMessage?: string) {
     statusCode: 500,
   };
 }
+
+export function actionError(error: unknown, fallbackMessage: string, action?: string): string {
+  return sanitizeError(error, fallbackMessage, { action });
+}
