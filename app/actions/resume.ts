@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db';
 import { StorageService } from '@/lib/resume/storage-service';
 import { validateResumeUpload } from '@/lib/security/file-validator';
 import { sanitizeError } from '@/lib/security/error-handler';
+import { enforceRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/security/rate-limiter';
 import { resumeParsePipeline, runResumeParsePipeline } from '@/trigger/resume';
 import { revalidatePath } from 'next/cache';
 
@@ -14,6 +15,7 @@ export async function uploadResumeAction(formData: FormData) {
 
   try {
     const user = await getAuthenticatedUser();
+    await enforceRateLimit('upload-resume', user.id, RATE_LIMIT_CONFIGS.RESUME_UPLOAD);
     const file = formData.get('file') as File;
 
     if (!file) {

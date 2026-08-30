@@ -730,7 +730,7 @@ export async function analyzeGitHubIntelligenceAction(username: string) {
     const user = await getAuthenticatedUser();
 
     // Enforce rate limiting (HIGH-002)
-    enforceRateLimit('analyze-github', user.id, RATE_LIMIT_CONFIGS.GITHUB_ANALYSIS);
+    await enforceRateLimit('analyze-github', user.id, RATE_LIMIT_CONFIGS.GITHUB_ANALYSIS);
 
     const cleanUsername = sanitizeGitHubUsername(username);
     if (!cleanUsername) {
@@ -857,7 +857,7 @@ export async function analyzePortfolioIntelligenceAction(url: string) {
     const user = await getAuthenticatedUser();
     
     // Enforce rate limiting (HIGH-002)
-    enforceRateLimit('analyze-portfolio', user.id, RATE_LIMIT_CONFIGS.PORTFOLIO_ANALYSIS);
+    await enforceRateLimit('analyze-portfolio', user.id, RATE_LIMIT_CONFIGS.PORTFOLIO_ANALYSIS);
 
     // SSRF Guard: Validate outbound URL protocol, host, and IP ranges
     const validation = validateOutboundUrl(url);
