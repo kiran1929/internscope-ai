@@ -221,7 +221,7 @@ export default function Home() {
                   title={company.name}
                   onClick={handleNavigateToDashboard}
                 >
-                  <CompanyLogo logo={company.logo} name={company.name} size="xl" />
+                  <CompanyLogo logo={company.logo} websiteUrl={company.website} name={company.name} size="xl" />
                   <div className="flex flex-col text-left">
                     <span className="text-sm font-bold text-white font-sans tracking-tight whitespace-nowrap group-hover:text-primary transition-colors">
                       {company.name}
@@ -254,7 +254,7 @@ export default function Home() {
                   title={company.name}
                   onClick={handleNavigateToDashboard}
                 >
-                  <CompanyLogo logo={company.logo} name={company.name} size="xl" />
+                  <CompanyLogo logo={company.logo} websiteUrl={company.website} name={company.name} size="xl" />
                   <div className="flex flex-col text-left">
                     <span className="text-sm font-bold text-white font-sans tracking-tight whitespace-nowrap group-hover:text-primary transition-colors">
                       {company.name}
