@@ -18,6 +18,7 @@ import {
   ExternalLink,
   MapPin,
   Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { Company } from '@/types';
 import { CompanyLogo } from './CompanyLogo';
@@ -187,7 +188,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   };
 
   const selectClassName =
-    'bg-input-bg border border-border-subtle text-xs font-medium text-foreground rounded-lg px-3 py-2 outline-none focus:border-primary/60 transition-all cursor-pointer h-9.5 shrink-0 shadow-2xs';
+    'bg-input-bg border border-border-subtle text-[11px] text-foreground rounded-lg px-2 py-1 outline-none focus:border-primary/60 transition-all cursor-pointer h-8 shrink-0 max-w-[130px] truncate';
 
   // Helper for generating pagination buttons
   const getPageNumbers = () => {
@@ -243,20 +244,20 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
         </div>
       </div>
 
-      {/* Filter Toolbar & View Switcher - Spacious Single Line */}
-      <div className="flex items-center justify-between gap-4 bg-surface-muted/40 p-3 sm:p-3.5 rounded-xl border border-border-subtle overflow-x-auto no-scrollbar">
-        {/* Search Input & All Select Dropdowns with Increased Spacing */}
-        <div className="flex items-center gap-3 flex-1 min-w-0 shrink-0">
-          <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-48 sm:w-56 h-9.5 focus-within:border-primary/50 transition-colors shrink-0 shadow-2xs">
-            <div className="relative flex items-center gap-2 px-3 flex-1 min-w-0">
-              <Search className="w-4 h-4 text-text-muted shrink-0" />
+      {/* Filter Toolbar & View Switcher - Strictly Single Line */}
+      <div className="flex items-center justify-between gap-2 bg-surface-muted/40 p-2 rounded-xl border border-border-subtle overflow-x-auto no-scrollbar">
+        {/* Search Input & All Select Dropdowns on Single Line */}
+        <div className="flex items-center gap-1.5 flex-1 min-w-0 shrink-0">
+          <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-44 sm:w-48 h-8 focus-within:border-primary/50 transition-colors shrink-0">
+            <div className="relative flex items-center gap-1 px-2 flex-1 min-w-0">
+              <Search className="w-3.5 h-3.5 text-text-muted shrink-0" />
               <input
                 type="text"
                 placeholder={SEARCH_PLACEHOLDERS[searchBy]}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 aria-label="Search companies"
-                className="bg-transparent border-none outline-none text-xs text-foreground w-full placeholder:text-text-muted/70 py-1.5"
+                className="bg-transparent border-none outline-none text-[11px] text-foreground w-full placeholder:text-text-muted/70 py-1"
               />
               {search && (
                 <button
@@ -265,7 +266,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                   aria-label="Clear search"
                   className="text-text-muted hover:text-foreground cursor-pointer"
                 >
-                  <X className="w-3.5 h-3.5" />
+                  <X className="w-3 h-3" />
                 </button>
               )}
             </div>
@@ -273,7 +274,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               id="company-search-by"
               value={searchBy}
               onChange={(e) => setSearchBy(e.target.value as SearchBy)}
-              className="shrink-0 border-l border-border-subtle bg-transparent text-xs text-text-muted px-2.5 outline-none cursor-pointer font-medium"
+              className="shrink-0 border-l border-border-subtle bg-transparent text-[10px] text-text-muted px-1.5 outline-none cursor-pointer"
             >
               <option value="all">All</option>
               <option value="name">Name</option>
@@ -469,13 +470,27 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                     )}
                   </div>
 
-                  {company.careerPage || company.website ? (
-                    <div className="pt-3 border-t border-border-subtle flex items-center justify-end">
-                      <a href={company.careerPage || company.website} target="_blank" rel="noreferrer" className="text-xs text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline">
+                  <div className="pt-3 border-t border-border-subtle flex items-center justify-between text-xs">
+                    {company.careerPage || company.website ? (
+                      <a
+                        href={company.careerPage || company.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline"
+                      >
                         Careers <ExternalLink className="w-3.5 h-3.5 text-text-muted/70" />
                       </a>
-                    </div>
-                  ) : null}
+                    ) : (
+                      <span className="text-text-muted/50 text-[11px]">No link</span>
+                    )}
+
+                    <Link
+                      href={`/companies/${company.id}`}
+                      className="text-primary hover:text-primary-hover font-semibold inline-flex items-center gap-1 transition-colors hover:underline"
+                    >
+                      Open <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
               );
             })}
