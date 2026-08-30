@@ -3,9 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { CompanyRepository } from '@/lib/repositories/company';
 import { companySchema, CompanyFormValues } from '@/lib/validation/company';
+import { requireAdmin } from '@/lib/auth/admin';
 
 export async function createCompanyAction(formData: CompanyFormValues) {
   try {
+    await requireAdmin();
     const validated = companySchema.parse(formData);
     
     // Check for duplicate names
@@ -26,6 +28,7 @@ export async function createCompanyAction(formData: CompanyFormValues) {
 
 export async function updateCompanyAction(id: string, formData: CompanyFormValues) {
   try {
+    await requireAdmin();
     const validated = companySchema.parse(formData);
 
     // Check duplicate names (excluding current record)
@@ -48,6 +51,7 @@ export async function updateCompanyAction(id: string, formData: CompanyFormValue
 
 export async function archiveCompanyAction(id: string) {
   try {
+    await requireAdmin();
     const company = await CompanyRepository.update(id, { isArchived: true });
     revalidatePath('/admin/companies');
     revalidatePath(`/admin/companies/${id}`);
@@ -61,6 +65,7 @@ export async function archiveCompanyAction(id: string) {
 
 export async function verifyCompanyAction(id: string, currentIsVerified: boolean) {
   try {
+    await requireAdmin();
     const company = await CompanyRepository.update(id, { isVerified: !currentIsVerified });
     revalidatePath('/admin/companies');
     revalidatePath(`/admin/companies/${id}`);
@@ -74,6 +79,7 @@ export async function verifyCompanyAction(id: string, currentIsVerified: boolean
 
 export async function deleteCompanyAction(id: string) {
   try {
+    await requireAdmin();
     // Soft delete via setting isArchived to true
     const company = await CompanyRepository.update(id, { isArchived: true });
     revalidatePath('/admin/companies');
@@ -87,6 +93,7 @@ export async function deleteCompanyAction(id: string) {
 
 export async function duplicateCompanyAction(id: string) {
   try {
+    await requireAdmin();
     const source = await CompanyRepository.findById(id);
     if (!source) {
       return { success: false, error: 'Source company not found' };

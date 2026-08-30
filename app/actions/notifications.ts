@@ -15,8 +15,8 @@ async function getAdminUser() {
 
 export async function markNotificationReadAction(id: string) {
   try {
-    await getAdminUser();
-    const notification = await NotificationRepository.markAsRead(id);
+    const dbUser = await getAdminUser();
+    const notification = await NotificationRepository.markAsRead(id, dbUser.id);
     revalidatePath('/admin/notifications');
     return { success: true, data: notification };
   } catch (error: unknown) {
@@ -41,8 +41,8 @@ export async function markAllNotificationsReadAction() {
 
 export async function deleteNotificationAction(id: string) {
   try {
-    await getAdminUser();
-    await NotificationRepository.delete(id);
+    const dbUser = await getAdminUser();
+    await NotificationRepository.delete(id, dbUser.id);
     revalidatePath('/admin/notifications');
     return { success: true };
   } catch (error: unknown) {

@@ -39,9 +39,9 @@ export class NotificationRepository {
     });
   }
 
-  static async markAsRead(id: string) {
-    return prisma.notification.update({
-      where: { id },
+  static async markAsRead(id: string, userId: string) {
+    return prisma.notification.updateMany({
+      where: { id, userId },
       data: { isRead: true },
     });
   }
@@ -53,9 +53,9 @@ export class NotificationRepository {
     });
   }
 
-  static async delete(id: string) {
-    return prisma.notification.delete({
-      where: { id },
+  static async delete(id: string, userId: string) {
+    return prisma.notification.deleteMany({
+      where: { id, userId },
     });
   }
 }
