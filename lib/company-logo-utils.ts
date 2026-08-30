@@ -127,14 +127,6 @@ export function buildGoogleFaviconUrl(domain: string, size = 128): string {
   return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=${size}`;
 }
 
-export function buildClearbitLogoUrl(domain: string): string {
-  return `https://logo.clearbit.com/${encodeURIComponent(domain)}`;
-}
-
-export function buildUnavatarLogoUrl(domain: string): string {
-  return `https://unavatar.io/${encodeURIComponent(domain)}?fallback=false`;
-}
-
 export function buildDuckDuckGoIconUrl(domain: string): string {
   return `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`;
 }
