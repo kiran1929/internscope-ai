@@ -402,33 +402,59 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {TESTIMONIALS.map((t) => (
-              <div
-                key={t.name}
-                className="relative group rounded-2xl p-7 bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between shadow-lg overflow-hidden"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center gap-1 text-amber-400">
-                    {[...Array(5)].map((_, i) => (
-                      <span key={i} className="text-xs">★</span>
-                    ))}
-                  </div>
-                  <p className="text-xs text-zinc-300 leading-relaxed font-normal italic">
-                    &ldquo;{t.content}&rdquo;
-                  </p>
-                </div>
+            {TESTIMONIALS.map((t, idx) => {
+              const companyCodeMap: Record<string, string> = {
+                'Sarah Chen': 'STRIPE',
+                'David Kojo': 'GOOG',
+                'Alex Rivera': 'OPENAI',
+              };
+              const logoCode = companyCodeMap[t.name] || 'MSFT';
 
-                <div className="flex items-center gap-3 pt-4 mt-6 border-t border-zinc-800/40">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary/30 to-blue-400/30 border border-primary/40 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md">
-                    {t.avatar}
+              return (
+                <div
+                  key={t.name}
+                  className="relative group rounded-2xl p-7 bg-zinc-900/50 border border-zinc-800/80 hover:border-primary/50 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(59,130,246,0.14)] flex flex-col justify-between overflow-hidden"
+                >
+                  {/* Subtle top gradient line highlight */}
+                  <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  
+                  {/* Background ambient glow */}
+                  <div className="absolute -top-12 -right-12 w-28 h-28 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/25 transition-colors pointer-events-none" />
+
+                  <div className="space-y-4 relative z-10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full text-amber-400">
+                        {[...Array(5)].map((_, i) => (
+                          <span key={i} className="text-xs">★</span>
+                        ))}
+                        <span className="text-[10px] font-bold ml-1 text-amber-300">5.0</span>
+                      </div>
+                      <CompanyLogo logo={logoCode} name={t.name} size="sm" />
+                    </div>
+
+                    <p className="text-xs text-zinc-200 leading-relaxed font-normal italic relative pt-2">
+                      <span className="text-primary text-base font-serif font-black mr-1 select-none">&ldquo;</span>
+                      {t.content}
+                      <span className="text-primary text-base font-serif font-black ml-1 select-none">&rdquo;</span>
+                    </p>
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-white group-hover:text-primary transition-colors leading-tight">{t.name}</h4>
-                    <span className="text-[11px] text-zinc-400">{t.role}</span>
+
+                  <div className="flex items-center gap-3.5 pt-5 mt-6 border-t border-zinc-800/50 relative z-10">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-blue-400 p-[1px] shadow-md group-hover:scale-105 transition-transform duration-300">
+                      <div className="w-full h-full rounded-full bg-zinc-950 flex items-center justify-center font-bold text-white text-xs">
+                        {t.avatar}
+                      </div>
+                    </div>
+                    <div className="flex flex-col">
+                      <h4 className="text-sm font-bold text-white group-hover:text-primary transition-colors leading-tight">
+                        {t.name}
+                      </h4>
+                      <span className="text-xs text-zinc-400 font-medium mt-0.5">{t.role}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </motion.section>
 
