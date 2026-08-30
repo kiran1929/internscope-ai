@@ -4,9 +4,11 @@ import { revalidatePath } from 'next/cache';
 import { OpportunityRepository } from '@/lib/repositories/opportunity';
 import { opportunitySchema, OpportunityFormValues } from '@/lib/validation/opportunity';
 import { scheduleNewOpportunityNotifications } from '@/lib/email/new-opportunity-dispatcher';
+import { requireAdmin } from '@/lib/auth/admin';
 
 export async function createOpportunityAction(formData: OpportunityFormValues) {
   try {
+    await requireAdmin();
     const validated = opportunitySchema.parse(formData);
     const opp = await OpportunityRepository.create(validated);
     if (opp.isActive && !opp.isArchived) {
@@ -23,6 +25,7 @@ export async function createOpportunityAction(formData: OpportunityFormValues) {
 
 export async function updateOpportunityAction(id: string, formData: OpportunityFormValues) {
   try {
+    await requireAdmin();
     const validated = opportunitySchema.parse(formData);
     const opp = await OpportunityRepository.update(id, validated);
     revalidatePath('/admin/opportunities');
@@ -38,6 +41,7 @@ export async function updateOpportunityAction(id: string, formData: OpportunityF
 
 export async function togglePublishOpportunityAction(id: string, currentIsActive: boolean) {
   try {
+    await requireAdmin();
     const opp = await OpportunityRepository.update(id, { isActive: !currentIsActive });
     if (opp.isActive && !opp.isArchived) {
       await scheduleNewOpportunityNotifications(opp.id);
@@ -54,6 +58,7 @@ export async function togglePublishOpportunityAction(id: string, currentIsActive
 
 export async function archiveOpportunityAction(id: string) {
   try {
+    await requireAdmin();
     const opp = await OpportunityRepository.update(id, { isArchived: true });
     revalidatePath('/admin/opportunities');
     revalidatePath(`/admin/opportunities/${id}`);
@@ -67,6 +72,7 @@ export async function archiveOpportunityAction(id: string) {
 
 export async function unarchiveOpportunityAction(id: string) {
   try {
+    await requireAdmin();
     const opp = await OpportunityRepository.update(id, { isArchived: false });
     revalidatePath('/admin/opportunities');
     revalidatePath(`/admin/opportunities/${id}`);
@@ -80,6 +86,7 @@ export async function unarchiveOpportunityAction(id: string) {
 
 export async function deleteOpportunityAction(id: string) {
   try {
+    await requireAdmin();
     // Soft delete via setting isArchived to true
     const opp = await OpportunityRepository.update(id, { isArchived: true });
     revalidatePath('/admin/opportunities');
