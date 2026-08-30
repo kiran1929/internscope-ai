@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Outfit } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
-import { dark } from "@clerk/themes";
 import "./globals.css";
 
 const inter = Inter({
@@ -26,7 +25,7 @@ export const metadata: Metadata = {
     description: "Personalized tech internship tracking platform.",
     type: "website",
     locale: "en_US",
-    },
+  },
 };
 
 import CookieConsent from "@/components/CookieConsent";
@@ -40,19 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      appearance={{
-        baseTheme: dark,
-        variables: {
-          colorPrimary: '#2563EB',
-          colorBackground: '#18181B',
-          colorInputBackground: '#09090B',
-          colorInputText: '#FFFFFF',
-          colorText: '#FFFFFF',
-          colorTextSecondary: '#A1A1AA',
-        },
-      } as any}
-    >
+    <ClerkProvider>
       <html
         lang="en"
         className={`${inter.variable} ${outfit.variable} dark h-full antialiased`}
