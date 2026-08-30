@@ -1,5 +1,8 @@
 import { prisma } from '../db';
 import { JobStatus, IngestionJob, Prisma } from '../generated/prisma/client';
+import {
+  getNextScheduledScrapeTime,
+} from '../ingestion/scraper-schedule';
 
 export class JobRepository {
   static async create(provider: string, triggerId?: string): Promise<IngestionJob> {
@@ -60,15 +63,7 @@ export class JobRepository {
     });
   }
 
-  static async getNextScheduledSync(provider: string): Promise<Date> {
-    // Scheduled full sync runs twice daily (9 AM & 9 PM IST).
-    const lastJob = await prisma.ingestionJob.findFirst({
-      where: { provider },
-      orderBy: { startedAt: 'desc' },
-    });
-
-    const baseTime = lastJob ? new Date(lastJob.startedAt) : new Date();
-    const hours = 12;
-    return new Date(baseTime.getTime() + hours * 60 * 60 * 1000);
+  static getNextScheduledSync(_provider: string): Date {
+    return getNextScheduledScrapeTime();
   }
 }

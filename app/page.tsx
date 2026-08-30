@@ -15,6 +15,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 
 // Data constants
 import {
@@ -23,6 +24,7 @@ import {
   TESTIMONIALS,
   FEATURES
 } from '@/constants';
+import { getCatalogCompanyCount } from '@/lib/ingestion/company-catalog';
 
 // Reusable Components
 import { Header } from '@/components/Header';
@@ -33,7 +35,15 @@ import { cn } from '@/lib/utils';
 
 export default function Home() {
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(null);
+  const catalogCompanyCount = getCatalogCompanyCount();
+
+  React.useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace('/dashboard');
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   const handleNavigateToDashboard = () => {
     router.push('/dashboard');
@@ -71,7 +81,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.24 }}
             className="text-sm sm:text-lg text-text-muted max-w-2xl mx-auto leading-relaxed"
           >
-            InternScope AI actively monitors career pages from 100+ top tech companies, calculates your resume match score, and sends personalized alerts before applications close.
+            InternScope AI actively monitors career pages from {catalogCompanyCount}+ top tech companies, calculates your resume match score, and sends personalized alerts before applications close.
           </motion.p>
 
           <motion.div
@@ -109,7 +119,7 @@ export default function Home() {
             <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-primary/5 rounded-full filter blur-xl pointer-events-none" />
 
             {[
-              { label: 'Companies Tracked', value: 120, suffix: '+' },
+              { label: 'Companies Tracked', value: catalogCompanyCount, suffix: '+' },
               { label: 'Active Internships', value: 1450, suffix: '+' },
               { label: 'Daily Updates', value: 24, suffix: '/7' },
               { label: 'Match Accuracy', value: 98, suffix: '%' }

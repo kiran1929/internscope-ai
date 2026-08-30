@@ -3,9 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { ApplicationRepository } from '@/lib/repositories/application';
 import { ApplicationStatus } from '@/lib/generated/prisma/enums';
+import { requireAdmin } from '@/lib/auth/admin';
 
 export async function updateApplicationStatusAction(id: string, newStatus: ApplicationStatus) {
   try {
+    await requireAdmin();
     if (!Object.values(ApplicationStatus).includes(newStatus)) {
       return { success: false, error: 'Invalid application status specified' };
     }

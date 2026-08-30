@@ -11,6 +11,10 @@ import { ApplicationStatus, OpportunityType, RemoteType, Prisma } from '@/lib/ge
 import { CandidateApplicationStatus } from '@/types/candidate';
 import { revalidatePath } from 'next/cache';
 import { SearchService, SearchOptions } from '@/lib/search/search-service';
+import { openOpportunityWhere } from '@/lib/opportunities/deadline-utils';
+import { sanitizeGitHubUsername, validateOutboundUrl } from '@/lib/security/ssrf-guard';
+import { sanitizeError } from '@/lib/security/error-handler';
+import { enforceRateLimit, RATE_LIMIT_CONFIGS } from '@/lib/security/rate-limiter';
 
 // Helper to authenticate the candidate user and retrieve DB entity
 async function resolveAuthenticatedUser() {
@@ -21,11 +25,11 @@ async function resolveAuthenticatedUser() {
   }
 
   let user = await UserRepository.findByClerkId(userId);
-  const clerkUser = await currentUser();
-  const activeClerkEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
 
   if (!user) {
-    // Lazy sync Clerk user to PostgreSQL DB if missing
+    // Lazy sync Clerk user to PostgreSQL DB if missing (only external network trip if first login)
+    const clerkUser = await currentUser();
+    const activeClerkEmail = clerkUser?.emailAddresses[0]?.emailAddress || '';
     if (!clerkUser) {
       throw new Error('User not found in Clerk directory');
     }
@@ -36,21 +40,15 @@ async function resolveAuthenticatedUser() {
       lastName: clerkUser.lastName || '',
       avatarUrl: clerkUser.imageUrl || '',
     });
-  } else if (activeClerkEmail && user.email !== activeClerkEmail) {
-    // Sync updated email if user changed or logged in with a different Clerk email
-    user = await prisma.user.update({
-      where: { id: user.id },
-      data: { email: activeClerkEmail },
-      include: {
-        profile: true,
-        emailPreference: true,
-      },
-    });
   }
   return user;
 }
 
-export const getAuthenticatedUser = cache(resolveAuthenticatedUser);
+const getCachedUser = cache(resolveAuthenticatedUser);
+
+export async function getAuthenticatedUser() {
+  return getCachedUser();
+}
 
 export async function getCompaniesDirectoryForUser() {
   const user = await getAuthenticatedUser();
@@ -71,12 +69,33 @@ export async function getCompaniesDirectoryForUser() {
         careerPageUrl: true,
         industry: true,
         country: true,
+        city: true,
+        state: true,
+        tags: true,
+        isVerified: true,
         hiringStatus: true,
         companySize: true,
+        description: true,
+        opportunities: {
+          where: openOpportunityWhere(),
+          orderBy: [
+            { deadline: 'asc' },
+            { createdAt: 'desc' },
+          ],
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            location: true,
+            remoteType: true,
+            deadline: true,
+            applicationUrl: true,
+          },
+        },
         _count: {
           select: {
             opportunities: {
-              where: { isArchived: false, isActive: true },
+              where: openOpportunityWhere(),
             },
           },
         },
@@ -101,6 +120,92 @@ export async function getCompaniesDirectoryForUser() {
     hiringStatus: company.hiringStatus || '',
     companySize: company.companySize || '',
   }));
+}
+
+export async function getCompanyWithOpportunities(companyId: string) {
+  const user = await getAuthenticatedUser();
+
+  const [company, isTracking, savedOpportunities, applications] = await Promise.all([
+    prisma.company.findUnique({
+      where: { id: companyId },
+      include: {
+        opportunities: {
+          where: openOpportunityWhere(),
+          orderBy: [
+            { deadline: 'asc' },
+            { createdAt: 'desc' },
+          ],
+          include: {
+            enrichment: true,
+          },
+        },
+      },
+    }),
+    prisma.targetCompany.findUnique({
+      where: {
+        userId_companyId: {
+          userId: user.id,
+          companyId,
+        },
+      },
+    }),
+    prisma.savedOpportunity.findMany({
+      where: { userId: user.id },
+      select: { opportunityId: true },
+    }),
+    prisma.application.findMany({
+      where: { userId: user.id },
+      select: { opportunityId: true, status: true },
+    }),
+  ]);
+
+  if (!company || company.isArchived) {
+    return null;
+  }
+
+  const savedOpportunityIds = new Set(savedOpportunities.map((s) => s.opportunityId));
+  const appStatusByOppId = new Map(applications.map((a) => [a.opportunityId, a.status]));
+
+  return {
+    company: {
+      id: company.id,
+      name: company.name,
+      logo: company.logoUrl || company.name.slice(0, 4).toUpperCase(),
+      logoUrl: company.logoUrl,
+      website: company.websiteUrl || '',
+      careerPage: company.careerPageUrl || '',
+      industry: company.industry || 'Tech',
+      description: company.description || '',
+      country: company.country || '',
+      hiringStatus: company.hiringStatus || '',
+      companySize: company.companySize || '',
+      isTracking: Boolean(isTracking),
+      activeOpeningsCount: company.opportunities.length,
+    },
+    opportunities: company.opportunities.map((opp) => ({
+      id: opp.id,
+      title: opp.title,
+      type: opp.type,
+      location: opp.location,
+      remoteType: opp.remoteType,
+      salaryRange: opp.salaryRange,
+      applicationUrl: opp.applicationUrl,
+      deadline: opp.deadline ? opp.deadline.toISOString() : null,
+      createdAt: opp.createdAt.toISOString(),
+      isSaved: savedOpportunityIds.has(opp.id),
+      appliedStatus: appStatusByOppId.get(opp.id) || null,
+      enrichment: opp.enrichment
+        ? {
+            skills: opp.enrichment.skills,
+            techStack: Array.isArray(opp.enrichment.techStack)
+              ? (opp.enrichment.techStack as string[])
+              : null,
+            experienceLevel: opp.enrichment.experienceLevel,
+            qualityScore: opp.enrichment.qualityScore,
+          }
+        : null,
+    })),
+  };
 }
 
 // 1. Profile Actions
@@ -256,7 +361,7 @@ export async function getPersonalizedRecommendations() {
     if (!profile) {
       // Default: Return newest 6 jobs
       const defaultJobs = await prisma.opportunity.findMany({
-        where: { isArchived: false, isActive: true },
+        where: openOpportunityWhere(),
         take: 6,
         orderBy: { createdAt: 'desc' },
         include: { company: true, enrichment: true },
@@ -266,7 +371,7 @@ export async function getPersonalizedRecommendations() {
 
     // Query active enriched opportunities (take top 60 most relevant candidates for scoring)
     const opportunities = await prisma.opportunity.findMany({
-      where: { isArchived: false, isActive: true },
+      where: openOpportunityWhere(),
       take: 60,
       orderBy: { createdAt: 'desc' },
       select: {
@@ -307,8 +412,8 @@ export async function getPersonalizedRecommendations() {
       // 1. Skill & Technologies overlap (max 50 points)
       const jobSkills = job.enrichment?.skills || [];
       if (userSkills.length > 0 && jobSkills.length > 0) {
-        const matchingSkills = jobSkills.filter((s) =>
-          userSkills.map((us) => us.toLowerCase()).includes(s.toLowerCase())
+        const matchingSkills = jobSkills.filter((s: string) =>
+          userSkills.map((us: string) => us.toLowerCase()).includes(s.toLowerCase())
         );
         score += (matchingSkills.length / Math.max(userSkills.length, 1)) * 50;
       }
@@ -316,7 +421,7 @@ export async function getPersonalizedRecommendations() {
       // 2. Preferred Location overlap (max 20 points)
       if (userLocations.length > 0) {
         const jobLoc = job.location.toLowerCase();
-        const matchesLocation = userLocations.some((ul) =>
+        const matchesLocation = userLocations.some((ul: string) =>
           jobLoc.includes(ul.toLowerCase())
         );
         if (matchesLocation) score += 20;
@@ -325,7 +430,7 @@ export async function getPersonalizedRecommendations() {
       // 3. Remote Pref overlap (max 15 points)
       if (userRemote.length > 0) {
         const jobRemote = job.remoteType?.toString().toUpperCase();
-        const matchesRemote = userRemote.some((ur) =>
+        const matchesRemote = userRemote.some((ur: string) =>
           ur.toUpperCase() === jobRemote
         );
         if (matchesRemote) score += 15;
@@ -334,7 +439,7 @@ export async function getPersonalizedRecommendations() {
       // 4. Employment Type Pref overlap (max 15 points)
       if (userTypes.length > 0) {
         const jobType = job.type?.toString().toUpperCase();
-        const matchesType = userTypes.some((ut) =>
+        const matchesType = userTypes.some((ut: string) =>
           ut.toUpperCase() === jobType
         );
         if (matchesType) score += 15;
@@ -346,9 +451,35 @@ export async function getPersonalizedRecommendations() {
     // Sort by compatibility descending
     scoredJobs.sort((a, b) => b.score - a.score);
 
+    // Return diverse companies first so the candidate gets varied recommendations
+    const seenCompanies = new Set<string>();
+    const diverseList: { job: (typeof opportunities)[0]; score: number; matchScore: number }[] = [];
+
+    for (const item of scoredJobs) {
+      const matchScore = Math.min(Math.max(Math.round(75 + item.score * 0.24), 78), 99);
+      if (!seenCompanies.has(item.job.company.name)) {
+        seenCompanies.add(item.job.company.name);
+        diverseList.push({ ...item, matchScore });
+      }
+      if (diverseList.length >= 6) break;
+    }
+
+    if (diverseList.length < 6) {
+      for (const item of scoredJobs) {
+        if (!diverseList.some((d) => d.job.id === item.job.id)) {
+          const matchScore = Math.min(Math.max(Math.round(75 + item.score * 0.24), 78), 99);
+          diverseList.push({ ...item, matchScore });
+        }
+        if (diverseList.length >= 6) break;
+      }
+    }
+
     return {
       success: true,
-      recommendations: scoredJobs.slice(0, 6).map((x) => x.job),
+      recommendations: diverseList.map((x) => ({
+        ...x.job,
+        matchScore: x.matchScore,
+      })),
     };
   } catch (error) {
     console.error('Recommendations error:', error);
@@ -436,8 +567,10 @@ export async function getEmailPreferenceAction() {
 export async function searchJobsAction(options: SearchOptions) {
   try {
     const user = await getAuthenticatedUser();
+    const cappedLimit = Math.min(Math.max(1, options.limit || 10), 100);
     const results = await SearchService.search({
       ...options,
+      limit: cappedLimit,
       userId: user.id,
     });
     
@@ -546,7 +679,7 @@ export async function simulateCareerSkillAction(skills: string[]) {
 
     // Fetch all active opportunities
     const opportunities = await prisma.opportunity.findMany({
-      where: { isActive: true, isArchived: false },
+      where: openOpportunityWhere(),
       include: { company: true, enrichment: true },
     });
 
@@ -595,18 +728,30 @@ export async function simulateCareerSkillAction(skills: string[]) {
 export async function analyzeGitHubIntelligenceAction(username: string) {
   try {
     const user = await getAuthenticatedUser();
-    const cleanUsername = username.trim();
-    if (!cleanUsername) return { success: false, error: 'Invalid GitHub username' };
+
+    // Enforce rate limiting (HIGH-002)
+    enforceRateLimit('analyze-github', user.id, RATE_LIMIT_CONFIGS.GITHUB_ANALYSIS);
+
+    const cleanUsername = sanitizeGitHubUsername(username);
+    if (!cleanUsername) {
+      return { success: false, error: 'Invalid GitHub username format. Only alphanumeric characters and single hyphens are allowed.' };
+    }
 
     let reposData = [];
     let isMock = false;
     try {
-      const response = await fetch(`https://api.github.com/users/${cleanUsername}/repos?per_page=30`, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const response = await fetch(`https://api.github.com/users/${encodeURIComponent(cleanUsername)}/repos?per_page=30`, {
+        signal: controller.signal,
         headers: {
           'Accept': 'application/vnd.github.v3+json',
           'User-Agent': 'InternScope-AI'
         }
       });
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         reposData = await response.json();
       } else {
@@ -703,18 +848,24 @@ Perform an analysis and return a JSON object strictly matching this schema:
       reposCount: reposData.length
     };
   } catch (error) {
-    console.error('GitHub analysis error:', error);
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return { success: false, error: sanitizeError(error, 'Failed to analyze GitHub profile.') };
   }
 }
 
 export async function analyzePortfolioIntelligenceAction(url: string) {
   try {
     const user = await getAuthenticatedUser();
-    let cleanUrl = url.trim();
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-      cleanUrl = `https://${cleanUrl}`;
+    
+    // Enforce rate limiting (HIGH-002)
+    enforceRateLimit('analyze-portfolio', user.id, RATE_LIMIT_CONFIGS.PORTFOLIO_ANALYSIS);
+
+    // SSRF Guard: Validate outbound URL protocol, host, and IP ranges
+    const validation = validateOutboundUrl(url);
+    if (!validation.isValid || !validation.parsedUrl) {
+      return { success: false, error: validation.error || 'Invalid or prohibited portfolio URL.' };
     }
+
+    const targetUrl = validation.parsedUrl.toString();
 
     let isMock = false;
     let title = '';
@@ -722,9 +873,15 @@ export async function analyzePortfolioIntelligenceAction(url: string) {
     let fetchedText = '';
 
     try {
-      const response = await fetch(cleanUrl, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const response = await fetch(targetUrl, {
+        signal: controller.signal,
         headers: { 'User-Agent': 'InternScope-AI-Portfolio-Auditor' }
       });
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const html = await response.text();
         const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
@@ -756,17 +913,17 @@ export async function analyzePortfolioIntelligenceAction(url: string) {
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         const prompt = `
-You are an expert web performance, SEO, accessibility, and UI/UX auditor. Auditing portfolio URL "${cleanUrl}".
-Parsed Content Snippet:
-Title: ${title}
-Description: ${metaDescription}
-Page Text: ${fetchedText}
+You are a senior hiring manager and web engineering lead. Review the extracted website text from this portfolio/project link "${targetUrl}":
+Title: "${title}"
+Meta Description: "${metaDescription}"
+Content Snippet:
+"${fetchedText}"
 
-Perform a portfolio intelligence analysis and return a JSON object strictly matching this schema:
+Perform an analysis and return a JSON object strictly matching this schema:
 {
-  "portfolioScore": number, (a rating between 40 and 100 based on SEO meta presence, recruiter usability, accessibility, and responsiveness)
-  "analysis": "A concise summary paragraph auditing the portfolio's messaging, presentation of engineering skills, design structure, and recruiter usability.",
-  "recommendations": ["Recommendation 1 (e.g. Add structural SEO meta tags)", "Recommendation 2"]
+  "portfolioScore": number, (a rating between 40 and 100 based on technical credibility, clarity, design maturity, and recruiter appeal)
+  "analysis": "A concise paragraph evaluating layout, project presentation, and modern web readiness.",
+  "recommendations": ["Recommendation 1 (e.g. Add case studies for projects)", "Recommendation 2"]
 }
 `;
         const response = await model.generateContent({
@@ -789,19 +946,18 @@ Perform a portfolio intelligence analysis and return a JSON object strictly matc
     }
 
     if (isMock || !analysisText) {
-      portfolioScore = 80;
-      analysisText = `Portfolio audit for ${cleanUrl} indicates solid layout structuring. The site successfully displays active projects and details technical skills. Incorporating stronger SEO metadata and micro-interactions will enhance recruiter engagement.`;
+      analysisText = `Portfolio review for ${targetUrl} confirms an accessible online portfolio. Layout contains standard navigation and project sections suitable for recruiter discovery.`;
       recommendations = [
-        'Improve structural SEO: add responsive viewport settings, OG title/description tags for social sharing preview.',
-        'Optimize page loading metrics: compress showcase screenshots and defer loading of JavaScript elements.',
-        'Accessibility enhancements: Ensure all images have Alt tags and buttons have Aria-labels.'
+        'Include measurable metrics and technical stack badges on featured projects.',
+        'Add a clear Call to Action (Resume Download or Email Me) in the hero section.',
+        'Ensure lighthouse performance scores and mobile responsiveness are optimized.'
       ];
     }
 
     // Save/update profile portfolioUrl
     await prisma.profile.update({
       where: { userId: user.id },
-      data: { portfolioUrl: cleanUrl }
+      data: { portfolioUrl: targetUrl }
     });
 
     return {
@@ -809,11 +965,10 @@ Perform a portfolio intelligence analysis and return a JSON object strictly matc
       portfolioScore,
       analysis: analysisText,
       recommendations,
-      url: cleanUrl
+      url: targetUrl
     };
   } catch (error) {
-    console.error('Portfolio analysis error:', error);
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return { success: false, error: sanitizeError(error, 'Failed to analyze portfolio URL.') };
   }
 }
 
@@ -873,7 +1028,7 @@ export async function loadInitialDashboardStateAction() {
           _count: {
             select: {
               opportunities: {
-                where: { isArchived: false, isActive: true },
+                where: openOpportunityWhere(),
               },
             },
           },
@@ -1126,10 +1281,9 @@ export async function sendTestOpportunityEmailAction(opportunityId?: string) {
     if (!opportunity) {
       opportunity = await prisma.opportunity.findFirst({
         where: {
-          isArchived: false,
-          isActive: true,
+          ...openOpportunityWhere(),
           company: { name: 'Google' },
-          applicationUrl: 'https://summerofcode.withgoogle.com'
+          applicationUrl: 'https://summerofcode.withgoogle.com',
         },
         include: { company: true, enrichment: true },
       });
@@ -1138,10 +1292,9 @@ export async function sendTestOpportunityEmailAction(opportunityId?: string) {
     if (!opportunity) {
       opportunity = await prisma.opportunity.findFirst({
         where: {
-          isArchived: false,
-          isActive: true,
+          ...openOpportunityWhere(),
           type: 'INTERNSHIP',
-          applicationUrl: { startsWith: 'https://' }
+          applicationUrl: { startsWith: 'https://' },
         },
         include: { company: true, enrichment: true },
         orderBy: { createdAt: 'desc' },
@@ -1150,7 +1303,7 @@ export async function sendTestOpportunityEmailAction(opportunityId?: string) {
 
     if (!opportunity) {
       opportunity = await prisma.opportunity.findFirst({
-        where: { isArchived: false, isActive: true },
+        where: openOpportunityWhere(),
         include: { company: true, enrichment: true },
         orderBy: { createdAt: 'desc' },
       });
@@ -1259,3 +1412,37 @@ export async function triggerOpportunityEmailIfEligibleAction(opportunityId: str
     };
   }
 }
+
+export async function deleteRecentSearchAction(searchId: string) {
+  try {
+    const user = await getAuthenticatedUser();
+    await prisma.searchLog.deleteMany({
+      where: {
+        id: searchId,
+        userId: user.id,
+      },
+    });
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('deleteRecentSearchAction error:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function clearRecentSearchesAction() {
+  try {
+    const user = await getAuthenticatedUser();
+    await prisma.searchLog.deleteMany({
+      where: {
+        userId: user.id,
+      },
+    });
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('clearRecentSearchesAction error:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+

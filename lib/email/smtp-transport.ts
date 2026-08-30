@@ -101,10 +101,19 @@ export class SMTPTransport {
     this.initTransporter();
     const from = this.getFromAddress();
 
-    // If SMTP is not configured, simulate successful delivery in dev
+    // If SMTP is not configured, simulate in development, fail explicitly in production (HIGH-003)
     if (!this.transporter || !this.isConfigured) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error(`[SMTPTransport] [CRITICAL] Email dispatch to ${options.to} failed: SMTP credentials are not configured in production.`);
+        return {
+          success: false,
+          error: 'SMTP transport is unconfigured in production environment.',
+          simulated: false,
+        };
+      }
+
       const simulatedId = `simulated_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      console.log(`[SMTPTransport] [SIMULATION] Email to: ${options.to} | Subject: "${options.subject}" | ID: ${simulatedId}`);
+      console.log(`[SMTPTransport] [DEV SIMULATION] Email to: ${options.to} | Subject: "${options.subject}" | ID: ${simulatedId}`);
       return {
         success: true,
         messageId: simulatedId,

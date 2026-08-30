@@ -12,10 +12,11 @@ export const opportunitySchema = z.object({
   salaryRange: z.string().nullable().optional().or(z.literal('')),
   benefits: z.string().nullable().optional().or(z.literal('')),
   applicationUrl: z.string().url('Please enter a valid application URL'),
-  deadline: z.preprocess(
-    (val) => (val ? new Date(val as string) : null),
-    z.date().nullable().optional()
-  ),
+  deadline: z.preprocess((val) => {
+    if (!val || val === '') return null;
+    const d = new Date(val as string);
+    return isNaN(d.getTime()) ? null : d;
+  }, z.date().nullable().optional()),
   isActive: z.boolean().default(true),
   isArchived: z.boolean().default(false),
   tags: z.array(z.string()).default([]),

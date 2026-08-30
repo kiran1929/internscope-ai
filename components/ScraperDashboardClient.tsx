@@ -64,6 +64,7 @@ interface ScraperDashboardClientProps {
     name: string;
     model: string;
   };
+  scrapingEnabled: boolean;
 }
 
 export default function ScraperDashboardClient({
@@ -73,6 +74,7 @@ export default function ScraperDashboardClient({
   enrichmentStats,
   confidenceDistribution,
   activeAIProvider,
+  scrapingEnabled,
 }: ScraperDashboardClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -126,6 +128,18 @@ export default function ScraperDashboardClient({
 
   return (
     <div className="space-y-6">
+      {!scrapingEnabled && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-amber-100">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
+          <div>
+            <p className="text-sm font-semibold">Scraping is paused</p>
+            <p className="text-xs text-amber-200/80 mt-1">
+              Scheduled syncs run at <strong>9:00 AM</strong> and <strong>9:00 PM IST</strong> when enabled.
+              Set <code className="text-amber-100">SCRAPING_ENABLED=true</code> before the next window to resume.
+            </p>
+          </div>
+        </div>
+      )}
       {/* Header Controls */}
       <div className="flex items-center justify-between">
         <div>

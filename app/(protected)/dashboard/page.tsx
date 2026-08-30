@@ -35,9 +35,12 @@ export default async function DashboardPage() {
     }),
     // Recent searches logged by this candidate
     prisma.searchLog.findMany({
-      where: { userId: user.id },
+      where: {
+        userId: user.id,
+        query: { not: '' },
+      },
       orderBy: { createdAt: 'desc' },
-      take: 6,
+      take: 8,
       select: { id: true, query: true, createdAt: true },
     }),
     // Upcoming deadlines in the next 14 days
@@ -50,13 +53,14 @@ export default async function DashboardPage() {
           lte: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Next 14 days
         },
       },
-      take: 3,
+      take: 4,
       orderBy: { deadline: 'asc' },
       select: {
         id: true,
         title: true,
+        location: true,
         deadline: true,
-        company: { select: { name: true } },
+        company: { select: { name: true, logoUrl: true, websiteUrl: true } },
       },
     }),
   ]);
@@ -100,6 +104,7 @@ export default async function DashboardPage() {
   const mappedDeadlines = upcomingDeadlines.map((item) => ({
     id: item.id,
     title: item.title,
+    location: item.location,
     deadline: item.deadline!,
     company: item.company,
   }));

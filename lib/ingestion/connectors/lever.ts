@@ -86,12 +86,15 @@ export class LeverConnector implements Connector {
       throw new Error(`Parse error: Lever payload is missing ID or Title (text).`);
     }
 
-    const companyDisplayName = this.config.boardToken.charAt(0).toUpperCase() + this.config.boardToken.slice(1);
+    const companyDisplayName =
+      this.config.companyName ??
+      this.config.boardToken.charAt(0).toUpperCase() + this.config.boardToken.slice(1);
 
     return {
       externalJobId: payload.id,
       title: payload.text,
       companyName: companyDisplayName,
+      companyWebsite: this.config.websiteUrl,
       location: payload.categories?.location || 'United States',
       remoteType: payload.workplaceType || '',
       type: payload.categories?.commitment || '',

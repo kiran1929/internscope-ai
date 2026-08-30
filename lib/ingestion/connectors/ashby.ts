@@ -85,12 +85,15 @@ export class AshbyConnector implements Connector {
       throw new Error(`Parse error: Ashby payload is missing ID or Title.`);
     }
 
-    const companyDisplayName = this.config.boardToken.charAt(0).toUpperCase() + this.config.boardToken.slice(1);
+    const companyDisplayName =
+      this.config.companyName ??
+      this.config.boardToken.charAt(0).toUpperCase() + this.config.boardToken.slice(1);
 
     return {
       externalJobId: payload.id,
       title: payload.title,
       companyName: companyDisplayName,
+      companyWebsite: this.config.websiteUrl,
       location: payload.location || 'United States',
       remoteType: payload.location || '',
       type: payload.employmentType || '',

@@ -15,6 +15,7 @@ import {
   Cpu,
   MessageSquare,
   Mail,
+  Radar,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -24,6 +25,7 @@ export type AdminTab =
   | 'overview'
   | 'opportunities'
   | 'companies'
+  | 'scraper'
   | 'users'
   | 'applications'
   | 'resumes'
@@ -56,6 +58,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     if (pathname === '/admin') return 'overview';
     if (pathname.startsWith('/admin/opportunities')) return 'opportunities';
     if (pathname.startsWith('/admin/companies')) return 'companies';
+    if (pathname.startsWith('/admin/scraper')) return 'scraper';
     if (pathname.startsWith('/admin/users')) return 'users';
     if (pathname.startsWith('/admin/applications')) return 'applications';
     if (pathname.startsWith('/admin/resumes')) return 'resumes';
@@ -72,6 +75,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'overview', label: 'Admin Overview', icon: LayoutDashboard, href: '/admin' },
     { id: 'opportunities', label: 'Manage Jobs', icon: Compass, href: '/admin/opportunities' },
     { id: 'companies', label: 'Manage Companies', icon: Building, href: '/admin/companies' },
+    { id: 'scraper', label: 'Job Scraper', icon: Radar, href: '/admin/scraper' },
     { id: 'users', label: 'Manage Users', icon: Users, href: '/admin/users' },
     { id: 'applications', label: 'User Applications', icon: Briefcase, href: '/admin/applications' },
     { id: 'resumes', label: 'Resume Analytics', icon: FileText, href: '/admin/resumes' },

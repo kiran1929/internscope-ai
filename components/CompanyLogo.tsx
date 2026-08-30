@@ -170,14 +170,34 @@ function getBrandDetails(brand: string, name: string) {
   }
 }
 
-export const CompanyLogo: React.FC<CompanyLogoProps> = ({
+const GRADIENTS = [
+  'from-blue-600 to-indigo-600',
+  'from-violet-600 to-purple-600',
+  'from-emerald-600 to-teal-600',
+  'from-rose-600 to-pink-600',
+  'from-amber-600 to-orange-600',
+  'from-cyan-600 to-blue-600',
+  'from-fuchsia-600 to-pink-600',
+  'from-indigo-600 to-cyan-600',
+];
+
+function getDeterministicGradient(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % GRADIENTS.length;
+  return GRADIENTS[index];
+}
+
+export const CompanyLogo: React.FC<CompanyLogoProps> = React.memo(function CompanyLogo({
   logo,
   logoUrl,
   websiteUrl,
   applicationUrl,
   name,
   size = 'md',
-}) => {
+}) {
   const sourceInput = useMemo(
     () => ({
       logoUrl: logoUrl ?? (isHttpUrl(logo) ? logo : null),
@@ -204,7 +224,7 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
   useEffect(() => {
     setImageIndex(0);
     setImageFailed(false);
-  }, [imageCandidates.join('|')]);
+  }, [primaryUrl]);
 
   if (useLegacyBrand) {
     const brand = getBrandDetails(logo!, name);
@@ -223,7 +243,7 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
   if (activeImage) {
     return (
       <div
-        className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} bg-white/90 dark:bg-zinc-900/90 rounded-xl p-2 shadow-sm backdrop-blur-xs transition-transform duration-300 hover:scale-105`}
+        className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} bg-white dark:bg-white rounded-xl shadow-xs ring-1 ring-black/10`}
         aria-label={`${name} Logo`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -232,6 +252,7 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
           alt={`${name} logo`}
           className="w-full h-full object-contain rounded-lg"
           loading="lazy"
+          decoding="async"
           referrerPolicy="no-referrer"
           onError={() => {
             if (imageIndex < imageCandidates.length - 1) {
@@ -245,15 +266,23 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
     );
   }
 
-  const brand = getBrandDetails('CUSTOM', name);
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+  const gradient = getDeterministicGradient(name);
+
   return (
     <div
-      className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} ${brand.bg}`}
+      className={`flex items-center justify-center shrink-0 overflow-hidden font-bold text-white shadow-xs rounded-xl bg-gradient-to-br ${gradient} ${sizeClasses[size]}`}
       aria-label={`${name} Logo`}
     >
-      {brand.element}
+      <span className="text-[75%] tracking-tight font-extrabold">{initials || name.slice(0, 2).toUpperCase()}</span>
     </div>
   );
-};
+});
 
 export default CompanyLogo;

@@ -82,17 +82,24 @@ export class GreenhouseConnector implements Connector {
       throw new Error(`Parse error: Greenhouse payload is missing ID or Title.`);
     }
 
-    // Capitalize the board token for display name
-    const companyDisplayName = this.config.boardToken.charAt(0).toUpperCase() + this.config.boardToken.slice(1);
+    // Capitalize the board token for display name unless overridden
+    const companyDisplayName =
+      this.config.companyName ??
+      this.config.boardToken.charAt(0).toUpperCase() + this.config.boardToken.slice(1);
+
+    const metadataDeadline = payload.metadata?.find((m) =>
+      /deadline|close|due/i.test(m.name)
+    )?.value;
 
     return {
       externalJobId: String(payload.id),
       title: payload.title,
       companyName: companyDisplayName,
+      companyWebsite: this.config.websiteUrl,
       location: payload.location?.name || 'United States',
       applicationUrl: payload.absolute_url || '',
       description: payload.content || '',
-      deadline: undefined,
+      deadline: metadataDeadline,
     };
   }
 }

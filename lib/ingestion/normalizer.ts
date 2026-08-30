@@ -1,5 +1,6 @@
 import { OpportunityType, RemoteType } from '../generated/prisma/enums';
 import { ParsedOpportunity, NormalizedOpportunity } from './types';
+import { resolveOpportunityDeadline } from '../opportunities/deadline-utils';
 
 export class Normalizer {
   static normalize(parsed: ParsedOpportunity): NormalizedOpportunity {
@@ -10,7 +11,11 @@ export class Normalizer {
     const type = this.normalizeEmploymentType(parsed.type, title);
     const salaryRange = this.normalizeSalaryRange(parsed.salaryRange);
     const applicationUrl = this.normalizeUrl(parsed.applicationUrl);
-    const deadline = this.normalizeDate(parsed.deadline);
+    const deadline =
+      resolveOpportunityDeadline({
+        explicit: parsed.deadline,
+        description: parsed.description,
+      }) ?? null;
     
     // Normalize skills and tags
     const { tags, skills } = this.extractTagsAndSkills(

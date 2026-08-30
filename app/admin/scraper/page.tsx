@@ -7,6 +7,11 @@ import { JobRepository } from '@/lib/repositories/job';
 import { EnrichmentRepository } from '@/lib/repositories/enrichment';
 import { AIProviderFactory } from '@/lib/ai/providers';
 import ScraperDashboardClient from '@/components/ScraperDashboardClient';
+import { isScrapingEnabled } from '@/lib/ingestion/scraper-config';
+import {
+  formatNextScrapeTimeIST,
+  getNextScheduledScrapeTime,
+} from '@/lib/ingestion/scraper-schedule';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,9 +61,6 @@ export default async function ScraperDashboardPage() {
     lastGreenhouseSuccess,
     lastLeverSuccess,
     lastAshbySuccess,
-    nextGreenhouse,
-    nextLever,
-    nextAshby,
     enrichmentStats,
     confidenceDistribution,
   ] = await Promise.all([
@@ -70,9 +72,6 @@ export default async function ScraperDashboardPage() {
     JobRepository.getLastSuccessfulSync('greenhouse'),
     JobRepository.getLastSuccessfulSync('lever'),
     JobRepository.getLastSuccessfulSync('ashby'),
-    JobRepository.getNextScheduledSync('greenhouse'),
-    JobRepository.getNextScheduledSync('lever'),
-    JobRepository.getNextScheduledSync('ashby'),
     EnrichmentRepository.getEnrichmentStats(),
     EnrichmentRepository.getConfidenceDistribution(),
   ]);
@@ -88,6 +87,9 @@ export default async function ScraperDashboardPage() {
     return new Date(finishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const nextSync = getNextScheduledScrapeTime();
+  const nextSyncLabel = formatNextScrapeTimeIST(nextSync);
+
   const providers = [
     {
       name: 'Greenhouse Job Boards',
@@ -96,7 +98,7 @@ export default async function ScraperDashboardPage() {
       type: 'greenhouse',
       endpoint: 'https://boards-api.greenhouse.io/v1/boards/stripe/jobs',
       lastSuccessfulSync: formatLastSyncString(lastGreenhouseSuccess?.finishedAt || null),
-      nextScheduledSync: nextGreenhouse.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      nextScheduledSync: nextSyncLabel,
     },
     {
       name: 'Lever Job Boards',
@@ -105,7 +107,7 @@ export default async function ScraperDashboardPage() {
       type: 'lever',
       endpoint: 'https://api.lever.co/v0/postings/spotify?mode=json',
       lastSuccessfulSync: formatLastSyncString(lastLeverSuccess?.finishedAt || null),
-      nextScheduledSync: nextLever.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      nextScheduledSync: nextSyncLabel,
     },
     {
       name: 'Ashby Careers Pages',
@@ -114,7 +116,7 @@ export default async function ScraperDashboardPage() {
       type: 'ashby',
       endpoint: 'https://api.ashbyhq.com/posting-api/job-board/linear',
       lastSuccessfulSync: formatLastSyncString(lastAshbySuccess?.finishedAt || null),
-      nextScheduledSync: nextAshby.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      nextScheduledSync: nextSyncLabel,
     },
   ];
 
@@ -127,6 +129,7 @@ export default async function ScraperDashboardPage() {
         enrichmentStats={enrichmentStats}
         confidenceDistribution={confidenceDistribution}
         activeAIProvider={activeAIProvider}
+        scrapingEnabled={isScrapingEnabled()}
       />
     </div>
   );
