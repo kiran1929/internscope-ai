@@ -12,6 +12,8 @@ import { CandidateApplicationStatus } from '@/types/candidate';
 import { revalidatePath } from 'next/cache';
 import { SearchService, SearchOptions } from '@/lib/search/search-service';
 import { openOpportunityWhere } from '@/lib/opportunities/deadline-utils';
+import { sanitizeGitHubUsername, validateOutboundUrl } from '@/lib/security/ssrf-guard';
+import { sanitizeError } from '@/lib/security/error-handler';
 
 // Helper to authenticate the candidate user and retrieve DB entity
 async function resolveAuthenticatedUser() {
@@ -653,18 +655,26 @@ export async function simulateCareerSkillAction(skills: string[]) {
 export async function analyzeGitHubIntelligenceAction(username: string) {
   try {
     const user = await getAuthenticatedUser();
-    const cleanUsername = username.trim();
-    if (!cleanUsername) return { success: false, error: 'Invalid GitHub username' };
+    const cleanUsername = sanitizeGitHubUsername(username);
+    if (!cleanUsername) {
+      return { success: false, error: 'Invalid GitHub username format. Only alphanumeric characters and single hyphens are allowed.' };
+    }
 
     let reposData = [];
     let isMock = false;
     try {
-      const response = await fetch(`https://api.github.com/users/${cleanUsername}/repos?per_page=30`, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const response = await fetch(`https://api.github.com/users/${encodeURIComponent(cleanUsername)}/repos?per_page=30`, {
+        signal: controller.signal,
         headers: {
           'Accept': 'application/vnd.github.v3+json',
           'User-Agent': 'InternScope-AI'
         }
       });
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         reposData = await response.json();
       } else {
@@ -761,18 +771,21 @@ Perform an analysis and return a JSON object strictly matching this schema:
       reposCount: reposData.length
     };
   } catch (error) {
-    console.error('GitHub analysis error:', error);
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return { success: false, error: sanitizeError(error, 'Failed to analyze GitHub profile.') };
   }
 }
 
 export async function analyzePortfolioIntelligenceAction(url: string) {
   try {
     const user = await getAuthenticatedUser();
-    let cleanUrl = url.trim();
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-      cleanUrl = `https://${cleanUrl}`;
+    
+    // SSRF Guard: Validate outbound URL protocol, host, and IP ranges
+    const validation = validateOutboundUrl(url);
+    if (!validation.isValid || !validation.parsedUrl) {
+      return { success: false, error: validation.error || 'Invalid or prohibited portfolio URL.' };
     }
+
+    const targetUrl = validation.parsedUrl.toString();
 
     let isMock = false;
     let title = '';
@@ -780,9 +793,15 @@ export async function analyzePortfolioIntelligenceAction(url: string) {
     let fetchedText = '';
 
     try {
-      const response = await fetch(cleanUrl, {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const response = await fetch(targetUrl, {
+        signal: controller.signal,
         headers: { 'User-Agent': 'InternScope-AI-Portfolio-Auditor' }
       });
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const html = await response.text();
         const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
@@ -814,17 +833,17 @@ export async function analyzePortfolioIntelligenceAction(url: string) {
         const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
         const prompt = `
-You are an expert web performance, SEO, accessibility, and UI/UX auditor. Auditing portfolio URL "${cleanUrl}".
-Parsed Content Snippet:
-Title: ${title}
-Description: ${metaDescription}
-Page Text: ${fetchedText}
+You are a senior hiring manager and web engineering lead. Review the extracted website text from this portfolio/project link "${targetUrl}":
+Title: "${title}"
+Meta Description: "${metaDescription}"
+Content Snippet:
+"${fetchedText}"
 
-Perform a portfolio intelligence analysis and return a JSON object strictly matching this schema:
+Perform an analysis and return a JSON object strictly matching this schema:
 {
-  "portfolioScore": number, (a rating between 40 and 100 based on SEO meta presence, recruiter usability, accessibility, and responsiveness)
-  "analysis": "A concise summary paragraph auditing the portfolio's messaging, presentation of engineering skills, design structure, and recruiter usability.",
-  "recommendations": ["Recommendation 1 (e.g. Add structural SEO meta tags)", "Recommendation 2"]
+  "portfolioScore": number, (a rating between 40 and 100 based on technical credibility, clarity, design maturity, and recruiter appeal)
+  "analysis": "A concise paragraph evaluating layout, project presentation, and modern web readiness.",
+  "recommendations": ["Recommendation 1 (e.g. Add case studies for projects)", "Recommendation 2"]
 }
 `;
         const response = await model.generateContent({
@@ -847,19 +866,18 @@ Perform a portfolio intelligence analysis and return a JSON object strictly matc
     }
 
     if (isMock || !analysisText) {
-      portfolioScore = 80;
-      analysisText = `Portfolio audit for ${cleanUrl} indicates solid layout structuring. The site successfully displays active projects and details technical skills. Incorporating stronger SEO metadata and micro-interactions will enhance recruiter engagement.`;
+      analysisText = `Portfolio review for ${targetUrl} confirms an accessible online portfolio. Layout contains standard navigation and project sections suitable for recruiter discovery.`;
       recommendations = [
-        'Improve structural SEO: add responsive viewport settings, OG title/description tags for social sharing preview.',
-        'Optimize page loading metrics: compress showcase screenshots and defer loading of JavaScript elements.',
-        'Accessibility enhancements: Ensure all images have Alt tags and buttons have Aria-labels.'
+        'Include measurable metrics and technical stack badges on featured projects.',
+        'Add a clear Call to Action (Resume Download or Email Me) in the hero section.',
+        'Ensure lighthouse performance scores and mobile responsiveness are optimized.'
       ];
     }
 
     // Save/update profile portfolioUrl
     await prisma.profile.update({
       where: { userId: user.id },
-      data: { portfolioUrl: cleanUrl }
+      data: { portfolioUrl: targetUrl }
     });
 
     return {
@@ -867,11 +885,10 @@ Perform a portfolio intelligence analysis and return a JSON object strictly matc
       portfolioScore,
       analysis: analysisText,
       recommendations,
-      url: cleanUrl
+      url: targetUrl
     };
   } catch (error) {
-    console.error('Portfolio analysis error:', error);
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return { success: false, error: sanitizeError(error, 'Failed to analyze portfolio URL.') };
   }
 }
 
