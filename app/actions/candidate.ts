@@ -388,9 +388,35 @@ export async function getPersonalizedRecommendations() {
     // Sort by compatibility descending
     scoredJobs.sort((a, b) => b.score - a.score);
 
+    // Return diverse companies first so the candidate gets varied recommendations
+    const seenCompanies = new Set<string>();
+    const diverseList: { job: (typeof opportunities)[0]; score: number; matchScore: number }[] = [];
+
+    for (const item of scoredJobs) {
+      const matchScore = Math.min(Math.max(Math.round(75 + item.score * 0.24), 78), 99);
+      if (!seenCompanies.has(item.job.company.name)) {
+        seenCompanies.add(item.job.company.name);
+        diverseList.push({ ...item, matchScore });
+      }
+      if (diverseList.length >= 6) break;
+    }
+
+    if (diverseList.length < 6) {
+      for (const item of scoredJobs) {
+        if (!diverseList.some((d) => d.job.id === item.job.id)) {
+          const matchScore = Math.min(Math.max(Math.round(75 + item.score * 0.24), 78), 99);
+          diverseList.push({ ...item, matchScore });
+        }
+        if (diverseList.length >= 6) break;
+      }
+    }
+
     return {
       success: true,
-      recommendations: scoredJobs.slice(0, 6).map((x) => x.job),
+      recommendations: diverseList.map((x) => ({
+        ...x.job,
+        matchScore: x.matchScore,
+      })),
     };
   } catch (error) {
     console.error('Recommendations error:', error);
