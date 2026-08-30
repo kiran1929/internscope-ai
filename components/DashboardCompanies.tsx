@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Search, Building, Plus, Check, X, RotateCcw } from 'lucide-react';
+import { Search, Building, Briefcase, Plus, Check, X, RotateCcw } from 'lucide-react';
 import { Company } from '@/types';
 import { CompanyLogo } from './CompanyLogo';
 import { cn } from '@/lib/utils';
@@ -57,6 +57,9 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   const [filterType, setFilterType] = useState<TrackingFilter>('all');
   const [openingsFilter, setOpeningsFilter] = useState<OpeningsFilter>('all');
   const [selectedShowcaseCompany, setSelectedShowcaseCompany] = useState<Company | null>(null);
+
+  const totalCompanies = companies.length;
+  const totalOpportunities = companies.reduce((acc, curr) => acc + (curr.activeOpeningsCount || 0), 0);
 
   const industries = useMemo(() => uniqueSorted(companies.map((company) => company.industry)), [companies]);
   const countries = useMemo(() => uniqueSorted(companies.map((company) => company.country)), [companies]);
@@ -114,17 +117,47 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
     'bg-input-bg border border-border-subtle text-xs text-foreground rounded-lg px-2.5 py-2 outline-none focus:border-primary/60 transition-all cursor-pointer';
 
   return (
-    <div className="page-shell animate-fade-in text-foreground">
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+    <div className="page-shell animate-fade-in text-foreground space-y-6">
+      {/* Top Header & Stat Counters */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border-subtle pb-5">
         <div>
           <h2 className="page-header-title text-xl sm:text-2xl">Target Companies</h2>
-          <p className="page-header-subtitle">Choose which companies you want our scrapers to monitor.</p>
+          <p className="page-header-subtitle mt-0.5">
+            Choose which companies you want our scrapers to monitor.
+          </p>
         </div>
+
+        {/* Total stats counters */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-surface-muted/70 border border-border-subtle shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+              <Building className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider leading-none">Total Companies</p>
+              <p className="text-base font-bold text-foreground mt-1 leading-none">{totalCompanies}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-surface-muted/70 border border-border-subtle shadow-2xs">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+              <Briefcase className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider leading-none">Total Opportunities</p>
+              <p className="text-base font-bold text-foreground mt-1 leading-none">{totalOpportunities}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <p className="text-xs text-text-muted font-medium">
           Showing {filteredCompanies.length} of {companies.length}
         </p>
       </div>
 
+      {/* Filter Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-full max-w-[20rem]">
           <div className="relative flex items-center gap-2 px-2.5 flex-1 min-w-0">
@@ -142,7 +175,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                 type="button"
                 onClick={() => setSearch('')}
                 aria-label="Clear search"
-                className="text-text-muted hover:text-foreground"
+                className="text-text-muted hover:text-foreground cursor-pointer"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -236,7 +269,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           <button
             type="button"
             onClick={resetFilters}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-text-muted hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-text-muted hover:text-foreground transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Reset
@@ -251,8 +284,8 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             <div
               key={company.id}
               className={cn(
-                'dashboard-card p-5 flex flex-col justify-between min-h-[13rem]',
-                company.isTracking && 'border-primary/45 shadow-[0_0_15px_rgba(37,99,235,0.04)]'
+                'dashboard-card p-5 flex flex-col justify-between min-h-[13rem] hover:border-primary/40 transition-all duration-250',
+                company.isTracking && 'border-primary/50 shadow-sm shadow-primary/5'
               )}
             >
               <div className="flex items-start justify-between">
@@ -265,7 +298,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               <div className="mt-4">
                 <h3 className="text-sm font-bold text-foreground">{company.name}</h3>
                 <div className="flex items-center gap-1.5 mt-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                   <span className="text-[11px] text-text-muted font-medium">
                     {company.activeOpeningsCount} active roles monitored
                   </span>
@@ -277,7 +310,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                       e.stopPropagation();
                       setSelectedShowcaseCompany(company);
                     }}
-                    className="mt-2 text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded hover:bg-purple-500/20 font-bold block text-center w-full transition-all"
+                    className="mt-2 text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded hover:bg-purple-500/20 font-bold block text-center w-full transition-all cursor-pointer"
                   >
                     ✨ Razorpay Showcase Mode
                   </button>
@@ -300,15 +333,15 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                 <button
                   onClick={() => onToggleTrack(company.id)}
                   className={cn(
-                    'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200',
+                    'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer',
                     company.isTracking
-                      ? 'bg-surface-muted hover:bg-border-subtle text-foreground'
-                      : 'bg-primary hover:bg-blue-700 text-white shadow-md shadow-primary/10'
+                      ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle'
+                      : 'bg-primary hover:bg-primary-hover text-white shadow-sm shadow-primary/20'
                   )}
                 >
                   {company.isTracking ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-success" />
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
                       <span>Tracking</span>
                     </>
                   ) : (
@@ -336,7 +369,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           <div className="bg-[#111113] border border-zinc-850 rounded-xl max-w-2xl w-full p-6 space-y-6 relative animate-in fade-in zoom-in-95 duration-200 text-white">
             <button
               onClick={() => setSelectedShowcaseCompany(null)}
-              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300"
+              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -412,7 +445,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedShowcaseCompany(null)}
-                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-xs font-bold text-zinc-200"
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-xs font-bold text-zinc-200 cursor-pointer"
               >
                 Close Target Roadmap
               </button>
