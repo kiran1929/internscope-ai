@@ -385,46 +385,46 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
       {/* Main Companies Display */}
       {paginatedCompanies.length > 0 ? (
         viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8">
             {paginatedCompanies.map((company) => {
               const hasOpenings = company.activeOpeningsCount > 0;
               return (
                 <div
                   key={company.id}
                   className={cn(
-                    'group relative bg-card-bg border rounded-xl p-4 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 gap-3',
+                    'group relative bg-card-bg border rounded-2xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-200 hover:shadow-lg hover:-translate-y-1 gap-5',
                     company.isTracking ? 'border-primary/50 ring-1 ring-primary/20 shadow-xs shadow-primary/5' : 'border-border-subtle hover:border-primary/35'
                   )}
                 >
-                  <div className="space-y-3">
-                    <div className="flex items-start justify-between gap-2.5">
-                      <Link href={`/companies/${company.id}`} className="flex items-center gap-2.5 min-w-0 group/head">
+                  <div className="space-y-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <Link href={`/companies/${company.id}`} className="flex items-center gap-3 min-w-0 group/head">
                         <CompanyLogo logo={company.logo} logoUrl={company.logoUrl} websiteUrl={company.website} name={company.name} size="md" />
                         <div className="min-w-0">
                           <h3 className="text-sm font-bold text-foreground group-hover/head:text-primary transition-colors truncate">{company.name}</h3>
                           <div className="text-[10px] text-text-muted mt-0.5">{company.country || 'Global'}</div>
                         </div>
                       </Link>
-                      <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-full shrink-0 max-w-[100px] truncate">{company.industry}</span>
+                      <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2.5 py-1 rounded-full shrink-0 max-w-[110px] truncate">{company.industry}</span>
                     </div>
 
                     <div className="pt-0.5 flex items-center justify-between gap-2">
                       {company.hiringStatus === 'FREEZE' ? (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-semibold">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-semibold">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                           <span>Hiring freeze</span>
                         </div>
                       ) : hasOpenings ? (
                         <Link
                           href={`/companies/${company.id}`}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs font-semibold transition-all cursor-pointer text-left"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs font-semibold transition-all cursor-pointer text-left"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                           <span>{company.activeOpeningsCount} active {company.activeOpeningsCount === 1 ? 'opening' : 'openings'}</span>
                           <span className="text-[10px] text-emerald-400/80 font-normal ml-0.5">→</span>
                         </Link>
                       ) : (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-muted text-text-muted border border-border-subtle text-xs font-medium">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-muted text-text-muted border border-border-subtle text-xs font-medium">
                           <span className="w-1.5 h-1.5 rounded-full bg-text-muted/50"></span>
                           <span>No active openings</span>
                         </div>
@@ -432,7 +432,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                     </div>
 
                     {company.opportunities && company.opportunities.length > 0 && (
-                      <div className="space-y-1.5 pt-1 border-t border-border-subtle/60">
+                      <div className="space-y-2 pt-2 border-t border-border-subtle/60">
                         <div className="flex items-center justify-between text-[10px] font-semibold text-text-muted">
                           <span>Listed Roles</span>
                           <Link
@@ -442,12 +442,12 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                             View all ({company.opportunities.length}) →
                           </Link>
                         </div>
-                        <div className="space-y-1">
+                        <div className="space-y-1.5">
                           {company.opportunities.slice(0, 2).map((opp) => (
                             <Link
                               key={opp.id}
                               href={`/jobs/${opp.id}`}
-                              className="block p-1.5 rounded-lg bg-surface-muted/60 hover:bg-surface-muted border border-border-subtle/50 transition-colors group/opp"
+                              className="block p-2 rounded-xl bg-surface-muted/60 hover:bg-surface-muted border border-border-subtle/50 transition-colors group/opp"
                             >
                               <div className="flex items-center justify-between gap-1.5">
                                 <p className="text-[11px] font-semibold text-foreground group-hover/opp:text-primary transition-colors truncate">{opp.title}</p>
@@ -469,30 +469,13 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                     )}
                   </div>
 
-                  <div className="pt-2.5 border-t border-border-subtle flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/companies/${company.id}`}
-                        className="text-[11px] text-primary hover:underline font-bold"
-                      >
-                        Company Hub
-                      </Link>
-                      {company.careerPage || company.website ? (
-                        <a href={company.careerPage || company.website} target="_blank" rel="noreferrer" className="text-[11px] text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline">
-                          Careers <ExternalLink className="w-3 h-3 text-text-muted/70" />
-                        </a>
-                      ) : null}
+                  {company.careerPage || company.website ? (
+                    <div className="pt-3 border-t border-border-subtle flex items-center justify-end">
+                      <a href={company.careerPage || company.website} target="_blank" rel="noreferrer" className="text-xs text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline">
+                        Careers <ExternalLink className="w-3.5 h-3.5 text-text-muted/70" />
+                      </a>
                     </div>
-                    <button
-                      onClick={() => onToggleTrack(company.id)}
-                      className={cn(
-                        'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer shrink-0',
-                        company.isTracking ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle' : 'bg-primary hover:bg-primary-hover text-white shadow-xs shadow-primary/25'
-                      )}
-                    >
-                      {company.isTracking ? <><Check className="w-3 h-3 text-emerald-500" /> <span>Tracking</span></> : <><Plus className="w-3 h-3" /> <span>Track</span></>}
-                    </button>
-                  </div>
+                  ) : null}
                 </div>
               );
             })}
