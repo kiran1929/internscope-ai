@@ -11,6 +11,7 @@ import { ApplicationStatus, OpportunityType, RemoteType, Prisma } from '@/lib/ge
 import { CandidateApplicationStatus } from '@/types/candidate';
 import { revalidatePath } from 'next/cache';
 import { SearchService, SearchOptions } from '@/lib/search/search-service';
+import { openOpportunityWhere } from '@/lib/opportunities/deadline-utils';
 
 // Helper to authenticate the candidate user and retrieve DB entity
 async function resolveAuthenticatedUser() {
@@ -76,7 +77,7 @@ export async function getCompaniesDirectoryForUser() {
         _count: {
           select: {
             opportunities: {
-              where: { isArchived: false, isActive: true },
+              where: openOpportunityWhere(),
             },
           },
         },
@@ -256,7 +257,7 @@ export async function getPersonalizedRecommendations() {
     if (!profile) {
       // Default: Return newest 6 jobs
       const defaultJobs = await prisma.opportunity.findMany({
-        where: { isArchived: false, isActive: true },
+        where: openOpportunityWhere(),
         take: 6,
         orderBy: { createdAt: 'desc' },
         include: { company: true, enrichment: true },
@@ -266,7 +267,7 @@ export async function getPersonalizedRecommendations() {
 
     // Query active enriched opportunities (take top 60 most relevant candidates for scoring)
     const opportunities = await prisma.opportunity.findMany({
-      where: { isArchived: false, isActive: true },
+      where: openOpportunityWhere(),
       take: 60,
       orderBy: { createdAt: 'desc' },
       select: {
@@ -546,7 +547,7 @@ export async function simulateCareerSkillAction(skills: string[]) {
 
     // Fetch all active opportunities
     const opportunities = await prisma.opportunity.findMany({
-      where: { isActive: true, isArchived: false },
+      where: openOpportunityWhere(),
       include: { company: true, enrichment: true },
     });
 
@@ -873,7 +874,7 @@ export async function loadInitialDashboardStateAction() {
           _count: {
             select: {
               opportunities: {
-                where: { isArchived: false, isActive: true },
+                where: openOpportunityWhere(),
               },
             },
           },
@@ -1126,10 +1127,9 @@ export async function sendTestOpportunityEmailAction(opportunityId?: string) {
     if (!opportunity) {
       opportunity = await prisma.opportunity.findFirst({
         where: {
-          isArchived: false,
-          isActive: true,
+          ...openOpportunityWhere(),
           company: { name: 'Google' },
-          applicationUrl: 'https://summerofcode.withgoogle.com'
+          applicationUrl: 'https://summerofcode.withgoogle.com',
         },
         include: { company: true, enrichment: true },
       });
@@ -1138,10 +1138,9 @@ export async function sendTestOpportunityEmailAction(opportunityId?: string) {
     if (!opportunity) {
       opportunity = await prisma.opportunity.findFirst({
         where: {
-          isArchived: false,
-          isActive: true,
+          ...openOpportunityWhere(),
           type: 'INTERNSHIP',
-          applicationUrl: { startsWith: 'https://' }
+          applicationUrl: { startsWith: 'https://' },
         },
         include: { company: true, enrichment: true },
         orderBy: { createdAt: 'desc' },
@@ -1150,7 +1149,7 @@ export async function sendTestOpportunityEmailAction(opportunityId?: string) {
 
     if (!opportunity) {
       opportunity = await prisma.opportunity.findFirst({
-        where: { isArchived: false, isActive: true },
+        where: openOpportunityWhere(),
         include: { company: true, enrichment: true },
         orderBy: { createdAt: 'desc' },
       });

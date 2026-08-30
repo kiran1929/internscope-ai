@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:catalog": "npx tsx scripts/sync-scrape-catalog.ts",
+    "purge:expired": "npx tsx scripts/purge-expired-opportunities.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.6.2",
@@ -44,6 +46,7 @@
     "eslint-config-next": "16.2.12",
     "prisma": "^7.9.1",
     "tailwindcss": "^4",
+    "tsx": "^4.19.4",
     "typescript": "^5"
   },
   "prisma": {

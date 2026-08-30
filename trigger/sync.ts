@@ -1,5 +1,15 @@
 import { task, schedules } from '@trigger.dev/sdk/v3';
 import { IngestionQueue } from '../lib/ingestion/queue';
+import { isScrapingEnabled } from '../lib/ingestion/scraper-config';
+import { SCRAPE_CRON_IST, SCRAPE_TIMEZONE } from '../lib/ingestion/scraper-schedule';
+
+async function runIfEnabled(provider: string, triggerId?: string) {
+  if (!isScrapingEnabled()) {
+    console.log(`[${provider}] Skipped — SCRAPING_ENABLED is not true`);
+    return { skipped: true, reason: 'SCRAPING_ENABLED is not true' };
+  }
+  return IngestionQueue.runJob(provider, triggerId);
+}
 
 export const greenhouseSync = task({
   id: 'greenhouse-sync',
@@ -10,7 +20,7 @@ export const greenhouseSync = task({
     factor: 2,
   },
   run: async (payload?: { triggerId?: string }) => {
-    return IngestionQueue.runJob('greenhouse', payload?.triggerId);
+    return runIfEnabled('greenhouse', payload?.triggerId);
   },
 });
 
@@ -23,7 +33,7 @@ export const leverSync = task({
     factor: 2,
   },
   run: async (payload?: { triggerId?: string }) => {
-    return IngestionQueue.runJob('lever', payload?.triggerId);
+    return runIfEnabled('lever', payload?.triggerId);
   },
 });
 
@@ -36,7 +46,7 @@ export const ashbySync = task({
     factor: 2,
   },
   run: async (payload?: { triggerId?: string }) => {
-    return IngestionQueue.runJob('ashby', payload?.triggerId);
+    return runIfEnabled('ashby', payload?.triggerId);
   },
 });
 
@@ -49,14 +59,15 @@ export const fullSync = task({
     factor: 2,
   },
   run: async (payload?: { triggerId?: string }) => {
-    return IngestionQueue.runJob('all', payload?.triggerId);
+    return runIfEnabled('all', payload?.triggerId);
   },
 });
 
-// Full catalog sync twice daily at 9:00 AM & 9:00 PM IST (03:30 & 15:30 UTC).
-// Post-ingestion enrichment drains the full pending queue with throttled Gemini calls.
+// Full catalog sync twice daily at 9:00 AM & 9:00 PM IST.
+// Register schedule always; task no-ops while SCRAPING_ENABLED=false.
 schedules.create({
   task: 'full-sync',
-  cron: '30 3,15 * * *',
-  deduplicationKey: 'full-sync-schedule',
+  cron: SCRAPE_CRON_IST,
+  timezone: SCRAPE_TIMEZONE,
+  deduplicationKey: 'full-sync-schedule-ist-9am-9pm',
 });

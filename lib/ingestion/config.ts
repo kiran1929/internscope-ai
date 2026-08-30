@@ -4,6 +4,9 @@ export interface ScraperProviderConfig {
   timeout: number;
   headers: Record<string, string>;
   boardToken: string;
+  companyName?: string;
+  websiteUrl?: string;
+  careerPageUrl?: string;
   rateLimitMs: number;
 }
 

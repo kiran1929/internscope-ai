@@ -1,6 +1,7 @@
 import { prisma } from '../db';
 import { OpportunityType, RemoteType, Prisma } from '../generated/prisma/client';
 import { EnrichedOpportunity } from './recommendation-hooks';
+import { openOpportunityWhere } from '../opportunities/deadline-utils';
 
 export interface SearchOptions {
   query?: string;
@@ -33,8 +34,7 @@ export class SearchService {
 
     // 1. Build DB Filtering Conditions
     const whereConditions: Prisma.OpportunityWhereInput = {
-      isArchived: false,
-      isActive: true,
+      ...openOpportunityWhere(),
     };
 
     if (options.companyId) {
@@ -331,7 +331,7 @@ export class SearchService {
     };
 
     const totalOpportunities = await prisma.opportunity.count({
-      where: { isArchived: false, isActive: true },
+      where: openOpportunityWhere(),
     });
 
     return {

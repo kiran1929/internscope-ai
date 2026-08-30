@@ -1,4 +1,5 @@
 import { NormalizedOpportunity, ValidationResult } from './types';
+import { isDeadlineExpired } from '../opportunities/deadline-utils';
 
 export class OpportunityValidator {
   static validate(normalized: NormalizedOpportunity): ValidationResult {
@@ -34,16 +35,11 @@ export class OpportunityValidator {
       if (urlError) errors.push(urlError);
     }
 
-    // 6. Check if Expired
-    if (normalized.deadline) {
-      const today = new Date();
-      // Set to midnight to compare only dates
-      today.setHours(0, 0, 0, 0);
-      const deadlineDate = new Date(normalized.deadline);
-      
-      if (deadlineDate < today) {
-        errors.push(`Opportunity has expired. Deadline was ${deadlineDate.toDateString()}`);
-      }
+    // 6. Reject expired deadlines
+    if (normalized.deadline && isDeadlineExpired(normalized.deadline)) {
+      errors.push(
+        `Opportunity has expired. Deadline was ${new Date(normalized.deadline).toDateString()}`
+      );
     }
 
     // 7. Check location
