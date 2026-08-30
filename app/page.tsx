@@ -196,15 +196,17 @@ export default function Home() {
             <h2 className="text-xs font-semibold text-text-muted uppercase tracking-widest">
               Deeply monitoring pipelines from top technology hubs
             </h2>
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-4 justify-items-center opacity-70">
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 sm:gap-4 justify-items-center">
               {INITIAL_COMPANIES.map((company) => (
                 <div
                   key={company.id}
-                  className="flex flex-col items-center gap-1.5 p-3 rounded-lg border border-zinc-900 bg-zinc-900/10 hover:border-zinc-800 hover:bg-zinc-900/20 transition-all duration-300"
+                  className="w-full flex flex-col items-center gap-2 p-3.5 rounded-xl border border-zinc-850 bg-zinc-900/40 hover:border-zinc-700 hover:bg-zinc-850/60 transition-all duration-200 group cursor-default shadow-sm"
                   title={company.name}
                 >
                   <CompanyLogo logo={company.logo} name={company.name} size="sm" />
-                  <span className="text-[10px] text-text-muted font-bold font-mono">{company.name}</span>
+                  <span className="text-xs text-zinc-300 group-hover:text-white font-medium font-sans tracking-tight truncate max-w-full">
+                    {company.name}
+                  </span>
                 </div>
               ))}
             </div>
