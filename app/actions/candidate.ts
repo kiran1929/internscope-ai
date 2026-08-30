@@ -74,6 +74,22 @@ export async function getCompaniesDirectoryForUser() {
         country: true,
         hiringStatus: true,
         companySize: true,
+        opportunities: {
+          where: openOpportunityWhere(),
+          orderBy: [
+            { deadline: 'asc' },
+            { createdAt: 'desc' },
+          ],
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            location: true,
+            remoteType: true,
+            deadline: true,
+            applicationUrl: true,
+          },
+        },
         _count: {
           select: {
             opportunities: {
@@ -102,6 +118,92 @@ export async function getCompaniesDirectoryForUser() {
     hiringStatus: company.hiringStatus || '',
     companySize: company.companySize || '',
   }));
+}
+
+export async function getCompanyWithOpportunities(companyId: string) {
+  const user = await getAuthenticatedUser();
+
+  const [company, isTracking, savedOpportunities, applications] = await Promise.all([
+    prisma.company.findUnique({
+      where: { id: companyId },
+      include: {
+        opportunities: {
+          where: openOpportunityWhere(),
+          orderBy: [
+            { deadline: 'asc' },
+            { createdAt: 'desc' },
+          ],
+          include: {
+            enrichment: true,
+          },
+        },
+      },
+    }),
+    prisma.targetCompany.findUnique({
+      where: {
+        userId_companyId: {
+          userId: user.id,
+          companyId,
+        },
+      },
+    }),
+    prisma.savedOpportunity.findMany({
+      where: { userId: user.id },
+      select: { opportunityId: true },
+    }),
+    prisma.application.findMany({
+      where: { userId: user.id },
+      select: { opportunityId: true, status: true },
+    }),
+  ]);
+
+  if (!company || company.isArchived) {
+    return null;
+  }
+
+  const savedOpportunityIds = new Set(savedOpportunities.map((s) => s.opportunityId));
+  const appStatusByOppId = new Map(applications.map((a) => [a.opportunityId, a.status]));
+
+  return {
+    company: {
+      id: company.id,
+      name: company.name,
+      logo: company.logoUrl || company.name.slice(0, 4).toUpperCase(),
+      logoUrl: company.logoUrl,
+      website: company.websiteUrl || '',
+      careerPage: company.careerPageUrl || '',
+      industry: company.industry || 'Tech',
+      description: company.description || '',
+      country: company.country || '',
+      hiringStatus: company.hiringStatus || '',
+      companySize: company.companySize || '',
+      isTracking: Boolean(isTracking),
+      activeOpeningsCount: company.opportunities.length,
+    },
+    opportunities: company.opportunities.map((opp) => ({
+      id: opp.id,
+      title: opp.title,
+      type: opp.type,
+      location: opp.location,
+      remoteType: opp.remoteType,
+      salaryRange: opp.salaryRange,
+      applicationUrl: opp.applicationUrl,
+      deadline: opp.deadline ? opp.deadline.toISOString() : null,
+      createdAt: opp.createdAt.toISOString(),
+      isSaved: savedOpportunityIds.has(opp.id),
+      appliedStatus: appStatusByOppId.get(opp.id) || null,
+      enrichment: opp.enrichment
+        ? {
+            skills: opp.enrichment.skills,
+            techStack: Array.isArray(opp.enrichment.techStack)
+              ? (opp.enrichment.techStack as string[])
+              : null,
+            experienceLevel: opp.enrichment.experienceLevel,
+            qualityScore: opp.enrichment.qualityScore,
+          }
+        : null,
+    })),
+  };
 }
 
 // 1. Profile Actions

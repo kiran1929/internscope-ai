@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Search,
   Building,
@@ -24,6 +25,7 @@ import { cn } from '@/lib/utils';
 type SearchBy = 'all' | 'name' | 'industry' | 'country';
 type TrackingFilter = 'all' | 'tracking' | 'not-tracking';
 type OpeningsFilter = 'all' | 'has-openings' | 'no-openings';
+type SortOption = 'openings_desc' | 'name_asc' | 'name_desc' | 'tracking_first';
 type ViewMode = 'grid' | 'table';
 
 interface DashboardCompaniesProps {
@@ -72,7 +74,22 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
   const [hiringStatusFilter, setHiringStatusFilter] = useState('');
   const [filterType, setFilterType] = useState<TrackingFilter>('all');
   const [openingsFilter, setOpeningsFilter] = useState<OpeningsFilter>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('openings_desc');
   const [selectedShowcaseCompany, setSelectedShowcaseCompany] = useState<Company | null>(null);
+  const [selectedCompanyJobsModal, setSelectedCompanyJobsModal] = useState<Company | null>(null);
+  const [expandedCompanyIds, setExpandedCompanyIds] = useState<Set<string>>(new Set());
+
+  const toggleExpandCompany = (id: string) => {
+    setExpandedCompanyIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
 
   // View Mode & Pagination states
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
@@ -84,15 +101,11 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
 
   const industries = useMemo(() => uniqueSorted(companies.map((company) => company.industry)), [companies]);
   const countries = useMemo(() => uniqueSorted(companies.map((company) => company.country)), [companies]);
-  const hiringStatuses = useMemo(
-    () => uniqueSorted(companies.map((company) => company.hiringStatus)),
-    [companies]
-  );
 
   const query = search.trim().toLowerCase();
 
-  const filteredCompanies = useMemo(() => {
-    return companies.filter((company) => {
+  const filteredAndSortedCompanies = useMemo(() => {
+    const filtered = companies.filter((company) => {
       const matchesSearch = matchesSearchQuery(company, query, searchBy);
       const matchesIndustry = !industryFilter || company.industry === industryFilter;
       const matchesCountry = !countryFilter || company.country === countryFilter;
@@ -121,18 +134,35 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
         matchesOpenings
       );
     });
-  }, [companies, query, searchBy, industryFilter, countryFilter, hiringStatusFilter, filterType, openingsFilter]);
+
+    return filtered.sort((a, b) => {
+      if (sortBy === 'openings_desc') {
+        const diff = (b.activeOpeningsCount || 0) - (a.activeOpeningsCount || 0);
+        if (diff !== 0) return diff;
+        return a.name.localeCompare(b.name);
+      }
+      if (sortBy === 'tracking_first') {
+        if (a.isTracking && !b.isTracking) return -1;
+        if (!a.isTracking && b.isTracking) return 1;
+        return (b.activeOpeningsCount || 0) - (a.activeOpeningsCount || 0);
+      }
+      if (sortBy === 'name_desc') {
+        return b.name.localeCompare(a.name);
+      }
+      return a.name.localeCompare(b.name);
+    });
+  }, [companies, query, searchBy, industryFilter, countryFilter, hiringStatusFilter, filterType, openingsFilter, sortBy]);
 
   // Reset page to 1 whenever filters change
   useEffect(() => {
     setPage(1);
-  }, [search, searchBy, industryFilter, countryFilter, hiringStatusFilter, filterType, openingsFilter]);
+  }, [search, searchBy, industryFilter, countryFilter, hiringStatusFilter, filterType, openingsFilter, sortBy]);
 
-  const totalFiltered = filteredCompanies.length;
+  const totalFiltered = filteredAndSortedCompanies.length;
   const totalPages = Math.max(1, Math.ceil(totalFiltered / pageSize));
   const currentPage = Math.min(page, totalPages);
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedCompanies = filteredCompanies.slice(startIndex, startIndex + pageSize);
+  const paginatedCompanies = filteredAndSortedCompanies.slice(startIndex, startIndex + pageSize);
 
   const hasActiveFilters =
     Boolean(search.trim()) ||
@@ -141,7 +171,8 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
     Boolean(countryFilter) ||
     Boolean(hiringStatusFilter) ||
     filterType !== 'all' ||
-    openingsFilter !== 'all';
+    openingsFilter !== 'all' ||
+    sortBy !== 'openings_desc';
 
   const resetFilters = () => {
     setSearch('');
@@ -151,6 +182,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
     setHiringStatusFilter('');
     setFilterType('all');
     setOpeningsFilter('all');
+    setSortBy('openings_desc');
   };
 
   const selectClassName =
@@ -214,7 +246,6 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2.5 bg-surface-muted/40 p-2.5 rounded-xl border border-border-subtle">
         {/* Filter items row */}
         <div className="flex flex-wrap items-center gap-2 flex-1 min-w-0">
-          {/* Search bar with inline search-by */}
           <div className="flex items-stretch rounded-lg border border-border-subtle bg-input-bg overflow-hidden w-full sm:w-64 h-8 focus-within:border-primary/50 transition-colors">
             <div className="relative flex items-center gap-1.5 px-2.5 flex-1 min-w-0">
               <Search className="w-3.5 h-3.5 text-text-muted shrink-0" />
@@ -237,9 +268,6 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                 </button>
               )}
             </div>
-            <label htmlFor="company-search-by" className="sr-only">
-              Search by
-            </label>
             <select
               id="company-search-by"
               value={searchBy}
@@ -256,37 +284,26 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           <select
             value={industryFilter}
             onChange={(e) => setIndustryFilter(e.target.value)}
-            aria-label="Filter by industry"
             className={selectClassName}
           >
             <option value="">All industries</option>
-            {industries.map((industry) => (
-              <option key={industry} value={industry}>
-                {industry}
-              </option>
-            ))}
+            {industries.map((industry) => <option key={industry} value={industry}>{industry}</option>)}
           </select>
 
           {countries.length > 0 && (
             <select
               value={countryFilter}
               onChange={(e) => setCountryFilter(e.target.value)}
-              aria-label="Filter by country"
               className={selectClassName}
             >
               <option value="">All countries</option>
-              {countries.map((country) => (
-                <option key={country} value={country}>
-                  {country}
-                </option>
-              ))}
+              {countries.map((country) => <option key={country} value={country}>{country}</option>)}
             </select>
           )}
 
           <select
             value={hiringStatusFilter}
             onChange={(e) => setHiringStatusFilter(e.target.value)}
-            aria-label="Filter by hiring status"
             className={selectClassName}
           >
             <option value="">All statuses</option>
@@ -298,7 +315,6 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value as TrackingFilter)}
-            aria-label="Filter by tracking status"
             className={selectClassName}
           >
             <option value="all">All tracking</option>
@@ -309,12 +325,23 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           <select
             value={openingsFilter}
             onChange={(e) => setOpeningsFilter(e.target.value as OpeningsFilter)}
-            aria-label="Filter by openings"
             className={selectClassName}
           >
             <option value="all">All openings</option>
             <option value="has-openings">Has openings</option>
             <option value="no-openings">No openings</option>
+          </select>
+
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            aria-label="Sort companies by"
+            className={cn(selectClassName, 'border-primary/40 text-primary font-semibold')}
+          >
+            <option value="openings_desc">Sort: Most Openings</option>
+            <option value="name_asc">Sort: Name (A–Z)</option>
+            <option value="name_desc">Sort: Name (Z–A)</option>
+            <option value="tracking_first">Sort: Tracked First</option>
           </select>
 
           {hasActiveFilters && (
@@ -329,7 +356,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           )}
         </div>
 
-        {/* View Mode Toggle & Counter */}
+        {/* View Mode Toggle */}
         <div className="flex items-center justify-between lg:justify-end gap-3 shrink-0 pt-1 lg:pt-0 border-t lg:border-t-0 border-border-subtle">
           <span className="text-xs text-text-muted font-medium">
             Showing <span className="text-foreground font-semibold">{totalFiltered === 0 ? 0 : startIndex + 1}–{Math.min(startIndex + pageSize, totalFiltered)}</span> of <span className="text-foreground font-semibold">{totalFiltered}</span>
@@ -339,28 +366,14 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             <button
               type="button"
               onClick={() => setViewMode('grid')}
-              aria-label="Grid View"
-              title="Grid View"
-              className={cn(
-                'p-1.5 rounded-md transition-all cursor-pointer',
-                viewMode === 'grid'
-                  ? 'bg-card-bg text-primary shadow-2xs font-semibold'
-                  : 'text-text-muted hover:text-foreground'
-              )}
+              className={cn('p-1.5 rounded-md transition-all cursor-pointer', viewMode === 'grid' ? 'bg-card-bg text-primary shadow-2xs font-semibold' : 'text-text-muted hover:text-foreground')}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setViewMode('table')}
-              aria-label="Table View"
-              title="Table View"
-              className={cn(
-                'p-1.5 rounded-md transition-all cursor-pointer',
-                viewMode === 'table'
-                  ? 'bg-card-bg text-primary shadow-2xs font-semibold'
-                  : 'text-text-muted hover:text-foreground'
-              )}
+              className={cn('p-1.5 rounded-md transition-all cursor-pointer', viewMode === 'table' ? 'bg-card-bg text-primary shadow-2xs font-semibold' : 'text-text-muted hover:text-foreground')}
             >
               <List className="w-3.5 h-3.5" />
             </button>
@@ -371,7 +384,6 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
       {/* Main Companies Display */}
       {paginatedCompanies.length > 0 ? (
         viewMode === 'grid' ? (
-          /* GRID VIEW - Compact & Balanced */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
             {paginatedCompanies.map((company) => {
               const hasOpenings = company.activeOpeningsCount > 0;
@@ -380,53 +392,36 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                   key={company.id}
                   className={cn(
                     'group relative bg-card-bg border rounded-xl p-4 flex flex-col justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 gap-3',
-                    company.isTracking
-                      ? 'border-primary/50 ring-1 ring-primary/20 shadow-xs shadow-primary/5'
-                      : 'border-border-subtle hover:border-primary/35'
+                    company.isTracking ? 'border-primary/50 ring-1 ring-primary/20 shadow-xs shadow-primary/5' : 'border-border-subtle hover:border-primary/35'
                   )}
                 >
                   <div className="space-y-3">
-                    {/* Top Row: Logo + Name & Country + Industry Badge */}
                     <div className="flex items-start justify-between gap-2.5">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <CompanyLogo
-                          logo={company.logo}
-                          logoUrl={company.logoUrl}
-                          websiteUrl={company.website}
-                          name={company.name}
-                          size="md"
-                        />
+                      <Link href={`/companies/${company.id}`} className="flex items-center gap-2.5 min-w-0 group/head">
+                        <CompanyLogo logo={company.logo} logoUrl={company.logoUrl} websiteUrl={company.website} name={company.name} size="md" />
                         <div className="min-w-0">
-                          <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">
-                            {company.name}
-                          </h3>
-                          <div className="flex items-center gap-1 text-[10px] text-text-muted mt-0.5">
-                            {company.country ? (
-                              <span className="truncate">{company.country}</span>
-                            ) : (
-                              <span>Global</span>
-                            )}
-                          </div>
+                          <h3 className="text-sm font-bold text-foreground group-hover/head:text-primary transition-colors truncate">{company.name}</h3>
+                          <div className="text-[10px] text-text-muted mt-0.5">{company.country || 'Global'}</div>
                         </div>
-                      </div>
-
-                      <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-full shrink-0 max-w-[100px] truncate">
-                        {company.industry}
-                      </span>
+                      </Link>
+                      <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-full shrink-0 max-w-[100px] truncate">{company.industry}</span>
                     </div>
 
-                    {/* Status & Openings - Clean & Minimal */}
-                    <div className="pt-0.5">
+                    <div className="pt-0.5 flex items-center justify-between gap-2">
                       {company.hiringStatus === 'FREEZE' ? (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-semibold">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                           <span>Hiring freeze</span>
                         </div>
                       ) : hasOpenings ? (
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-semibold">
+                        <Link
+                          href={`/companies/${company.id}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 border border-emerald-500/20 text-xs font-semibold transition-all cursor-pointer text-left"
+                        >
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                           <span>{company.activeOpeningsCount} active {company.activeOpeningsCount === 1 ? 'opening' : 'openings'}</span>
-                        </div>
+                          <span className="text-[10px] text-emerald-400/80 font-normal ml-0.5">→</span>
+                        </Link>
                       ) : (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-muted text-text-muted border border-border-subtle text-xs font-medium">
                           <span className="w-1.5 h-1.5 rounded-full bg-text-muted/50"></span>
@@ -435,56 +430,66 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                       )}
                     </div>
 
-                    {company.name.toLowerCase() === 'razorpay' && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedShowcaseCompany(company);
-                        }}
-                        className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-1 rounded-md hover:bg-purple-500/20 font-bold block text-center w-full transition-all cursor-pointer"
-                      >
-                        ✨ Razorpay Showcase Mode
-                      </button>
+                    {company.opportunities && company.opportunities.length > 0 && (
+                      <div className="space-y-1.5 pt-1 border-t border-border-subtle/60">
+                        <div className="flex items-center justify-between text-[10px] font-semibold text-text-muted">
+                          <span>Listed Roles</span>
+                          <Link
+                            href={`/companies/${company.id}`}
+                            className="text-primary hover:underline cursor-pointer"
+                          >
+                            View all ({company.opportunities.length}) →
+                          </Link>
+                        </div>
+                        <div className="space-y-1">
+                          {company.opportunities.slice(0, 2).map((opp) => (
+                            <Link
+                              key={opp.id}
+                              href={`/jobs/${opp.id}`}
+                              className="block p-1.5 rounded-lg bg-surface-muted/60 hover:bg-surface-muted border border-border-subtle/50 transition-colors group/opp"
+                            >
+                              <div className="flex items-center justify-between gap-1.5">
+                                <p className="text-[11px] font-semibold text-foreground group-hover/opp:text-primary transition-colors truncate">{opp.title}</p>
+                                <span className="text-[9px] uppercase px-1.5 py-0.2 bg-card-bg border border-border-subtle text-text-muted rounded shrink-0 font-mono">{opp.type.toLowerCase()}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[9px] text-text-muted mt-0.5 font-mono">
+                                <span>{opp.location || opp.remoteType || 'Multiple locations'}</span>
+                                {opp.deadline && (
+                                  <>
+                                    <span>•</span>
+                                    <span>Due {new Date(opp.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                                  </>
+                                )}
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  {/* Footer Action Bar */}
                   <div className="pt-2.5 border-t border-border-subtle flex items-center justify-between gap-2">
-                    {company.careerPage || company.website ? (
-                      <a
-                        href={company.careerPage || company.website}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-[11px] text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline"
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/companies/${company.id}`}
+                        className="text-[11px] text-primary hover:underline font-bold"
                       >
-                        Careers
-                        <ExternalLink className="w-3 h-3 text-text-muted/70" />
-                      </a>
-                    ) : (
-                      <span className="text-[11px] text-text-muted/60">No page</span>
-                    )}
-
+                        Company Hub
+                      </Link>
+                      {company.careerPage || company.website ? (
+                        <a href={company.careerPage || company.website} target="_blank" rel="noreferrer" className="text-[11px] text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline">
+                          Careers <ExternalLink className="w-3 h-3 text-text-muted/70" />
+                        </a>
+                      ) : null}
+                    </div>
                     <button
                       onClick={() => onToggleTrack(company.id)}
                       className={cn(
                         'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer shrink-0',
-                        company.isTracking
-                          ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle'
-                          : 'bg-primary hover:bg-primary-hover text-white shadow-xs shadow-primary/25'
+                        company.isTracking ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle' : 'bg-primary hover:bg-primary-hover text-white shadow-xs shadow-primary/25'
                       )}
                     >
-                      {company.isTracking ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-500" />
-                          <span>Tracking</span>
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="w-3 h-3" />
-                          <span>Track</span>
-                        </>
-                      )}
+                      {company.isTracking ? <><Check className="w-3 h-3 text-emerald-500" /> <span>Tracking</span></> : <><Plus className="w-3 h-3" /> <span>Track</span></>}
                     </button>
                   </div>
                 </div>
@@ -492,7 +497,6 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
             })}
           </div>
         ) : (
-          /* DENSE TABLE VIEW */
           <div className="overflow-x-auto rounded-xl border border-border-subtle bg-card-bg shadow-2xs">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
@@ -507,97 +511,36 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               </thead>
               <tbody className="divide-y divide-border-subtle">
                 {paginatedCompanies.map((company) => (
-                  <tr
-                    key={company.id}
-                    className="hover:bg-surface-muted/40 transition-colors group"
-                  >
-                    <td className="py-2.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <CompanyLogo
-                          logo={company.logo}
-                          logoUrl={company.logoUrl}
-                          websiteUrl={company.website}
-                          name={company.name}
-                          size="sm"
-                        />
-                        <div>
-                          <p className="font-bold text-foreground">{company.name}</p>
-                          {company.careerPage || company.website ? (
-                            <a
-                              href={company.careerPage || company.website}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="text-[10px] text-text-muted hover:text-primary transition-colors inline-flex items-center gap-1"
-                            >
-                              Careers <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          ) : null}
-                        </div>
-                      </div>
+                  <tr key={company.id} className="hover:bg-surface-muted/40 transition-colors">
+                    <td className="py-2.5 px-4 font-bold text-foreground">
+                      <Link href={`/companies/${company.id}`} className="hover:text-primary hover:underline transition-colors">
+                        {company.name}
+                      </Link>
                     </td>
+                    <td className="py-2.5 px-4 text-text-muted">{company.industry}</td>
+                    <td className="py-2.5 px-4 text-text-muted">{company.country || 'Global'}</td>
+                    <td className="py-2.5 px-4">{company.hiringStatus}</td>
                     <td className="py-2.5 px-4">
-                      <span className="text-[10px] font-medium text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-md">
-                        {company.industry}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4 text-text-muted">
-                      {company.country || 'Global'}
-                    </td>
-                    <td className="py-2.5 px-4">
-                      {company.hiringStatus === 'FREEZE' ? (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                          Hiring freeze
-                        </span>
-                      ) : company.activeOpeningsCount > 0 ? (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          Hiring
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1 bg-surface-muted text-text-muted border border-border-subtle">
-                          <span className="w-1.5 h-1.5 rounded-full bg-text-muted/50" />
-                          Not hiring
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-4">
-                      <span className="font-bold text-foreground font-mono">
-                        {company.activeOpeningsCount}
-                      </span>
-                      <span className="text-[10px] text-text-muted ml-1">roles</span>
+                      {company.activeOpeningsCount > 0 ? (
+                        <Link href={`/companies/${company.id}`} className="inline-flex items-center gap-1 font-bold text-foreground font-mono hover:text-primary transition-colors cursor-pointer group/tblrole">
+                          <span>{company.activeOpeningsCount}</span>
+                          <span className="text-[10px] text-text-muted group-hover/tblrole:text-primary">roles →</span>
+                        </Link>
+                      ) : <span className="font-mono text-text-muted">0 roles</span>}
                     </td>
                     <td className="py-2.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {company.name.toLowerCase() === 'razorpay' && (
-                          <button
-                            type="button"
-                            onClick={() => setSelectedShowcaseCompany(company)}
-                            className="text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-1 rounded hover:bg-purple-500/20 font-semibold cursor-pointer"
-                          >
-                            Roadmap
-                          </button>
-                        )}
+                        <Link
+                          href={`/companies/${company.id}`}
+                          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle"
+                        >
+                          View Openings
+                        </Link>
                         <button
                           onClick={() => onToggleTrack(company.id)}
-                          className={cn(
-                            'px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer',
-                            company.isTracking
-                              ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle'
-                              : 'bg-primary hover:bg-primary-hover text-white shadow-xs shadow-primary/20'
-                          )}
+                          className={cn('px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer', company.isTracking ? 'bg-surface-muted border' : 'bg-primary text-white')}
                         >
-                          {company.isTracking ? (
-                            <>
-                              <Check className="w-3 h-3 text-emerald-500" />
-                              <span>Tracking</span>
-                            </>
-                          ) : (
-                            <>
-                              <Plus className="w-3 h-3" />
-                              <span>Track</span>
-                            </>
-                          )}
+                          {company.isTracking ? 'Tracking' : 'Track'}
                         </button>
                       </div>
                     </td>
@@ -608,173 +551,175 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
           </div>
         )
       ) : (
-        <div className="border border-dashed border-border-subtle rounded-xl p-10 text-center max-w-md mx-auto">
+        <div className="border border-dashed border-border-subtle rounded-xl p-10 text-center">
           <Building className="w-7 h-7 text-text-muted mx-auto mb-2.5" />
-          <h3 className="text-sm font-bold text-foreground">No companies found</h3>
-          <p className="text-xs text-text-muted mt-1">Try changing your search keywords or resetting filters.</p>
+          <h3 className="text-sm font-bold">No companies found</h3>
         </div>
       )}
 
       {/* Pagination Controls */}
       {totalFiltered > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-border-subtle">
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-text-muted">
-              Page <span className="font-bold text-foreground">{currentPage}</span> of{' '}
-              <span className="font-bold text-foreground">{totalPages}</span>
-            </span>
-
-            {/* Page size picker */}
-            <div className="flex items-center gap-1.5 text-xs text-text-muted">
-              <span>Show</span>
-              <select
-                value={pageSize}
-                onChange={(e) => {
-                  setPageSize(Number(e.target.value));
-                  setPage(1);
-                }}
-                className="bg-input-bg border border-border-subtle text-foreground rounded-md px-2 py-1 text-xs outline-none cursor-pointer h-7"
-              >
-                <option value={8}>8 / page</option>
-                <option value={12}>12 / page</option>
-                <option value={24}>24 / page</option>
-                <option value={48}>48 / page</option>
-              </select>
-            </div>
+          <div className="text-xs text-text-muted">
+            Page <span className="font-bold text-foreground">{currentPage}</span> of <span className="font-bold text-foreground">{totalPages}</span>
           </div>
-
-          {/* Navigation Buttons */}
           <div className="flex items-center gap-1">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="p-1.5 rounded-lg border border-border-subtle bg-card-bg text-text-muted hover:text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
-              aria-label="Previous Page"
+              className="p-1.5 rounded-lg border border-border-subtle bg-input-bg text-foreground disabled:opacity-30 transition-colors cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
-
-            {getPageNumbers().map((p, idx) =>
-              p === 'ellipsis' ? (
-                <span key={`ellipsis-${idx}`} className="px-1.5 text-text-muted text-xs">
-                  …
-                </span>
+            {getPageNumbers().map((pageNum, idx) =>
+              pageNum === 'ellipsis' ? (
+                <span key={`e-${idx}`} className="px-2 text-xs text-text-muted">...</span>
               ) : (
                 <button
-                  key={p}
+                  key={pageNum}
                   type="button"
-                  onClick={() => setPage(p)}
-                  className={cn(
-                    'w-7 h-7 rounded-lg text-xs font-semibold border transition-all cursor-pointer',
-                    currentPage === p
-                      ? 'bg-primary text-white border-primary shadow-xs shadow-primary/20'
-                      : 'border-border-subtle bg-card-bg text-text-muted hover:text-foreground hover:bg-surface-muted'
-                  )}
+                  onClick={() => setPage(pageNum)}
+                  className={cn('w-7 h-7 rounded-lg text-xs font-semibold', currentPage === pageNum ? 'bg-primary text-white' : 'text-text-muted hover:bg-surface-muted')}
                 >
-                  {p}
+                  {pageNum}
                 </button>
               )
             )}
-
             <button
               type="button"
               disabled={currentPage >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="p-1.5 rounded-lg border border-border-subtle bg-card-bg text-text-muted hover:text-foreground hover:bg-surface-muted disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
-              aria-label="Next Page"
+              className="p-1.5 rounded-lg border border-border-subtle bg-input-bg text-foreground disabled:opacity-30 transition-colors cursor-pointer"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
       )}
 
-      {/* Razorpay Showcase Modal */}
-      {selectedShowcaseCompany && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#111113] border border-zinc-850 rounded-xl max-w-2xl w-full p-6 space-y-6 relative animate-in fade-in zoom-in-95 duration-200 text-white">
-            <button
-              onClick={() => setSelectedShowcaseCompany(null)}
-              className="absolute top-4 right-4 text-zinc-500 hover:text-zinc-300 cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="flex items-center gap-4 border-b border-zinc-900 pb-4">
-              <div className="w-12 h-12 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center font-bold text-lg text-purple-400">
-                R
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-white">Razorpay Target Roadmap</h3>
-                <p className="text-xs text-purple-400 mt-0.5">Showcase Mode: How to reach 90% compatibility</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed">
-              <div className="space-y-4">
-                <div className="space-y-1">
-                  <span className="font-bold text-zinc-400 uppercase tracking-wider text-[9px] block">Company hiring stack</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {['React', 'Node.js', 'Redis', 'PHP', 'Go', 'System Design'].map(s => (
-                      <span key={s} className="bg-zinc-950 border border-zinc-900 text-zinc-300 px-2.5 py-0.5 rounded text-[10px]">{s}</span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <span className="font-bold text-zinc-400 uppercase tracking-wider text-[9px] block">Identified Gaps</span>
-                  <div className="space-y-1.5 text-zinc-400">
-                    <div className="flex gap-2 items-start">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 shrink-0"></span>
-                      <span>Missing backend caching expertise (Redis).</span>
-                    </div>
-                    <div className="flex gap-2 items-start">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 mt-1.5 shrink-0"></span>
-                      <span>No production-grade Go or PHP backend exposure.</span>
-                    </div>
-                  </div>
+      {/* ALL JOBS MODAL FOR SELECTED COMPANY */}
+      {selectedCompanyJobsModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card-bg border border-border-subtle rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl animate-fade-in flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between p-5 border-b border-border-subtle bg-surface-muted/30">
+              <div className="flex items-center gap-3">
+                <CompanyLogo
+                  logo={selectedCompanyJobsModal.logo}
+                  logoUrl={selectedCompanyJobsModal.logoUrl}
+                  websiteUrl={selectedCompanyJobsModal.website}
+                  name={selectedCompanyJobsModal.name}
+                  size="md"
+                />
+                <div>
+                  <h3 className="text-base font-bold text-foreground">
+                    {selectedCompanyJobsModal.name} Opportunities
+                  </h3>
+                  <p className="text-xs text-text-muted mt-0.5">
+                    {selectedCompanyJobsModal.opportunities?.length || 0} active listed roles • {selectedCompanyJobsModal.industry}
+                  </p>
                 </div>
               </div>
 
-              <div className="bg-zinc-950/45 border border-zinc-900 rounded-xl p-4 space-y-4">
-                <span className="font-bold text-primary uppercase tracking-wider text-[9px] block">Actionable Prep Roadmap</span>
-                
-                <div className="space-y-3">
-                  <div className="flex gap-3 items-start">
-                    <div className="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-[9px] shrink-0">1</div>
-                    <div>
-                      <span className="font-bold text-zinc-200 block">Learn Redis Caching</span>
-                      <span className="text-[10px] text-zinc-500 block">Complete the AI Redis roadmap inside the Career tab (estimated 6 hours).</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 items-start">
-                    <div className="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-[9px] shrink-0">2</div>
-                    <div>
-                      <span className="font-bold text-zinc-200 block">Tailor Resume for Razorpay</span>
-                      <span className="text-[10px] text-zinc-500 block">Use the ATS optimizer inside the job detail page to highlight API scale.</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3 items-start">
-                    <div className="w-5 h-5 rounded-full bg-primary/10 border border-primary/20 text-primary flex items-center justify-center font-bold text-[9px] shrink-0">3</div>
-                    <div>
-                      <span className="font-bold text-zinc-200 block">Run Backend Mock Interview</span>
-                      <span className="text-[10px] text-zinc-500 block">Start a Medium difficulty session in Interview page focusing on Redis & Go.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end pt-4 border-t border-zinc-900">
               <button
                 type="button"
-                onClick={() => setSelectedShowcaseCompany(null)}
-                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 rounded-lg text-xs font-bold text-zinc-200 cursor-pointer"
+                onClick={() => setSelectedCompanyJobsModal(null)}
+                className="p-1.5 rounded-lg text-text-muted hover:text-foreground hover:bg-surface-muted transition-colors cursor-pointer"
               >
-                Close Target Roadmap
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-3 flex-1 divide-y divide-border-subtle/50">
+              {selectedCompanyJobsModal.opportunities && selectedCompanyJobsModal.opportunities.length > 0 ? (
+                selectedCompanyJobsModal.opportunities.map((opp, idx) => (
+                  <div key={opp.id} className={cn('space-y-2', idx > 0 && 'pt-3')}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <a
+                          href={`/jobs/${opp.id}`}
+                          className="text-sm font-bold text-foreground hover:text-primary transition-colors leading-snug block"
+                        >
+                          {opp.title}
+                        </a>
+                        <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px] text-text-muted">
+                          <span className="px-2 py-0.5 rounded bg-surface-muted border border-border-subtle font-mono text-[10px] uppercase">
+                            {opp.type.toLowerCase()}
+                          </span>
+                          <span>•</span>
+                          <span>{opp.location || opp.remoteType || 'Multiple locations'}</span>
+                          {opp.deadline && (
+                            <>
+                              <span>•</span>
+                              <span className="text-amber-400 font-medium">
+                                Deadline: {new Date(opp.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {opp.applicationUrl && (
+                          <a
+                            href={opp.applicationUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-2.5 py-1.5 rounded-lg bg-surface-muted hover:bg-surface-elevated text-text-muted hover:text-foreground text-xs font-semibold border border-border-subtle inline-flex items-center gap-1 transition-colors"
+                          >
+                            <span>Direct Link</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                        <a
+                          href={`/jobs/${opp.id}`}
+                          className="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs shadow-primary/20 inline-flex items-center gap-1 transition-colors"
+                        >
+                          <span>Apply on Platform</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-text-muted space-y-2">
+                  <Briefcase className="w-8 h-8 mx-auto text-text-muted/60" />
+                  <p className="text-xs">No currently listed individual roles for this company.</p>
+                  {selectedCompanyJobsModal.careerPage && (
+                    <a
+                      href={selectedCompanyJobsModal.careerPage}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline font-semibold mt-2"
+                    >
+                      <span>Visit {selectedCompanyJobsModal.name} Official Career Portal</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-border-subtle bg-surface-muted/20 flex items-center justify-between">
+              {selectedCompanyJobsModal.careerPage || selectedCompanyJobsModal.website ? (
+                <a
+                  href={selectedCompanyJobsModal.careerPage || selectedCompanyJobsModal.website}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-text-muted hover:text-foreground inline-flex items-center gap-1 transition-colors hover:underline"
+                >
+                  <span>Official Careers Portal</span>
+                  <ExternalLink className="w-3 h-3 text-text-muted" />
+                </a>
+              ) : (
+                <span />
+              )}
+              <button
+                type="button"
+                onClick={() => setSelectedCompanyJobsModal(null)}
+                className="px-4 py-1.5 bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>
