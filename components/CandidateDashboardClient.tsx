@@ -341,93 +341,33 @@ export default function CandidateDashboardClient({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {recommendationsSlot}
 
-        {/* Right 1 column: Deadlines, Telemetry, and Actions */}
-        <div className="space-y-5">
-          {/* Quick Actions */}
-          <div className="bg-card-bg border border-border-subtle rounded-xl p-4.5 space-y-3.5 shadow-2xs">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-primary" /> Quick Actions
-              </h4>
-              <span className="text-[10px] text-text-muted">Direct Shortcuts</span>
-            </div>
-
-            <div className="grid grid-cols-1 gap-2">
-              <Link
-                href="/internships"
-                className="group flex items-center justify-between p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform shrink-0">
-                    <Compass className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">Search Jobs & Internships</p>
-                    <p className="text-[10px] text-text-muted truncate">Explore 850+ live opportunities</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-              </Link>
-
-              <Link
-                href="/applications"
-                className="group flex items-center justify-between p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400 group-hover:scale-105 transition-transform shrink-0">
-                    <Briefcase className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">Application Pipeline</p>
-                    <p className="text-[10px] text-text-muted truncate">Track stages & interviews</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-              </Link>
-
-              <Link
-                href="/resume"
-                className="group flex items-center justify-between p-2.5 rounded-lg border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors truncate">Resume Intel & ATS</p>
-                    <p className="text-[10px] text-text-muted truncate">Optimize keyword match score</p>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-              </Link>
-            </div>
-          </div>
-
+        {/* Right 1 column: Deadlines, Recent Searches, and Quick Actions */}
+        <div className="space-y-6">
           {/* Upcoming Deadlines */}
-          <div className="bg-card-bg border border-border-subtle rounded-xl p-4.5 space-y-3 shadow-2xs">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-amber-500" /> Deadlines Coming Up
+          <div className="bg-card-bg border border-border-subtle rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-amber-500" /> Deadlines Coming Up
               </h4>
-              <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold">
+              <span className="text-[10px] font-mono text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-bold">
                 Next 14 days
               </span>
             </div>
 
             {upcomingDeadlines.length === 0 ? (
-              <div className="py-4 text-center space-y-1">
-                <Clock className="w-5 h-5 text-text-muted/40 mx-auto" />
-                <p className="text-xs text-text-muted font-medium">No urgent deadlines tracked</p>
-                <p className="text-[10px] text-text-muted/70">Save roles to monitor upcoming closing dates</p>
+              <div className="py-6 text-center space-y-1.5">
+                <Clock className="w-6 h-6 text-text-muted/40 mx-auto" />
+                <p className="text-xs text-text-muted font-semibold">No urgent deadlines tracked</p>
+                <p className="text-[11px] text-text-muted/70">Save roles to monitor upcoming closing dates</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {upcomingDeadlines.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between gap-2.5 p-2.5 rounded-lg bg-surface-muted/40 hover:bg-surface-muted border border-border-subtle hover:border-amber-500/30 transition-all group"
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl bg-surface-muted/40 hover:bg-surface-muted border border-border-subtle hover:border-amber-500/30 transition-all group"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0">
                       <CompanyLogo
                         logoUrl={item.company.logoUrl}
                         websiteUrl={item.company.websiteUrl}
@@ -437,12 +377,12 @@ export default function CandidateDashboardClient({
                       <div className="min-w-0">
                         <Link
                           href={`/jobs/${item.id}`}
-                          className="font-bold text-xs text-foreground group-hover:text-primary transition-colors block line-clamp-1"
+                          className="font-bold text-xs sm:text-sm text-foreground group-hover:text-primary transition-colors block line-clamp-1"
                           title={item.title}
                         >
                           {item.title}
                         </Link>
-                        <div className="flex items-center gap-1.5 text-[10px] text-text-muted mt-0.5">
+                        <div className="flex items-center gap-1.5 text-[11px] text-text-muted mt-0.5">
                           <span className="font-semibold text-text-muted truncate">{item.company.name}</span>
                           {item.location && (
                             <>
@@ -454,8 +394,8 @@ export default function CandidateDashboardClient({
                       </div>
                     </div>
 
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-md shrink-0 font-mono">
-                      <Clock className="w-2.5 h-2.5" />
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg shrink-0 font-mono">
+                      <Clock className="w-3 h-3" />
                       {new Date(item.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
@@ -465,16 +405,16 @@ export default function CandidateDashboardClient({
           </div>
 
           {/* Recent Search Queries */}
-          <div className="bg-card-bg border border-border-subtle rounded-xl p-4.5 space-y-3 shadow-2xs">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
-                <Search className="w-3.5 h-3.5 text-primary" /> Recent Searches
+          <div className="bg-card-bg border border-border-subtle rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                <Search className="w-4 h-4 text-primary" /> Recent Searches
               </h4>
               {searches.length > 0 && (
                 <button
                   type="button"
                   onClick={handleClearSearches}
-                  className="text-[10px] text-text-muted hover:text-red-500 transition-colors font-semibold cursor-pointer"
+                  className="text-[11px] text-text-muted hover:text-red-500 transition-colors font-semibold cursor-pointer"
                 >
                   Clear all
                 </button>
@@ -482,14 +422,14 @@ export default function CandidateDashboardClient({
             </div>
 
             {searches.length === 0 ? (
-              <div className="space-y-2">
-                <p className="text-[11px] text-text-muted">Popular searches:</p>
-                <div className="flex flex-wrap gap-1.5">
+              <div className="space-y-3">
+                <p className="text-xs text-text-muted">Popular searches:</p>
+                <div className="flex flex-wrap gap-2">
                   {['Frontend', 'Backend', 'AI / ML', 'Full Stack', 'Data Engineer', 'Remote'].map((tag) => (
                     <Link
                       key={tag}
                       href={`/internships?query=${encodeURIComponent(tag)}`}
-                      className="text-[11px] bg-surface-muted hover:bg-primary/10 text-text-muted hover:text-primary border border-border-subtle hover:border-primary/30 px-2.5 py-1 rounded-md font-medium transition-all shadow-2xs cursor-pointer"
+                      className="text-xs bg-surface-muted hover:bg-primary/10 text-text-muted hover:text-primary border border-border-subtle hover:border-primary/30 px-3 py-1.5 rounded-lg font-medium transition-all shadow-2xs cursor-pointer"
                     >
                       {tag}
                     </Link>
@@ -497,16 +437,16 @@ export default function CandidateDashboardClient({
                 </div>
               </div>
             ) : (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {searches.map((item) => (
                   <Link
                     key={item.id}
                     href={`/internships?query=${encodeURIComponent(item.query)}`}
-                    className="group inline-flex items-center gap-1.5 text-[11px] bg-surface-muted hover:bg-primary/10 text-text-muted hover:text-primary border border-border-subtle hover:border-primary/30 px-2.5 py-1 rounded-md font-medium transition-all duration-150 cursor-pointer shadow-2xs"
+                    className="group inline-flex items-center gap-2 text-xs bg-surface-muted hover:bg-primary/10 text-text-muted hover:text-primary border border-border-subtle hover:border-primary/30 px-3 py-1.5 rounded-lg font-medium transition-all duration-150 cursor-pointer shadow-2xs"
                     title={`Search for "${item.query}"`}
                   >
-                    <Search className="w-2.5 h-2.5 text-text-muted group-hover:text-primary transition-colors" />
-                    <span className="truncate max-w-[120px]">{item.query}</span>
+                    <Search className="w-3 h-3 text-text-muted group-hover:text-primary transition-colors" />
+                    <span className="truncate max-w-[130px]">{item.query}</span>
                     <button
                       type="button"
                       onClick={(e) => handleDeleteSearch(e, item.id)}
@@ -514,7 +454,7 @@ export default function CandidateDashboardClient({
                       title="Remove from history"
                       aria-label="Remove search"
                     >
-                      <X className="w-2.5 h-2.5" />
+                      <X className="w-3 h-3" />
                     </button>
                   </Link>
                 ))}
@@ -522,6 +462,65 @@ export default function CandidateDashboardClient({
             )}
           </div>
 
+          {/* Quick Actions - Moved to bottom */}
+          <div className="bg-card-bg border border-border-subtle rounded-2xl p-5 sm:p-6 space-y-4 shadow-2xs">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" /> Quick Actions
+              </h4>
+              <span className="text-[10px] text-text-muted font-medium uppercase tracking-wider">Direct Shortcuts</span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2.5">
+              <Link
+                href="/internships"
+                className="group flex items-center justify-between p-3 rounded-xl border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform shrink-0">
+                    <Compass className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">Search Jobs & Internships</p>
+                    <p className="text-[11px] text-text-muted truncate">Explore 850+ live opportunities</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              </Link>
+
+              <Link
+                href="/applications"
+                className="group flex items-center justify-between p-3 rounded-xl border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 group-hover:scale-105 transition-transform shrink-0">
+                    <Briefcase className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">Application Pipeline</p>
+                    <p className="text-[11px] text-text-muted truncate">Track stages & interviews</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              </Link>
+
+              <Link
+                href="/resume"
+                className="group flex items-center justify-between p-3 rounded-xl border border-border-subtle hover:border-primary/40 bg-surface-muted/30 hover:bg-surface-muted transition-all"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 group-hover:scale-105 transition-transform shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors truncate">Resume Intel & ATS</p>
+                    <p className="text-[11px] text-text-muted truncate">Optimize keyword match score</p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-text-muted/60 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+              </Link>
+            </div>
+          </div>
         </div>
 
       </div>
