@@ -92,22 +92,22 @@ export default function CandidateSavedJobsClient({
   });
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
+    <div className="page-shell animate-fade-in text-foreground">
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">Saved Opportunities</h2>
-        <p className="text-xs text-zinc-400 mt-1">Review opportunities you marked to apply for later.</p>
+        <h2 className="page-header-title text-xl sm:text-2xl">Saved Opportunities</h2>
+        <p className="page-header-subtitle">Review opportunities you marked to apply for later.</p>
       </div>
 
       {/* Filter and stats row */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-zinc-850 bg-zinc-950 w-full sm:max-w-md">
-          <Search className="w-4 h-4 text-zinc-500 shrink-0" />
+        <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-border-subtle bg-input-bg w-full sm:max-w-md">
+          <Search className="w-4 h-4 text-text-muted shrink-0" />
           <input
             type="text"
             placeholder="Search saved positions..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent border-none outline-none text-xs text-white w-full placeholder:text-zinc-600"
+            className="bg-transparent border-none outline-none text-xs text-foreground w-full placeholder:text-text-muted/70"
           />
         </div>
 
@@ -115,12 +115,12 @@ export default function CandidateSavedJobsClient({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as 'newest' | 'title')}
-            className="bg-zinc-950 border border-zinc-850 rounded-lg text-xs p-1.5 text-zinc-300 outline-none"
+            className="bg-input-bg border border-border-subtle rounded-lg text-xs p-1.5 text-foreground outline-none focus:border-primary/50"
           >
             <option value="newest">Sort by Date Saved</option>
             <option value="title">Sort by Job Title</option>
           </select>
-          <span className="text-xs text-zinc-500 font-semibold">
+          <span className="text-xs text-text-muted font-semibold">
             Bookmarked: {sorted.length} positions
           </span>
         </div>
@@ -135,7 +135,7 @@ export default function CandidateSavedJobsClient({
             return (
               <div
                 key={item.id}
-                className="bg-[#111113] border border-zinc-850 hover:border-zinc-800 rounded-xl p-5 flex flex-col justify-between hover:shadow-md transition-all h-48"
+                className="dashboard-card p-5 flex flex-col justify-between hover:shadow-md transition-all min-h-[12rem]"
               >
                 <div>
                   <div className="flex items-start justify-between">
@@ -147,12 +147,15 @@ export default function CandidateSavedJobsClient({
                         name={item.opportunity.company.name}
                         size="md"
                       />
-                      <div>
-                        <Link href={`/jobs/${item.opportunity.id}`} className="text-xs font-bold text-zinc-100 hover:text-primary transition-colors block truncate max-w-[170px]">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-primary leading-snug truncate">
+                          {item.opportunity.company.name}
+                        </p>
+                        <Link href={`/jobs/${item.opportunity.id}`} className="text-sm font-bold text-foreground hover:text-primary transition-colors block truncate max-w-[170px] mt-0.5">
                           {item.opportunity.title}
                         </Link>
-                        <p className="text-[10px] text-zinc-500 font-semibold">
-                          {item.opportunity.company.name} &bull; {item.opportunity.location}
+                        <p className="text-[10px] text-text-muted mt-0.5">
+                          {item.opportunity.location}
                         </p>
                       </div>
                     </div>

@@ -404,7 +404,7 @@ export default function CandidateCopilotClient({
                   <div key={idx} className="flex justify-between items-center p-2 rounded border border-zinc-900 bg-zinc-950/30 text-xs leading-normal">
                     <div>
                       <span className="font-bold text-zinc-200 block truncate max-w-[130px]">{job.title}</span>
-                      <span className="text-[9px] text-zinc-500 font-mono">{job.companyName}</span>
+                      <span className="text-[9px] text-primary font-semibold truncate">{job.companyName}</span>
                     </div>
                     <span className="text-[10px] font-mono font-bold text-emerald-400">
                       {job.score}% Fit

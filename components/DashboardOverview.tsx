@@ -335,7 +335,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   <tr key={role.id} className="text-xs text-text-muted hover:bg-zinc-900/30 transition-colors group">
                     <td className="py-3 px-1 flex items-center gap-3">
                       <CompanyLogo logo={role.companyLogo} name={role.companyName} size="sm" />
-                      <span className="font-semibold text-white">{role.companyName}</span>
+                      <span className="font-semibold text-primary">{role.companyName}</span>
                     </td>
                     <td className="py-3 px-2">
                       <span className="text-white font-medium block truncate max-w-[160px] sm:max-w-[200px]" title={role.role}>

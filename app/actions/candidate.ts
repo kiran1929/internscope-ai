@@ -273,6 +273,7 @@ export async function getPersonalizedRecommendations() {
           select: {
             name: true,
             logoUrl: true,
+            websiteUrl: true,
           },
         },
         enrichment: {

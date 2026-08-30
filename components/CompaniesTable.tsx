@@ -440,7 +440,7 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data }) => {
               </button>
               <button
                 onClick={() => handleDelete(confirmDeleteId)}
-                className="px-3.5 py-1.5 rounded-lg bg-red-650 hover:bg-red-700 text-xs font-semibold text-white transition-all cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg bg-danger hover:bg-red-700 text-xs font-semibold text-white transition-all cursor-pointer"
               >
                 Soft Delete
               </button>

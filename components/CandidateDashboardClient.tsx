@@ -127,28 +127,28 @@ export default function CandidateDashboardClient({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in text-white ">
+    <div className="page-shell animate-fade-in text-foreground">
       {/* Welcome header section */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-900 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border-subtle pb-5">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
+          <h2 className="page-header-title text-xl sm:text-2xl">
             Welcome back, {user.profile?.firstName || 'Candidate'} 👋
           </h2>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="page-header-subtitle">
             Access matching postings, organize applications, and update preferred settings.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Link
             href="/internships"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-xs font-semibold text-zinc-300 hover:bg-zinc-900 transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-subtle bg-input-bg text-xs font-semibold text-foreground hover:bg-surface-muted transition-all"
           >
             <Search className="w-3.5 h-3.5" />
             <span>Search Jobs</span>
           </Link>
           <Link
             href="/profile"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/95 text-xs font-semibold text-white transition-all"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 text-xs font-semibold text-white transition-all"
           >
             <User className="w-3.5 h-3.5" />
             <span>Manage Profile</span>
@@ -159,35 +159,35 @@ export default function CandidateDashboardClient({
       {/* KPI Funnels */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Profile completion card */}
-        <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 hover:border-zinc-800 transition-all shadow-sm">
+        <div className="dashboard-card p-5 hover:shadow-md transition-all">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Profile Setup</span>
+            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Profile Setup</span>
             <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-400">
               <User className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 space-y-2">
-            <p className="text-2xl font-extrabold text-white font-mono">{completionPct}%</p>
-            <div className="w-full bg-zinc-950 rounded-full h-1.5 border border-zinc-900 overflow-hidden">
+            <p className="text-2xl font-extrabold text-foreground font-mono">{completionPct}%</p>
+            <div className="w-full bg-surface-muted rounded-full h-1.5 border border-border-subtle overflow-hidden">
               <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${completionPct}%` }} />
             </div>
-            <p className="text-[10px] text-zinc-500">
+            <p className="text-[10px] text-text-muted">
               {completionPct === 100 ? 'All parameters configured.' : 'Complete setup to refine AI matches.'}
             </p>
           </div>
         </div>
 
         {/* Saved Jobs Card */}
-        <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 hover:border-zinc-800 transition-all shadow-sm">
+        <div className="dashboard-card p-5 hover:shadow-md transition-all">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Bookmarks</span>
+            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Bookmarks</span>
             <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
               <Bookmark className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-extrabold text-white font-mono">{savedCount}</p>
-            <p className="text-[10px] text-zinc-500 mt-1.5 flex items-center gap-1">
+            <p className="text-2xl font-extrabold text-foreground font-mono">{savedCount}</p>
+            <p className="text-[10px] text-text-muted mt-1.5 flex items-center gap-1">
               <Link href="/saved" className="hover:text-emerald-400 flex items-center gap-0.5">
                 View saved positions <ArrowRight className="w-3 h-3" />
               </Link>
@@ -196,16 +196,16 @@ export default function CandidateDashboardClient({
         </div>
 
         {/* Tracked Applications Card */}
-        <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 hover:border-zinc-800 transition-all shadow-sm">
+        <div className="dashboard-card p-5 hover:shadow-md transition-all">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Active Funnel</span>
+            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Active Funnel</span>
             <div className="p-2 rounded-lg bg-primary/10 text-primary">
               <Briefcase className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-extrabold text-white font-mono">{applicationsCount}</p>
-            <p className="text-[10px] text-zinc-500 mt-1.5">
+            <p className="text-2xl font-extrabold text-foreground font-mono">{applicationsCount}</p>
+            <p className="text-[10px] text-text-muted mt-1.5">
               <Link href="/applications" className="hover:text-primary flex items-center gap-0.5">
                 Open tracker dashboard <ArrowRight className="w-3 h-3" />
               </Link>
@@ -214,16 +214,16 @@ export default function CandidateDashboardClient({
         </div>
 
         {/* Deadlines Card */}
-        <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 hover:border-zinc-800 transition-all shadow-sm">
+        <div className="dashboard-card p-5 hover:shadow-md transition-all">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Deadlines</span>
+            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Deadlines</span>
             <div className="p-2 rounded-lg bg-amber-500/10 text-amber-400">
               <Calendar className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3">
-            <p className="text-2xl font-extrabold text-white font-mono">{upcomingDeadlines.length}</p>
-            <p className="text-[10px] text-zinc-500 mt-1.5">
+            <p className="text-2xl font-extrabold text-foreground font-mono">{upcomingDeadlines.length}</p>
+            <p className="text-[10px] text-text-muted mt-1.5">
               {upcomingDeadlines.length > 0 ? 'Positions closing soon.' : 'No urgent closures tracked.'}
             </p>
           </div>
@@ -237,40 +237,40 @@ export default function CandidateDashboardClient({
         {/* Right 1 column: Deadlines, Telemetry, and Actions */}
         <div className="space-y-6">
           {/* Quick Actions */}
-          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-4 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white border-b border-zinc-900 pb-2">Quick Actions</h4>
+          <div className="dashboard-card p-4 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border-subtle pb-2">Quick Actions</h4>
             <div className="grid grid-cols-1 gap-2">
               <Link
                 href="/internships"
-                className="w-full flex items-center justify-between p-2.5 rounded-lg border border-zinc-900 bg-zinc-950 hover:bg-zinc-900 text-left transition-all text-xs"
+                className="w-full flex items-center justify-between p-2.5 rounded-lg border border-border-subtle bg-input-bg hover:bg-surface-muted text-left transition-all text-xs"
               >
-                <span className="text-zinc-300 font-semibold">Search Jobs & Internships</span>
-                <Compass className="w-4 h-4 text-zinc-500" />
+                <span className="text-foreground font-semibold">Search Jobs & Internships</span>
+                <Compass className="w-4 h-4 text-text-muted" />
               </Link>
               <Link
                 href="/applications"
-                className="w-full flex items-center justify-between p-2.5 rounded-lg border border-zinc-900 bg-zinc-950 hover:bg-zinc-900 text-left transition-all text-xs"
+                className="w-full flex items-center justify-between p-2.5 rounded-lg border border-border-subtle bg-input-bg hover:bg-surface-muted text-left transition-all text-xs"
               >
-                <span className="text-zinc-300 font-semibold">Track Active Applications</span>
-                <Briefcase className="w-4 h-4 text-zinc-500" />
+                <span className="text-foreground font-semibold">Track Active Applications</span>
+                <Briefcase className="w-4 h-4 text-text-muted" />
               </Link>
             </div>
           </div>
 
           {/* Upcoming Deadlines */}
-          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-4 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white border-b border-zinc-900 pb-2">Deadlines Coming Up</h4>
+          <div className="dashboard-card p-4 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border-subtle pb-2">Deadlines Coming Up</h4>
             {upcomingDeadlines.length === 0 ? (
-              <p className="text-[10px] text-zinc-500 text-center py-2">No upcoming job deadlines logged.</p>
+              <p className="text-[10px] text-text-muted text-center py-2">No upcoming job deadlines logged.</p>
             ) : (
               <div className="space-y-2">
                 {upcomingDeadlines.map((item) => (
-                  <div key={item.id} className="flex justify-between items-center text-xs p-2 rounded bg-zinc-950 border border-zinc-900">
+                  <div key={item.id} className="flex justify-between items-center text-xs p-2 rounded-lg bg-surface-muted border border-border-subtle">
                     <div>
-                      <Link href={`/jobs/${item.id}`} className="font-semibold text-zinc-200 hover:text-primary transition-colors block truncate max-w-[130px]">
+                      <Link href={`/jobs/${item.id}`} className="font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[130px]">
                         {item.title}
                       </Link>
-                      <p className="text-[9px] text-zinc-500 font-mono">{item.company.name}</p>
+                      <span className="text-[10px] text-primary font-semibold truncate max-w-[130px]">{item.company.name}</span>
                     </div>
                     <span className="text-[9px] text-amber-400 font-mono bg-amber-500/10 border border-amber-500/20 px-1.5 py-0.5 rounded">
                       {new Date(item.deadline).toLocaleDateString([], { month: 'short', day: 'numeric' })}
@@ -282,16 +282,16 @@ export default function CandidateDashboardClient({
           </div>
 
           {/* Recent Search Queries */}
-          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-4 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-white border-b border-zinc-900 pb-2">Recent Searches</h4>
+          <div className="dashboard-card p-4 space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border-subtle pb-2">Recent Searches</h4>
             {recentSearches.length === 0 ? (
-              <p className="text-[10px] text-zinc-500 text-center py-2">No recent queries logged.</p>
+              <p className="text-[10px] text-text-muted text-center py-2">No recent queries logged.</p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {recentSearches.map((item) => (
                   <span
                     key={item.id}
-                    className="text-[9px] bg-zinc-950 text-zinc-400 border border-zinc-900 px-2 py-1 rounded flex items-center gap-1 font-mono"
+                    className="text-[9px] bg-surface-muted text-text-muted border border-border-subtle px-2 py-1 rounded-md flex items-center gap-1 font-mono"
                   >
                     <Search className="w-2.5 h-2.5" />
                     {item.query}

@@ -26,7 +26,7 @@ export class MatchEngine {
       type: string;
       enrichment: {
         skills: string[];
-        techStack: any;
+        techStack: unknown;
         experienceLevel: string | null;
         employmentType: string | null;
       } | null;

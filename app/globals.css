@@ -132,6 +132,18 @@ html.light .text-white {
   color: var(--foreground) !important;
 }
 
+/* Keep primary CTAs readable in light mode */
+html.light .bg-primary.text-white,
+html.light [class*="bg-primary"].text-white,
+html.light button.bg-primary,
+html.light a.bg-primary {
+  color: #ffffff !important;
+}
+
+html.light .text-zinc-100 {
+  color: var(--foreground) !important;
+}
+
 html.light .text-zinc-200,
 html.light .text-zinc-300 {
   color: #334155 !important;

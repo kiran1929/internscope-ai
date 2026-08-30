@@ -23,16 +23,17 @@ function applyTheme(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark');
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window === 'undefined') return 'dark';
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored === 'light' ? 'light' : 'dark';
+  });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    const initial: Theme = stored === 'light' ? 'light' : 'dark';
-    applyTheme(initial);
-    setThemeState(initial);
+    applyTheme(theme);
     setMounted(true);
-  }, []);
+  }, [theme]);
 
   const setTheme = useCallback((next: Theme) => {
     applyTheme(next);

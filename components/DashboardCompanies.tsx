@@ -113,14 +113,18 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
               </div>
 
               <div className="mt-4 pt-3 border-t border-zinc-900 flex items-center justify-between">
-                <a
-                  href={company.website || '#'}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[10px] text-text-muted hover:text-white font-medium underline"
-                >
-                  Visit Careers
-                </a>
+                {company.website ? (
+                  <a
+                    href={company.website}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-text-muted hover:text-foreground font-medium underline"
+                  >
+                    Visit Careers
+                  </a>
+                ) : (
+                  <span className="text-[10px] text-text-muted">No careers page</span>
+                )}
                 <button
                   onClick={() => onToggleTrack(company.id)}
                   className={cn(

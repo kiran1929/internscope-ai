@@ -189,7 +189,7 @@ export default function UserProfileFormClient({ user }: UserProfileFormClientPro
             </div>
 
             <div>
-              <h3 className="text-xs font-bold text-zinc-100 leading-tight">
+              <h3 className="text-xs font-bold text-foreground leading-tight">
                 {(user.profile?.firstName || '') + ' ' + (user.profile?.lastName || 'Candidate')}
               </h3>
               <span className="text-[9px] text-zinc-500 font-mono mt-1 block">
@@ -651,7 +651,7 @@ export default function UserProfileFormClient({ user }: UserProfileFormClientPro
                   toast.error('Deletion simulation: Clerk users cannot be deleted directly in sandbox environments.');
                   setShowDeleteModal(false);
                 }}
-                className="px-4 py-2 bg-red-650 hover:bg-red-700 text-white rounded-lg font-bold transition-all shadow-md text-xs"
+                className="px-4 py-2 bg-danger hover:bg-red-700 text-white rounded-lg font-bold transition-all shadow-md text-xs"
               >
                 Confirm Delete
               </button>

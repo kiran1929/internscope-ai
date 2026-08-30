@@ -161,7 +161,7 @@ export default function CandidateApplicationsClient({
                             <Link href={`/jobs/${app.opportunity.id}`} className="text-xs font-bold text-zinc-200 hover:text-primary transition-colors block truncate max-w-[110px]" title={app.opportunity.title}>
                               {app.opportunity.title}
                             </Link>
-                            <p className="text-[9px] text-zinc-500 font-semibold truncate max-w-[110px]">
+                            <p className="text-[9px] text-primary font-semibold truncate max-w-[110px]">
                               {app.opportunity.company.name}
                             </p>
                           </div>
