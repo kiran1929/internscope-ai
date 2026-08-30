@@ -31,7 +31,7 @@ export async function DashboardRecommendations() {
       : [];
 
   return (
-    <div className="lg:col-span-2 space-y-6">
+    <div className="space-y-6">
       <div className="flex items-center justify-between border-b border-border-subtle pb-3">
         <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-primary" /> Personalized AI Recommendations
