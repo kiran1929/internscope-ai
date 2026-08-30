@@ -15,13 +15,14 @@ interface CompanyLogoProps {
   websiteUrl?: string | null;
   applicationUrl?: string | null;
   name: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 const sizeClasses = {
   sm: 'w-8 h-8 text-xs rounded-xl',
   md: 'w-11 h-11 text-sm rounded-xl',
   lg: 'w-14 h-14 text-lg rounded-2xl',
+  xl: 'w-14 h-14 text-xl rounded-2xl',
 };
 
 function getBrandDetails(brand: string, name: string) {
