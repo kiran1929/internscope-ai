@@ -392,7 +392,7 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                 <div
                   key={company.id}
                   className={cn(
-                    'group relative bg-card-bg border rounded-2xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 gap-5 hover:shadow-[0_12px_36px_rgba(56,189,248,0.3)]',
+                    'group relative bg-card-bg border rounded-xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 gap-5 hover:shadow-[0_12px_36px_rgba(56,189,248,0.3)]',
                     company.isTracking ? 'border-primary/50 ring-1 ring-primary/20 shadow-xs shadow-primary/5' : 'border-border-subtle'
                   )}
                 >
