@@ -223,14 +223,14 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
   if (activeImage) {
     return (
       <div
-        className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} bg-zinc-900/60 hover:bg-zinc-800/80 transition-colors`}
+        className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} bg-white/90 dark:bg-zinc-900/90 rounded-xl p-2 shadow-sm backdrop-blur-xs transition-transform duration-300 hover:scale-105`}
         aria-label={`${name} Logo`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={activeImage}
           alt={`${name} logo`}
-          className="w-full h-full object-contain p-1.5"
+          className="w-full h-full object-contain rounded-lg"
           loading="lazy"
           referrerPolicy="no-referrer"
           onError={() => {
