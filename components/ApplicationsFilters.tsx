@@ -89,7 +89,7 @@ export const ApplicationsFilters: React.FC<ApplicationsFiltersProps> = ({
   return (
     <div className="bg-[#111113] border border-zinc-800/80 rounded-xl p-4 space-y-4 shadow-sm text-white">
       <div className="flex flex-col md:flex-row md:items-center gap-3">
-        <div className="relative flex-1">
+        <div className="relative w-full max-w-[20rem]">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-text-muted" />
           <input
             type="text"

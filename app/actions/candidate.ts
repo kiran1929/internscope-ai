@@ -61,14 +61,18 @@ export async function getCompaniesDirectoryForUser() {
       select: { companyId: true },
     }),
     prisma.company.findMany({
-      take: 40,
+      take: 250,
       where: { isArchived: false },
       select: {
         id: true,
         name: true,
         logoUrl: true,
         websiteUrl: true,
+        careerPageUrl: true,
         industry: true,
+        country: true,
+        hiringStatus: true,
+        companySize: true,
         _count: {
           select: {
             opportunities: {
@@ -92,6 +96,10 @@ export async function getCompaniesDirectoryForUser() {
     activeOpeningsCount: company._count.opportunities,
     isTracking: trackedCompanyIds.has(company.id),
     website: company.websiteUrl || '',
+    careerPage: company.careerPageUrl || '',
+    country: company.country || '',
+    hiringStatus: company.hiringStatus || '',
+    companySize: company.companySize || '',
   }));
 }
 

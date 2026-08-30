@@ -153,8 +153,8 @@ export default function CandidateSearchClient({
       <div className="dashboard-card p-5 space-y-4 shadow-sm">
         
         {/* Search bar row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-3 flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-border-subtle bg-input-bg">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2 flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-border-subtle bg-input-bg max-w-xl">
             <Search className="w-4 h-4 text-text-muted shrink-0" />
             <input
               type="text"
