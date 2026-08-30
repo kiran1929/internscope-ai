@@ -108,6 +108,26 @@ function getBrandDetails(brand: string, name: string) {
   }
 }
 
+const GRADIENTS = [
+  'from-blue-600 to-indigo-600',
+  'from-violet-600 to-purple-600',
+  'from-emerald-600 to-teal-600',
+  'from-rose-600 to-pink-600',
+  'from-amber-600 to-orange-600',
+  'from-cyan-600 to-blue-600',
+  'from-fuchsia-600 to-pink-600',
+  'from-indigo-600 to-cyan-600',
+];
+
+function getDeterministicGradient(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % GRADIENTS.length;
+  return GRADIENTS[index];
+}
+
 export const CompanyLogo: React.FC<CompanyLogoProps> = ({
   logo,
   logoUrl,
@@ -161,7 +181,7 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
   if (activeImage) {
     return (
       <div
-        className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} bg-card-bg border border-border-subtle`}
+        className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} bg-white dark:bg-white rounded-xl shadow-xs ring-1 ring-black/10`}
         aria-label={`${name} Logo`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -183,13 +203,21 @@ export const CompanyLogo: React.FC<CompanyLogoProps> = ({
     );
   }
 
-  const brand = getBrandDetails('CUSTOM', name);
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+  const gradient = getDeterministicGradient(name);
+
   return (
     <div
-      className={`flex items-center justify-center shrink-0 overflow-hidden ${sizeClasses[size]} ${brand.bg}`}
+      className={`flex items-center justify-center shrink-0 overflow-hidden font-bold text-white shadow-xs rounded-xl bg-gradient-to-br ${gradient} ${sizeClasses[size]}`}
       aria-label={`${name} Logo`}
     >
-      {brand.element}
+      <span className="text-[75%] tracking-tight font-extrabold">{initials || name.slice(0, 2).toUpperCase()}</span>
     </div>
   );
 };
