@@ -7,7 +7,7 @@ import { defaultScraperSettings } from './config';
 import {
   ScrapeBoard,
   ScrapeProvider,
-  getCatalogBoardsByProvider,
+  getEffectiveBoardsByProvider,
   buildCareerPageUrl,
 } from './company-catalog';
 import { IngestionSummary } from './types';
@@ -75,7 +75,7 @@ export async function runBoardsForProvider(
   runPipeline: (connector: Connector) => Promise<IngestionSummary>,
   onLog?: (message: string) => void
 ): Promise<BoardRunResult> {
-  const boards = getCatalogBoardsByProvider(provider);
+  const boards = await getEffectiveBoardsByProvider(provider);
   const summaries: IngestionSummary[] = [];
   const boardErrors: Array<{ board: string; error: string }> = [];
   let boardsSucceeded = 0;

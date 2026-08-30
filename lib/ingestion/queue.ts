@@ -13,6 +13,8 @@ import {
 import { ScrapeProvider } from './company-catalog';
 import { isScrapingEnabled, SCRAPING_DISABLED_MESSAGE } from './scraper-config';
 
+import { acquireDistributedLock } from './distributed-lock';
+
 // Concurrency locks
 const activeJobs = new Set<string>();
 
@@ -56,12 +58,20 @@ export class IngestionQueue {
       throw new Error(SCRAPING_DISABLED_MESSAGE);
     }
 
+    // Distributed lock guard across serverless instances (CRIT-004)
+    const lock = await acquireDistributedLock(provider);
+    if (!lock.acquired) {
+      throw new Error(`Concurrency Lock: A sync job for "${provider}" is currently locked and running on another worker.`);
+    }
+
     if (activeJobs.has(provider)) {
-      throw new Error(`Concurrency Lock: A sync job for "${provider}" is already active.`);
+      await lock.release();
+      throw new Error(`Concurrency Lock: A sync job for "${provider}" is already active in this instance.`);
     }
 
     const runningJobs = await JobRepository.findRunning(provider);
     if (runningJobs.length > 0) {
+      await lock.release();
       throw new Error(`Concurrency Lock: A database record shows "${provider}" sync is already running.`);
     }
 
@@ -170,6 +180,7 @@ export class IngestionQueue {
         });
       } finally {
         activeJobs.delete(provider);
+        await lock.release();
       }
     })();
 
