@@ -106,40 +106,106 @@ export async function getCompaniesDirectoryForUser() {
 
   const trackedCompanyIds = new Set(dbTrackedCompanies.map((company) => company.companyId));
 
-  return dbCompanies.map((company) => {
-    const locationParts = [company.city, company.state, company.country].filter(Boolean);
-    const location = locationParts.length > 0 ? locationParts.join(', ') : 'HQ / Global';
+  return dbCompanies.map((company) => ({
+    id: company.id,
+    name: company.name,
+    logo: company.logoUrl || company.name.slice(0, 4).toUpperCase(),
+    logoUrl: company.logoUrl,
+    industry: company.industry || 'Tech',
+    activeOpeningsCount: company._count.opportunities,
+    isTracking: trackedCompanyIds.has(company.id),
+    website: company.websiteUrl || '',
+    careerPage: company.careerPageUrl || '',
+    country: company.country || '',
+    hiringStatus: company.hiringStatus || '',
+    companySize: company.companySize || '',
+  }));
+}
 
-    return {
+export async function getCompanyWithOpportunities(companyId: string) {
+  const user = await getAuthenticatedUser();
+
+  const [company, isTracking, savedOpportunities, applications] = await Promise.all([
+    prisma.company.findUnique({
+      where: { id: companyId },
+      include: {
+        opportunities: {
+          where: openOpportunityWhere(),
+          orderBy: [
+            { deadline: 'asc' },
+            { createdAt: 'desc' },
+          ],
+          include: {
+            enrichment: true,
+          },
+        },
+      },
+    }),
+    prisma.targetCompany.findUnique({
+      where: {
+        userId_companyId: {
+          userId: user.id,
+          companyId,
+        },
+      },
+    }),
+    prisma.savedOpportunity.findMany({
+      where: { userId: user.id },
+      select: { opportunityId: true },
+    }),
+    prisma.application.findMany({
+      where: { userId: user.id },
+      select: { opportunityId: true, status: true },
+    }),
+  ]);
+
+  if (!company || company.isArchived) {
+    return null;
+  }
+
+  const savedOpportunityIds = new Set(savedOpportunities.map((s) => s.opportunityId));
+  const appStatusByOppId = new Map(applications.map((a) => [a.opportunityId, a.status]));
+
+  return {
+    company: {
       id: company.id,
       name: company.name,
       logo: company.logoUrl || company.name.slice(0, 4).toUpperCase(),
       logoUrl: company.logoUrl,
-      industry: company.industry || 'Technology',
-      activeOpeningsCount: company._count.opportunities,
-      isTracking: trackedCompanyIds.has(company.id),
       website: company.websiteUrl || '',
       careerPage: company.careerPageUrl || '',
+      industry: company.industry || 'Tech',
+      description: company.description || '',
       country: company.country || '',
-      city: company.city || '',
-      state: company.state || '',
-      location,
-      tags: company.tags || [],
-      isVerified: company.isVerified || false,
       hiringStatus: company.hiringStatus || '',
       companySize: company.companySize || '',
-      description: company.description || '',
-      opportunities: company.opportunities.map((opp) => ({
-        id: opp.id,
-        title: opp.title,
-        type: opp.type,
-        location: opp.location,
-        remoteType: opp.remoteType,
-        deadline: opp.deadline ? opp.deadline.toISOString() : null,
-        applicationUrl: opp.applicationUrl,
-      })),
-    };
-  });
+      isTracking: Boolean(isTracking),
+      activeOpeningsCount: company.opportunities.length,
+    },
+    opportunities: company.opportunities.map((opp) => ({
+      id: opp.id,
+      title: opp.title,
+      type: opp.type,
+      location: opp.location,
+      remoteType: opp.remoteType,
+      salaryRange: opp.salaryRange,
+      applicationUrl: opp.applicationUrl,
+      deadline: opp.deadline ? opp.deadline.toISOString() : null,
+      createdAt: opp.createdAt.toISOString(),
+      isSaved: savedOpportunityIds.has(opp.id),
+      appliedStatus: appStatusByOppId.get(opp.id) || null,
+      enrichment: opp.enrichment
+        ? {
+            skills: opp.enrichment.skills,
+            techStack: Array.isArray(opp.enrichment.techStack)
+              ? (opp.enrichment.techStack as string[])
+              : null,
+            experienceLevel: opp.enrichment.experienceLevel,
+            qualityScore: opp.enrichment.qualityScore,
+          }
+        : null,
+    })),
+  };
 }
 
 // 1. Profile Actions
