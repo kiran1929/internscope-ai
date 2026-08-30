@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { toggleSaveJobAction, upsertApplicationAction, generateApplicationCopilotAction } from '@/app/actions/candidate';
 import { CandidateApplicationStatus } from '@/types/candidate';
 import { CompanyLogo } from '@/components/CompanyLogo';
+import { RichDescription } from '@/components/RichDescription';
 
 interface JobDetailClientProps {
   job: {
@@ -37,6 +38,7 @@ interface JobDetailClientProps {
     remoteType: string;
     salaryRange: string | null;
     applicationUrl: string;
+    tags?: string[];
     createdAt: Date;
     company: {
       id: string;
@@ -378,18 +380,14 @@ export default function JobDetailClient({
           {/* Description */}
           <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-white border-b border-zinc-900 pb-2">Opportunity Description</h3>
-            <div className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap font-sans">
-              {job.description || 'No description provided.'}
-            </div>
+            <RichDescription content={job.description} />
           </div>
 
           {/* Requirements */}
           {job.requirements && (
             <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-white border-b border-zinc-900 pb-2">Requirements</h3>
-              <div className="text-xs text-zinc-300 leading-relaxed whitespace-pre-wrap font-sans">
-                {job.requirements}
-              </div>
+              <RichDescription content={job.requirements} />
             </div>
           )}
 
@@ -486,17 +484,23 @@ export default function JobDetailClient({
           {/* Enriched Skills & Technologies */}
           <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-white border-b border-zinc-900 pb-2">Target Skills</h4>
-            {job.enrichment?.skills && job.enrichment.skills.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {job.enrichment.skills.map((s) => (
-                  <span key={s} className="text-[9px] bg-zinc-950 text-zinc-300 border border-zinc-900 px-2 py-1 rounded">
-                    {s}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[10px] text-zinc-500">No skills tags extracted.</p>
-            )}
+            {(() => {
+              const skills: string[] = (job.enrichment?.skills && job.enrichment.skills.length > 0)
+                ? job.enrichment.skills
+                : (job.tags && job.tags.length > 0)
+                ? job.tags
+                : ['Problem Solving', 'Communication', 'Technical Adaptability'];
+
+              return (
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.map((s: string) => (
+                    <span key={s} className="text-[9px] bg-zinc-950 text-zinc-300 border border-zinc-900 px-2 py-1 rounded">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              );
+            })()}
           </div>
 
           {/* Company Brief */}

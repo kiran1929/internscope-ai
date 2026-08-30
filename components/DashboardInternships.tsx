@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Search, Compass, MapPin, Calendar, Sparkles, Plus, Check, Bookmark, ArrowUpRight, Eye } from 'lucide-react';
 import { Internship } from '@/types';
 import { CompanyLogo } from './CompanyLogo';
+import { RichDescription } from './RichDescription';
 import { cn } from '@/lib/utils';
 
 interface DashboardInternshipsProps {
@@ -281,9 +282,7 @@ export const DashboardInternships: React.FC<DashboardInternshipsProps> = ({
 
               <div className="space-y-2">
                 <h4 className="text-xs font-semibold text-white">Role Description</h4>
-                <p className="text-xs text-text-muted leading-relaxed">
-                  {selectedInternship.description}
-                </p>
+                <RichDescription content={selectedInternship.description} />
               </div>
 
               <div className="space-y-2 pt-2">
