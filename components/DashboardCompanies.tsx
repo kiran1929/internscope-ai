@@ -369,81 +369,124 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
         viewMode === 'grid' ? (
           /* GRID VIEW */
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {paginatedCompanies.map((company) => (
-              <div
-                key={company.id}
-                className={cn(
-                  'dashboard-card p-5 flex flex-col justify-between min-h-[13rem] hover:border-primary/40 transition-all duration-250',
-                  company.isTracking && 'border-primary/50 shadow-sm shadow-primary/5'
-                )}
-              >
-                <div className="flex items-start justify-between">
-                  <CompanyLogo logo={company.logo} logoUrl={company.logoUrl} websiteUrl={company.website} name={company.name} size="md" />
-                  <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-full">
-                    {company.industry}
-                  </span>
-                </div>
+            {paginatedCompanies.map((company) => {
+              const hasOpenings = company.activeOpeningsCount > 0;
+              return (
+                <div
+                  key={company.id}
+                  className={cn(
+                    'group relative bg-card-bg border rounded-2xl p-5 flex flex-col justify-between transition-all duration-250 hover:shadow-md hover:-translate-y-0.5 min-h-[14.5rem]',
+                    company.isTracking
+                      ? 'border-primary/50 ring-1 ring-primary/20 shadow-sm shadow-primary/5'
+                      : 'border-border-subtle hover:border-primary/35'
+                  )}
+                >
+                  <div>
+                    {/* Header: Logo & Badges */}
+                    <div className="flex items-start justify-between gap-2">
+                      <CompanyLogo
+                        logo={company.logo}
+                        logoUrl={company.logoUrl}
+                        websiteUrl={company.website}
+                        name={company.name}
+                        size="md"
+                      />
+                      <div className="flex flex-col items-end gap-1">
+                        <span className="text-[10px] font-semibold text-text-muted bg-surface-muted border border-border-subtle px-2 py-0.5 rounded-full max-w-[120px] truncate">
+                          {company.industry}
+                        </span>
+                        {company.country && (
+                          <span className="text-[9px] text-text-muted/80 font-medium">
+                            {company.country}
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="mt-4">
-                  <h3 className="text-sm font-bold text-foreground">{company.name}</h3>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                    <span className="text-[11px] text-text-muted font-medium">
-                      {company.activeOpeningsCount} active roles monitored
-                    </span>
+                    {/* Company Info */}
+                    <div className="mt-4">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                          {company.name}
+                        </h3>
+                        {company.hiringStatus === 'FREEZE' && (
+                          <span className="text-[9px] font-semibold px-1.5 py-0.2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded">
+                            Freeze
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Active Roles Indicator */}
+                      <div className="mt-2.5">
+                        {hasOpenings ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-[11px] font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            {company.activeOpeningsCount} active {company.activeOpeningsCount === 1 ? 'role' : 'roles'} monitored
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-surface-muted text-text-muted border border-border-subtle text-[11px] font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-text-muted/60"></span>
+                            0 roles currently open
+                          </span>
+                        )}
+                      </div>
+
+                      {company.name.toLowerCase() === 'razorpay' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedShowcaseCompany(company);
+                          }}
+                          className="mt-2.5 text-[10px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-1 rounded-lg hover:bg-purple-500/20 font-bold block text-center w-full transition-all cursor-pointer"
+                        >
+                          ✨ Razorpay Showcase Mode
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  {company.name.toLowerCase() === 'razorpay' && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedShowcaseCompany(company);
-                      }}
-                      className="mt-2 text-[9px] bg-purple-500/10 text-purple-400 border border-purple-500/20 px-2 py-0.5 rounded hover:bg-purple-500/20 font-bold block text-center w-full transition-all cursor-pointer"
-                    >
-                      ✨ Razorpay Showcase Mode
-                    </button>
-                  )}
-                </div>
 
-                <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between">
-                  {company.careerPage || company.website ? (
-                    <a
-                      href={company.careerPage || company.website}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-[10px] text-text-muted hover:text-foreground font-medium underline inline-flex items-center gap-1"
-                    >
-                      Visit Careers
-                      <ExternalLink className="w-2.5 h-2.5" />
-                    </a>
-                  ) : (
-                    <span className="text-[10px] text-text-muted">No careers page</span>
-                  )}
-                  <button
-                    onClick={() => onToggleTrack(company.id)}
-                    className={cn(
-                      'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer',
-                      company.isTracking
-                        ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle'
-                        : 'bg-primary hover:bg-primary-hover text-white shadow-sm shadow-primary/20'
-                    )}
-                  >
-                    {company.isTracking ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-500" />
-                        <span>Tracking</span>
-                      </>
+                  {/* Footer Action Bar */}
+                  <div className="mt-4 pt-3 border-t border-border-subtle flex items-center justify-between gap-2">
+                    {company.careerPage || company.website ? (
+                      <a
+                        href={company.careerPage || company.website}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] text-text-muted hover:text-foreground font-medium inline-flex items-center gap-1 transition-colors hover:underline"
+                      >
+                        Careers
+                        <ExternalLink className="w-3 h-3 text-text-muted/70" />
+                      </a>
                     ) : (
-                      <>
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Track</span>
-                      </>
+                      <span className="text-[11px] text-text-muted/60">No careers page</span>
                     )}
-                  </button>
+
+                    <button
+                      onClick={() => onToggleTrack(company.id)}
+                      className={cn(
+                        'px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 cursor-pointer shrink-0',
+                        company.isTracking
+                          ? 'bg-surface-muted hover:bg-surface-elevated text-foreground border border-border-subtle'
+                          : 'bg-primary hover:bg-primary-hover text-white shadow-xs shadow-primary/25'
+                      )}
+                    >
+                      {company.isTracking ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          <span>Tracking</span>
+                        </>
+                      ) : (
+                        <>
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Track</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           /* DENSE TABLE VIEW */
