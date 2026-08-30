@@ -101,3 +101,20 @@ export async function writeAuditLogAction(params: {
     };
   }
 }
+
+export async function getDeadLetterQueueAction() {
+  try {
+    await requireAdmin();
+    const { DeadLetterQueue } = await import('@/lib/ingestion/dead-letter-queue');
+    const items = DeadLetterQueue.getRecentFailures(50);
+    const count = DeadLetterQueue.getFailureCount();
+    return { success: true, count, items };
+  } catch (error) {
+    return {
+      success: false,
+      error: sanitizeError(error, 'Failed to fetch dead letter queue.'),
+      count: 0,
+      items: [],
+    };
+  }
+}

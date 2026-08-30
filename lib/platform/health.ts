@@ -1,5 +1,7 @@
 import { prisma } from '../db';
 import { RedisCache } from './redis';
+import { DeadLetterQueue } from '../ingestion/dead-letter-queue';
+import { getCatalogCompanyCount } from '../ingestion/catalog-sync';
 
 export interface HealthStatus {
   status: 'HEALTHY' | 'DEGRADED' | 'UNHEALTHY';
@@ -9,6 +11,7 @@ export interface HealthStatus {
     redis: { status: 'UP' | 'DOWN'; latencyMs: number };
     aiProviders: { status: 'UP' | 'DOWN' };
     triggerDev: { status: 'UP' | 'DOWN' };
+    scraping: { status: 'UP' | 'DOWN'; deadLetterCount: number; activeBoards: number };
   };
   recentFailures: Array<{
     id: string;
@@ -28,6 +31,11 @@ export class HealthMonitor {
       redis: { status: 'UP' as 'UP' | 'DOWN', latencyMs: 0 },
       aiProviders: { status: 'UP' as 'UP' | 'DOWN' },
       triggerDev: { status: 'UP' as 'UP' | 'DOWN' },
+      scraping: {
+        status: 'UP' as 'UP' | 'DOWN',
+        deadLetterCount: DeadLetterQueue.getFailureCount(),
+        activeBoards: getCatalogCompanyCount(),
+      },
     };
 
     // 1. Check Database connection & latency
