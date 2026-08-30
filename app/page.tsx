@@ -267,7 +267,7 @@ export default function Home() {
               transition={{
                 repeat: Infinity,
                 ease: 'linear',
-                duration: 28,
+                duration: 56,
               }}
             >
               {[...INITIAL_COMPANIES.slice(0, 8), ...INITIAL_COMPANIES.slice(0, 8), ...INITIAL_COMPANIES.slice(0, 8)].map((company, index) => (
@@ -300,7 +300,7 @@ export default function Home() {
               transition={{
                 repeat: Infinity,
                 ease: 'linear',
-                duration: 32,
+                duration: 64,
               }}
             >
               {[...INITIAL_COMPANIES.slice(8), ...INITIAL_COMPANIES.slice(8), ...INITIAL_COMPANIES.slice(8)].map((company, index) => (
