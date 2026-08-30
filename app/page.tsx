@@ -15,6 +15,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@clerk/nextjs';
 
 // Data constants
 import {
@@ -33,7 +34,14 @@ import { cn } from '@/lib/utils';
 
 export default function Home() {
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace('/dashboard');
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   const handleNavigateToDashboard = () => {
     router.push('/dashboard');
