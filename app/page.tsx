@@ -344,18 +344,44 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
-                { step: '01', title: 'Upload & Profile', desc: 'Sync your resume to extract key frameworks, skills, and target job levels.' },
-                { step: '02', title: 'Target Selection', desc: 'Toggle the companies you want to track. We scan career APIs every 6 hours.' },
-                { step: '03', title: 'Apply & Excel', desc: 'Receive real-time match alerts and tailored interview questions for high-scoring positions.' },
-              ].map((item) => (
-                <div key={item.step} className="bg-[#18181B] border border-zinc-850 rounded-xl p-6 relative hover:border-zinc-750 transition-colors duration-300 shadow-sm">
-                  <span className="absolute top-4 right-4 text-xs font-bold font-mono text-primary bg-primary/10 px-2 py-0.5 rounded">
-                    Step {item.step}
-                  </span>
-                  <h3 className="text-sm font-bold text-white mt-4">{item.title}</h3>
-                  <p className="text-xs text-text-muted leading-relaxed mt-2">{item.desc}</p>
-                </div>
-              ))}
+                { step: '01', title: 'Upload & Profile', desc: 'Sync your resume to extract key frameworks, skills, and target job levels.', icon: FileText },
+                { step: '02', title: 'Target Selection', desc: 'Toggle the companies you want to track. We scan career APIs every 6 hours.', icon: Building },
+                { step: '03', title: 'Apply & Excel', desc: 'Receive real-time match alerts and tailored interview questions for high-scoring positions.', icon: Sparkles },
+              ].map((item) => {
+                const StepIcon = item.icon;
+                return (
+                  <div
+                    key={item.step}
+                    className="relative group rounded-2xl p-7 bg-zinc-900/40 border border-zinc-800/80 hover:border-primary/50 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(59,130,246,0.12)] overflow-hidden flex flex-col justify-between"
+                  >
+                    {/* Top ambient highlight line */}
+                    <div className="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-transparent via-primary/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    {/* Ambient corner glow */}
+                    <div className="absolute -top-10 -right-10 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-colors pointer-events-none" />
+
+                    <div className="space-y-6 relative z-10">
+                      <div className="flex items-center justify-between">
+                        <div className="w-12 h-12 rounded-xl bg-zinc-900/90 border border-zinc-750 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white group-hover:border-primary group-hover:scale-110 transition-all duration-300 shadow-md">
+                          <StepIcon className="w-6 h-6" />
+                        </div>
+                        <span className="text-xs font-extrabold font-mono text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full shadow-sm">
+                          STEP {item.step}
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h3 className="text-base font-bold text-white group-hover:text-primary transition-colors tracking-tight">
+                          {item.title}
+                        </h3>
+                        <p className="text-xs text-zinc-400 leading-relaxed font-normal">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </motion.section>
@@ -377,17 +403,28 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {TESTIMONIALS.map((t) => (
-              <div key={t.name} className="bg-[#18181B] border border-zinc-850 rounded-xl p-6 flex flex-col justify-between h-48 hover:border-zinc-750 transition-all duration-350 shadow-md">
-                <p className="text-xs text-text-muted leading-relaxed italic">
-                  &ldquo;{t.content}&rdquo;
-                </p>
-                <div className="flex items-center gap-3 pt-4 border-t border-zinc-900/60">
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center font-bold text-primary text-xs shrink-0">
+              <div
+                key={t.name}
+                className="relative group rounded-2xl p-7 bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between shadow-lg overflow-hidden"
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center gap-1 text-amber-400">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className="text-xs">★</span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-zinc-300 leading-relaxed font-normal italic">
+                    &ldquo;{t.content}&rdquo;
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4 mt-6 border-t border-zinc-800/40">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-primary/30 to-blue-400/30 border border-primary/40 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-md">
                     {t.avatar}
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white leading-tight">{t.name}</h4>
-                    <span className="text-[10px] text-text-muted">{t.role}</span>
+                    <h4 className="text-xs font-bold text-white group-hover:text-primary transition-colors leading-tight">{t.name}</h4>
+                    <span className="text-[11px] text-zinc-400">{t.role}</span>
                   </div>
                 </div>
               </div>
