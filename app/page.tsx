@@ -51,20 +51,6 @@ export default function Home() {
 
         {/* HERO SECTION */}
         <section className="relative pt-36 pb-16 sm:pt-44 sm:pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-900/60 border border-zinc-800 text-[10px] sm:text-xs font-bold text-text-muted hover:border-zinc-700 transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
-            onClick={handleNavigateToDashboard}
-            tabIndex={0}
-            aria-label="Launch interactive dashboard demo app"
-            onKeyDown={(e) => e.key === 'Enter' && handleNavigateToDashboard()}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-primary animate-pulse" />
-            <span>Introducing InternScope 1.0 Demo Dashboard</span>
-            <Play className="w-2.5 h-2.5 text-text-muted fill-current" />
-          </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
