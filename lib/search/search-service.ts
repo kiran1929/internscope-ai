@@ -164,20 +164,22 @@ export class SearchService {
       .map((r) => r.opportunity);
 
     // 4. Log telemetry search query asynchronously to database
-    (async () => {
-      try {
-        await prisma.searchLog.create({
-          data: {
-            query,
-            filters: JSON.stringify(options),
-            resultsCount: total,
-            userId: options.userId || null,
-          },
-        });
-      } catch (err) {
-        console.error('[SearchService] Telemetry log save failed:', err);
-      }
-    })();
+    if (query && query.trim().length > 0) {
+      (async () => {
+        try {
+          await prisma.searchLog.create({
+            data: {
+              query: query.trim(),
+              filters: JSON.stringify(options),
+              resultsCount: total,
+              userId: options.userId || null,
+            },
+          });
+        } catch (err) {
+          console.error('[SearchService] Telemetry log save failed:', err);
+        }
+      })();
+    }
 
     return {
       opportunities: paginated,

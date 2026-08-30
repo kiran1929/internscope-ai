@@ -3,7 +3,7 @@
 import React, { useState, useTransition, useEffect } from 'react';
 import { Search, Compass, MapPin, Calendar, Sparkles, Plus, Check, Bookmark, ArrowUpRight, X, FileText, Loader2, ArrowRight, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { toggleSaveJobAction, upsertApplicationAction, searchJobsAction } from '@/app/actions/candidate';
 import { CandidateApplicationStatus } from '@/types/candidate';
@@ -46,10 +46,12 @@ export default function CandidateSearchClient({
   trackedOpportunityIds,
 }: CandidateSearchClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
   // Search input & filters
-  const [query, setQuery] = useState('');
+  const initialUrlQuery = searchParams.get('query') || searchParams.get('q') || '';
+  const [query, setQuery] = useState(initialUrlQuery);
   const [remoteType, setRemoteType] = useState('');
   const [employmentType, setEmploymentType] = useState('');
   const [experienceLevel, setExperienceLevel] = useState('');
@@ -99,6 +101,13 @@ export default function CandidateSearchClient({
       }
     });
   };
+
+  useEffect(() => {
+    const urlParamQuery = searchParams.get('query') || searchParams.get('q');
+    if (urlParamQuery !== null && urlParamQuery !== query) {
+      setQuery(urlParamQuery);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     // Debounced search trigger for input/filter changes

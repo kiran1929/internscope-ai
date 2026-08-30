@@ -1251,3 +1251,37 @@ export async function triggerOpportunityEmailIfEligibleAction(opportunityId: str
     };
   }
 }
+
+export async function deleteRecentSearchAction(searchId: string) {
+  try {
+    const user = await getAuthenticatedUser();
+    await prisma.searchLog.deleteMany({
+      where: {
+        id: searchId,
+        userId: user.id,
+      },
+    });
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('deleteRecentSearchAction error:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function clearRecentSearchesAction() {
+  try {
+    const user = await getAuthenticatedUser();
+    await prisma.searchLog.deleteMany({
+      where: {
+        userId: user.id,
+      },
+    });
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('clearRecentSearchesAction error:', error);
+    return { success: false, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
