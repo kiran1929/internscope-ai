@@ -415,25 +415,22 @@ export const DashboardCompanies: React.FC<DashboardCompaniesProps> = ({
                       </span>
                     </div>
 
-                    {/* Status & Roles - Clean & Layman Friendly */}
+                    {/* Status & Openings - Clean & Minimal */}
                     <div className="pt-0.5">
                       {company.hiringStatus === 'FREEZE' ? (
-                        <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-semibold">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 border border-amber-500/20 text-xs font-semibold">
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                           <span>Hiring freeze</span>
                         </div>
                       ) : hasOpenings ? (
-                        <div className="flex items-center justify-between gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-semibold">
-                          <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span>{company.activeOpeningsCount} {company.activeOpeningsCount === 1 ? 'role open' : 'roles open'}</span>
-                          </div>
-                          <span className="text-[9px] uppercase font-bold tracking-wider bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded">Hiring</span>
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 text-xs font-semibold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          <span>{company.activeOpeningsCount} active {company.activeOpeningsCount === 1 ? 'opening' : 'openings'}</span>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-surface-muted text-text-muted border border-border-subtle text-xs font-medium">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-muted text-text-muted border border-border-subtle text-xs font-medium">
                           <span className="w-1.5 h-1.5 rounded-full bg-text-muted/50"></span>
-                          <span>No open roles right now</span>
+                          <span>No active openings</span>
                         </div>
                       )}
                     </div>
