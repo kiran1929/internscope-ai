@@ -43,6 +43,10 @@ export function sanitizeError(
       'Opportunity',
       'Resume not found',
       'Cover letter not found',
+      'Scraping is disabled',
+      'Concurrency Lock',
+      'DOCX',
+      'PDF',
     ];
 
     if (safePrefixes.some((prefix) => msg.startsWith(prefix))) {

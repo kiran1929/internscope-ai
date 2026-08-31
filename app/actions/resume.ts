@@ -81,18 +81,23 @@ export async function uploadResumeAction(formData: FormData) {
       data: { processingStatus: 'PROCESSING' },
     });
 
-    try {
-      await resumeParsePipeline.trigger({
-        resumeId: resumeRecord.id,
-        userId: user.id,
-      });
-    } catch (triggerError) {
-      console.warn('Trigger.dev job dispatch failed, executing pipeline inline in dev:', triggerError);
-      await runResumeParsePipeline({
-        resumeId: resumeRecord.id,
-        userId: user.id,
-      });
-    }
+    // Execute parsing, matching, and career analysis asynchronously in the background
+    (async () => {
+      try {
+        await resumeParsePipeline.trigger({
+          resumeId: resumeRecord.id,
+          userId: user.id,
+        });
+      } catch (triggerError) {
+        console.warn('Trigger.dev job dispatch failed, running pipeline in background:', triggerError);
+        await runResumeParsePipeline({
+          resumeId: resumeRecord.id,
+          userId: user.id,
+        }).catch((err) => {
+          console.error('Background resume pipeline error:', err);
+        });
+      }
+    })();
 
     revalidatePath('/resume');
     revalidatePath('/dashboard');

@@ -22,15 +22,17 @@ function normalizeExtension(fileName: string): string {
 }
 
 function detectExtensionFromBuffer(buffer: Buffer): '.pdf' | '.docx' | null {
-  if (hasPrefix(buffer, PDF_SIGNATURE)) return '.pdf';
+  // Check PDF signature (allow leading whitespace or BOM)
+  const head = buffer.subarray(0, Math.min(buffer.length, 1024));
+  if (head.includes(PDF_SIGNATURE) || hasPrefix(buffer, PDF_SIGNATURE)) return '.pdf';
   if (hasPrefix(buffer, ZIP_SIGNATURE)) return '.docx';
   return null;
 }
 
 function isLikelyDocx(buffer: Buffer): boolean {
   if (!hasPrefix(buffer, ZIP_SIGNATURE)) return false;
-  const head = buffer.subarray(0, Math.min(buffer.length, 4096)).toString('latin1');
-  return head.includes('[Content_Types].xml') || head.includes('word/');
+  const head = buffer.subarray(0, Math.min(buffer.length, 8192)).toString('latin1');
+  return head.includes('[Content_Types].xml') || head.includes('word/') || head.includes('docProps/');
 }
 
 export function validateResumeUpload(file: File, buffer: Buffer): ValidatedUploadFile {

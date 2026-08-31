@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Globe,
@@ -80,6 +80,17 @@ export default function ScraperDashboardClient({
   const [isPending, startTransition] = useTransition();
   const [selectedJob, setSelectedJob] = useState<IngestionJob | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Automatically poll and refresh dashboard every 4s while any job is active
+  useEffect(() => {
+    if (runningJobs.length === 0) return;
+
+    const interval = setInterval(() => {
+      router.refresh();
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [runningJobs.length, router]);
 
   const handleEnrich = () => {
     startTransition(async () => {
@@ -172,49 +183,49 @@ export default function ScraperDashboardClient({
           <button
             onClick={() => handleTrigger('greenhouse')}
             disabled={isPending}
-            className="flex items-center justify-between p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950 hover:border-primary/40 hover:bg-zinc-900/20 text-left transition-all"
+            className="flex items-center justify-between p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950 hover:border-primary/40 hover:bg-zinc-900/20 text-left transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             <div className="space-y-1">
               <p className="text-xs font-bold text-zinc-200">Greenhouse Sync</p>
               <p className="text-[10px] text-zinc-500">Seed targets: Stripe</p>
             </div>
-            <Play className="w-3.5 h-3.5 text-zinc-400" />
+            {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Play className="w-3.5 h-3.5 text-zinc-400" />}
           </button>
 
           <button
             onClick={() => handleTrigger('lever')}
             disabled={isPending}
-            className="flex items-center justify-between p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950 hover:border-primary/40 hover:bg-zinc-900/20 text-left transition-all"
+            className="flex items-center justify-between p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950 hover:border-primary/40 hover:bg-zinc-900/20 text-left transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             <div className="space-y-1">
               <p className="text-xs font-bold text-zinc-200">Lever Sync</p>
               <p className="text-[10px] text-zinc-500">Seed targets: Spotify</p>
             </div>
-            <Play className="w-3.5 h-3.5 text-zinc-400" />
+            {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Play className="w-3.5 h-3.5 text-zinc-400" />}
           </button>
 
           <button
             onClick={() => handleTrigger('ashby')}
             disabled={isPending}
-            className="flex items-center justify-between p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950 hover:border-primary/40 hover:bg-zinc-900/20 text-left transition-all"
+            className="flex items-center justify-between p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950 hover:border-primary/40 hover:bg-zinc-900/20 text-left transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             <div className="space-y-1">
               <p className="text-xs font-bold text-zinc-200">Ashby Sync</p>
               <p className="text-[10px] text-zinc-500">Seed targets: Linear</p>
             </div>
-            <Play className="w-3.5 h-3.5 text-zinc-400" />
+            {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Play className="w-3.5 h-3.5 text-zinc-400" />}
           </button>
 
           <button
             onClick={() => handleTrigger('all')}
             disabled={isPending}
-            className="flex items-center justify-between p-3.5 rounded-lg border border-primary/20 bg-primary/5 hover:border-primary/40 hover:bg-primary/10 text-left transition-all"
+            className="flex items-center justify-between p-3.5 rounded-lg border border-primary/30 bg-primary/10 hover:border-primary/60 hover:bg-primary/20 text-left transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
           >
             <div className="space-y-1">
               <p className="text-xs font-bold text-primary">Full Platform Sync</p>
               <p className="text-[10px] text-zinc-400">Sync all 3 sequentially</p>
             </div>
-            <Shuffle className="w-3.5 h-3.5 text-primary" />
+            {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Shuffle className="w-3.5 h-3.5 text-primary" />}
           </button>
         </div>
       </div>
