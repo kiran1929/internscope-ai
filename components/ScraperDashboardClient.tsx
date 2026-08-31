@@ -137,38 +137,54 @@ export default function ScraperDashboardClient({
     });
   };
 
+  const isScrapingActive = runningJobs.length > 0;
+
   return (
     <div className="space-y-6">
-      {!scrapingEnabled && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-amber-100">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-400" />
-          <div>
-            <p className="text-sm font-semibold">Scraping is paused</p>
-            <p className="text-xs text-amber-200/80 mt-1">
-              Scheduled syncs run at <strong>9:00 AM</strong> and <strong>9:00 PM IST</strong> when enabled.
-              Set <code className="text-amber-100">SCRAPING_ENABLED=true</code> before the next window to resume.
-            </p>
-          </div>
-        </div>
-      )}
       {/* Header Controls */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
-            Ingestion Crawler Pipeline
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl sm:text-2xl font-bold font-display text-white tracking-tight">
+              Ingestion Crawler Pipeline
+            </h2>
+            {/* Live Scraping Status Indicator */}
+            <div
+              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                isScrapingActive
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-sm shadow-emerald-500/20'
+                  : 'bg-zinc-900 border-zinc-800 text-zinc-400'
+              }`}
+            >
+              <span className="relative flex h-2 w-2">
+                {isScrapingActive ? (
+                  <>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                  </>
+                ) : (
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-zinc-600"></span>
+                )}
+              </span>
+              <span>{isScrapingActive ? 'Scraping Active' : 'Scraping Idle'}</span>
+            </div>
+          </div>
           <p className="text-xs text-zinc-400 mt-1">
-            Manage background tasks, schedules, and monitor job ingestion history in real-time.
+            {isScrapingActive
+              ? `Currently ingesting and processing ${runningJobs.length} active job stream${runningJobs.length > 1 ? 's' : ''}...`
+              : 'Crawler is currently idle. Next sync runs automatically at 9:00 AM & 9:00 PM IST or on-demand below.'}
           </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing || isPending}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-xs font-semibold text-zinc-300 hover:bg-zinc-900 transition-all disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
-          <span>Refresh</span>
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing || isPending}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-xs font-semibold text-zinc-300 hover:bg-zinc-900 transition-all disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+        </div>
       </div>
 
       {/* Manual Sync Control Panel */}
