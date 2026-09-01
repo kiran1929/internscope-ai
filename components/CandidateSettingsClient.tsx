@@ -8,6 +8,7 @@ import { updateEmailPreferenceAction } from '@/app/actions/candidate';
 import { exportAccountDataAction, requestDataDeletionAction } from '@/app/actions/compliance';
 import CandidateFeedbackClient from './CandidateFeedbackClient';
 import { useTheme } from '@/providers/ThemeProvider';
+import { RazorpayCheckoutButton } from './RazorpayCheckoutButton';
 
 interface EmailPreference {
   weeklyDigest: boolean;
@@ -319,18 +320,17 @@ export default function CandidateSettingsClient({
 
             <div className="bg-gradient-to-br from-amber-500/10 to-amber-700/5 border border-amber-500/20 rounded-xl p-5 space-y-3.5 text-xs">
               <div>
-                <span className="text-xs font-bold text-amber-500 uppercase tracking-wider block">PRO PLAN ACTIVE</span>
-                <span className="text-xl font-extrabold text-foreground font-mono mt-1 block">$8 / month</span>
+                <span className="text-xs font-bold text-amber-500 uppercase tracking-wider block">PRO PLAN</span>
+                <span className="text-xl font-extrabold text-foreground font-mono mt-1 block">₹499 / month</span>
               </div>
               <p className="text-xs text-text-muted leading-relaxed">
-                Provides tailwind matches, instant SMS summaries, automated resumes upload matching, and unlimited background trackers.
+                Provides automated ATS matches, AI interview simulations, tailored resume optimizations, and background monitors.
               </p>
-              <button
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 font-bold text-zinc-950 rounded-xl text-xs transition-all shadow-md cursor-pointer"
-                onClick={() => toast.success('Premium Pro subscriber verified.')}
-              >
-                Subscription Active
-              </button>
+              <RazorpayCheckoutButton
+                planTier="PRO_MONTHLY"
+                planTitle="Pro Monthly"
+                amountText="₹499/mo"
+              />
             </div>
           </div>
 

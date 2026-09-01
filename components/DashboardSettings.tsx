@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { User, Shield, Check, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { RazorpayCheckoutButton } from './RazorpayCheckoutButton';
 
 export const DashboardSettings: React.FC = () => {
   const [profileSaved, setProfileSaved] = useState(false);
@@ -202,17 +203,16 @@ export const DashboardSettings: React.FC = () => {
           <div className="bg-gradient-to-br from-amber-500/10 to-amber-700/5 border border-amber-500/25 rounded-xl p-4 space-y-3.5 text-xs">
             <div>
               <span className="text-xs font-bold text-amber-500 uppercase tracking-wider block">PRO PLAN</span>
-              <span className="text-lg font-black text-white font-display mt-0.5 block">$8 / month</span>
+              <span className="text-lg font-black text-white font-display mt-0.5 block">₹499 / month</span>
             </div>
             <p className="text-[11px] text-text-muted leading-relaxed">
               Unlock automated resume tailoring, unlimited scrapers, integration webhooks, and SMS deadline push alerts.
             </p>
-            <button
-              className="w-full py-2.5 bg-amber-500 hover:bg-amber-600 font-bold text-zinc-950 rounded-lg text-xs transition-colors shadow-lg shadow-amber-500/10"
-              onClick={() => alert('Subscription integration coming soon in the next phase.')}
-            >
-              Upgrade to Pro (Demo)
-            </button>
+            <RazorpayCheckoutButton
+              planTier="PRO_MONTHLY"
+              planTitle="Pro Monthly"
+              amountText="₹499/mo"
+            />
           </div>
         </div>
 
