@@ -65,8 +65,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
   const [showProfile, setShowProfile] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
-  const { theme, toggleTheme } = useTheme();
-  const isDark = theme === 'dark';
+  const { theme, toggleTheme, mounted } = useTheme();
+  const isDark = !mounted || theme === 'dark';
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const navRef = useRef<HTMLElement>(null);

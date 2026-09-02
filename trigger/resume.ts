@@ -91,51 +91,55 @@ export async function runResumeParsePipeline(payload: ResumePipelinePayload) {
       },
     });
 
-    // Compute fits in batches to save resource limits
-    const matchPromises = opportunities.map(async (job) => {
-      const matchResult = MatchEngine.match(parserResult.structuredData, job);
+    // Compute fits in batches of 50 to save connection pool limits
+    const CHUNK_SIZE = 50;
+    for (let i = 0; i < opportunities.length; i += CHUNK_SIZE) {
+      const chunk = opportunities.slice(i, i + CHUNK_SIZE);
+      await Promise.all(
+        chunk.map(async (job) => {
+          const matchResult = MatchEngine.match(parserResult.structuredData, job);
 
-      return prisma.jobMatch.upsert({
-        where: {
-          resumeId_opportunityId: {
-            resumeId,
-            opportunityId: job.id,
-          },
-        },
-        create: {
-          resumeId,
-          opportunityId: job.id,
-          overallScore: matchResult.overallScore,
-          skillScore: matchResult.skillScore,
-          techScore: matchResult.techScore,
-          experienceScore: matchResult.experienceScore,
-          locationScore: matchResult.locationScore,
-          employmentTypeScore: matchResult.employmentTypeScore,
-          missingSkills: matchResult.missingSkills,
-          missingTechnologies: matchResult.missingTechnologies,
-          niceToHaveSkills: matchResult.niceToHaveSkills,
-          strengthAreas: matchResult.strengthAreas,
-          improvementSuggestions: matchResult.improvementSuggestions,
-          matchExplanation: matchResult.matchExplanation,
-        },
-        update: {
-          overallScore: matchResult.overallScore,
-          skillScore: matchResult.skillScore,
-          techScore: matchResult.techScore,
-          experienceScore: matchResult.experienceScore,
-          locationScore: matchResult.locationScore,
-          employmentTypeScore: matchResult.employmentTypeScore,
-          missingSkills: matchResult.missingSkills,
-          missingTechnologies: matchResult.missingTechnologies,
-          niceToHaveSkills: matchResult.niceToHaveSkills,
-          strengthAreas: matchResult.strengthAreas,
-          improvementSuggestions: matchResult.improvementSuggestions,
-          matchExplanation: matchResult.matchExplanation,
-        },
-      });
-    });
-
-    await Promise.all(matchPromises);
+          return prisma.jobMatch.upsert({
+            where: {
+              resumeId_opportunityId: {
+                resumeId,
+                opportunityId: job.id,
+              },
+            },
+            create: {
+              resumeId,
+              opportunityId: job.id,
+              overallScore: matchResult.overallScore,
+              skillScore: matchResult.skillScore,
+              techScore: matchResult.techScore,
+              experienceScore: matchResult.experienceScore,
+              locationScore: matchResult.locationScore,
+              employmentTypeScore: matchResult.employmentTypeScore,
+              missingSkills: matchResult.missingSkills,
+              missingTechnologies: matchResult.missingTechnologies,
+              niceToHaveSkills: matchResult.niceToHaveSkills,
+              strengthAreas: matchResult.strengthAreas,
+              improvementSuggestions: matchResult.improvementSuggestions,
+              matchExplanation: matchResult.matchExplanation,
+            },
+            update: {
+              overallScore: matchResult.overallScore,
+              skillScore: matchResult.skillScore,
+              techScore: matchResult.techScore,
+              experienceScore: matchResult.experienceScore,
+              locationScore: matchResult.locationScore,
+              employmentTypeScore: matchResult.employmentTypeScore,
+              missingSkills: matchResult.missingSkills,
+              missingTechnologies: matchResult.missingTechnologies,
+              niceToHaveSkills: matchResult.niceToHaveSkills,
+              strengthAreas: matchResult.strengthAreas,
+              improvementSuggestions: matchResult.improvementSuggestions,
+              matchExplanation: matchResult.matchExplanation,
+            },
+          });
+        })
+      );
+    }
 
     // Trigger Career Analysis pipeline automatically
     try {

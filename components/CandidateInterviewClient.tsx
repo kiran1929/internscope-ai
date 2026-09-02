@@ -11,6 +11,10 @@ import {
   ShieldCheck,
   Loader2,
   Upload,
+  Terminal,
+  Users,
+  FileText,
+  Check,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -398,22 +402,63 @@ export default function CandidateInterviewClient({
 
             {/* Categories Multi-selection */}
             <div className="space-y-2">
-              <label className="text-[10px] uppercase font-bold text-zinc-500 block">Practice Categories</label>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {['Technical', 'Behavioral', 'Resume-based', 'Problem Solving'].map((cat) => {
-                  const selected = categories.includes(cat);
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] uppercase font-bold text-zinc-400 block tracking-wider">Practice Categories</label>
+                <span className="text-[10px] text-zinc-500 font-mono">
+                  {categories.length} selected
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {[
+                  { id: 'Technical', label: 'Technical & Coding', desc: 'Core CS, system design, data structures', icon: Terminal },
+                  { id: 'Behavioral', label: 'Behavioral (STAR)', desc: 'Leadership, teamwork, conflict resolution', icon: Users },
+                  { id: 'Resume-based', label: 'Resume-Based', desc: 'Deep dive on your projects & work experience', icon: FileText },
+                  { id: 'Problem Solving', label: 'Problem Solving', desc: 'Analytical thinking, case studies & estimations', icon: Sparkles },
+                ].map((cat) => {
+                  const selected = categories.includes(cat.id);
+                  const Icon = cat.icon;
                   return (
                     <button
-                      key={cat}
+                      key={cat.id}
                       type="button"
-                      onClick={() => toggleCategory(cat)}
-                      className={`p-2.5 border rounded-lg text-left transition-all ${
+                      onClick={() => toggleCategory(cat.id)}
+                      className={`p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer flex items-start gap-2.5 relative group ${
                         selected
-                          ? 'border-primary bg-primary/5 text-white font-bold'
-                          : 'border-zinc-850 bg-zinc-950 text-zinc-400 hover:bg-zinc-900'
+                          ? 'border-primary/60 bg-primary/10 shadow-sm shadow-primary/10 text-white'
+                          : 'border-zinc-800/80 bg-zinc-950/60 hover:bg-zinc-900/60 hover:border-zinc-700 text-zinc-400'
                       }`}
                     >
-                      {cat}
+                      <div
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                          selected
+                            ? 'bg-primary text-white shadow-sm shadow-primary/30'
+                            : 'bg-zinc-900 text-zinc-400 group-hover:text-zinc-200'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
+
+                      <div className="flex-1 min-w-0 pr-5">
+                        <span className={`text-xs font-bold block transition-colors ${selected ? 'text-white' : 'text-zinc-300 group-hover:text-white'}`}>
+                          {cat.label}
+                        </span>
+                        <span className="text-[10px] text-zinc-500 leading-tight block mt-0.5 font-normal">
+                          {cat.desc}
+                        </span>
+                      </div>
+
+                      <div className="absolute top-3 right-3">
+                        <div
+                          className={`w-4 h-4 rounded-md border flex items-center justify-center transition-all ${
+                            selected
+                              ? 'border-primary bg-primary text-white'
+                              : 'border-zinc-700 bg-zinc-900/50'
+                          }`}
+                        >
+                          {selected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                        </div>
+                      </div>
                     </button>
                   );
                 })}

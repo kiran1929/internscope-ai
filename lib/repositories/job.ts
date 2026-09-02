@@ -37,6 +37,21 @@ export class JobRepository {
   }
 
   static async findRunning(provider?: string): Promise<IngestionJob[]> {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+
+    // Auto-reconcile stale/zombie jobs from terminated serverless executions
+    await prisma.ingestionJob.updateMany({
+      where: {
+        status: JobStatus.RUNNING,
+        startedAt: { lt: tenMinutesAgo },
+      },
+      data: {
+        status: JobStatus.FAILED,
+        finishedAt: new Date(),
+        error: 'Job timed out or worker process terminated unexpectedly.',
+      },
+    });
+
     return prisma.ingestionJob.findMany({
       where: {
         status: JobStatus.RUNNING,
