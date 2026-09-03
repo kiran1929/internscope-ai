@@ -581,6 +581,7 @@ export async function searchJobsAction(options: SearchOptions) {
       type: opp.type.toString(),
       applicationUrl: opp.applicationUrl,
       createdAt: opp.createdAt,
+      description: opp.description,
       company: {
         id: opp.company.id,
         name: opp.company.name,

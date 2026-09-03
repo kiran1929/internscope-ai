@@ -149,6 +149,20 @@ html.light .text-zinc-300 {
   color: #334155 !important;
 }
 
+/* Opportunity descriptions must stay readable in both themes */
+.rich-description,
+.rich-description * {
+  color: inherit !important;
+}
+
+html.light .rich-description {
+  color: #334155 !important;
+}
+
+html.dark .rich-description {
+  color: #d4d4d8 !important;
+}
+
 html.light .text-zinc-400,
 html.light .text-zinc-500,
 html.light .text-zinc-600 {

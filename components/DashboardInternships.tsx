@@ -281,8 +281,10 @@ export const DashboardInternships: React.FC<DashboardInternshipsProps> = ({
               </div>
 
               <div className="space-y-2">
-                <h4 className="text-xs font-semibold text-white">Role Description</h4>
-                <RichDescription content={selectedInternship.description} />
+                <h4 className="text-xs font-semibold text-foreground">Role Description</h4>
+                <div className="max-h-64 overflow-y-auto pr-1 rounded-lg bg-surface-muted/40 border border-border-subtle p-3">
+                  <RichDescription content={selectedInternship.description} />
+                </div>
               </div>
 
               <div className="space-y-2 pt-2">

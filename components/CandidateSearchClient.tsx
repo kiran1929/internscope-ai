@@ -16,6 +16,7 @@ interface OpportunityItem {
   type: string;
   applicationUrl: string;
   createdAt: Date;
+  description?: string | null;
   company: {
     id: string;
     name: string;
@@ -28,6 +29,21 @@ interface OpportunityItem {
     experienceLevel: string | null;
     salaryMin: number | null;
   } | null;
+}
+
+function toPlainExcerpt(raw?: string | null, maxLen = 180): string {
+  if (!raw?.trim()) return '';
+  let text = raw
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&amp;/gi, '&')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (text.length <= maxLen) return text;
+  return `${text.slice(0, maxLen).trim()}…`;
 }
 
 interface CandidateSearchClientProps {
@@ -332,6 +348,12 @@ export default function CandidateSearchClient({
                       >
                         {role.title}
                       </Link>
+
+                      {toPlainExcerpt(role.description) && (
+                        <p className="text-xs text-text-muted leading-relaxed line-clamp-2 max-w-2xl">
+                          {toPlainExcerpt(role.description)}
+                        </p>
+                      )}
 
                       {/* Concrete Spec Badges (Location, Mode, Salary, Level) */}
                       <div className="flex flex-wrap items-center gap-2 text-xs">
