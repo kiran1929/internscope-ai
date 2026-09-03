@@ -53,7 +53,7 @@ export default function CandidateSearchClient({
   const initialUrlQuery = searchParams.get('query') || searchParams.get('q') || '';
   const [query, setQuery] = useState(initialUrlQuery);
   const [remoteType, setRemoteType] = useState('');
-  const [employmentType, setEmploymentType] = useState('');
+  const [employmentType] = useState('internship');
   const [experienceLevel, setExperienceLevel] = useState('');
   const [salaryMin, setSalaryMin] = useState<number>(0);
   
@@ -196,17 +196,6 @@ export default function CandidateSearchClient({
             <option value="onsite">🏢 On-site Only</option>
           </select>
 
-          {/* Job Category Dropdown */}
-          <select
-            value={employmentType}
-            onChange={(e) => setEmploymentType(e.target.value)}
-            className="h-9 bg-surface-muted/40 border border-border-subtle hover:border-border-hover rounded-lg px-2.5 text-xs font-medium text-foreground outline-none focus:border-primary/50 cursor-pointer shrink-0"
-          >
-            <option value="">Category: All Types</option>
-            <option value="internship">💼 Internships</option>
-            <option value="new_grad">🎓 New Grad & Full-time</option>
-          </select>
-
           {/* Experience Level Dropdown */}
           <select
             value={experienceLevel}
@@ -237,13 +226,12 @@ export default function CandidateSearchClient({
           </select>
 
           {/* Reset Filters Action */}
-          {(query || remoteType || employmentType || experienceLevel || salaryMin > 0) && (
+          {(query || remoteType || experienceLevel || salaryMin > 0) && (
             <button
               type="button"
               onClick={() => {
                 setQuery('');
                 setRemoteType('');
-                setEmploymentType('');
                 setExperienceLevel('');
                 setSalaryMin(0);
               }}

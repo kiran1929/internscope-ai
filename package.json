@@ -10,6 +10,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "sync:catalog": "npx tsx scripts/sync-scrape-catalog.ts",
+    "fetch:india-ats": "npx tsx scripts/fetch-india-ats.ts",
+    "fetch:jobvetta": "npx tsx scripts/fetch-jobvetta.ts",
+    "purge:non-internships": "npx tsx scripts/purge-non-internships.ts",
+    "fix:application-urls": "npx tsx scripts/fix-application-urls.ts",
     "purge:expired": "npx tsx scripts/purge-expired-opportunities.ts"
   },
   "dependencies": {

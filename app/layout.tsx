@@ -39,7 +39,22 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      localization={{
+        signIn: {
+          start: {
+            title: 'Welcome back',
+            subtitle: 'Sign in to InternScope AI to continue',
+          },
+        },
+        signUp: {
+          start: {
+            title: 'Create your account',
+            subtitle: 'Join InternScope AI and start tracking internships',
+          },
+        },
+      }}
+    >
       <html
         lang="en"
         className={`${inter.variable} ${outfit.variable} dark h-full antialiased`}

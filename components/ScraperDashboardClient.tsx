@@ -17,7 +17,7 @@ import {
   XCircle,
   Eye
 } from 'lucide-react';
-import { triggerSyncAction, retrySyncAction, triggerEnrichmentAction } from '@/app/actions/scraper';
+import { triggerSyncAction, retrySyncAction, triggerEnrichmentAction, getEnrichmentProgressAction } from '@/app/actions/scraper';
 import { JobStatus } from '@/lib/generated/prisma/enums';
 import type { IngestionJob } from '@/lib/generated/prisma/client';
 import { toast } from 'sonner';
@@ -47,6 +47,8 @@ interface EnrichmentStats {
   avgConfidence: number;
   totalTokens: number;
   totalCost: number;
+  activeItemTitle?: string | null;
+  activeItemCompany?: string | null;
 }
 
 interface ScraperDashboardClientProps {
@@ -65,23 +67,67 @@ interface ScraperDashboardClientProps {
     model: string;
   };
   scrapingEnabled: boolean;
+  catalogBoardCount: number;
+  boardCounts: {
+    greenhouse: number;
+    lever: number;
+    ashby: number;
+    smartrecruiters: number;
+    workday: number;
+  };
 }
 
 export default function ScraperDashboardClient({
   providers,
   runningJobs,
   history,
-  enrichmentStats,
+  enrichmentStats: initialEnrichmentStats,
   confidenceDistribution,
   activeAIProvider,
   scrapingEnabled,
+  catalogBoardCount,
+  boardCounts,
 }: ScraperDashboardClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [selectedJob, setSelectedJob] = useState<IngestionJob | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [enrichStats, setEnrichStats] = useState<EnrichmentStats>(initialEnrichmentStats);
+  const [isEnrichingManual, setIsEnrichingManual] = useState(false);
 
-  // Automatically poll and refresh dashboard every 4s while any job is active
+  // Sync initial stats when server props change
+  useEffect(() => {
+    setEnrichStats(initialEnrichmentStats);
+  }, [initialEnrichmentStats]);
+
+  // Is enrichment currently running (either in DB state or initiated by client)
+  const isEnrichmentActive = enrichStats.running > 0 || isEnrichingManual;
+
+  // Real-time polling for AI Enrichment progress
+  useEffect(() => {
+    if (!isEnrichmentActive && enrichStats.pending === 0) return;
+
+    // If active or pending, poll every 2 seconds for live progress
+    const interval = setInterval(async () => {
+      try {
+        const res = await getEnrichmentProgressAction();
+        if (res.success && res.stats) {
+          setEnrichStats(res.stats);
+          if (!res.isRunning && res.stats.pending === 0 && isEnrichingManual) {
+            setIsEnrichingManual(false);
+            toast.success('AI Enrichment pipeline finished processing all listings.');
+            router.refresh();
+          }
+        }
+      } catch {
+        // Silent catch for background polling
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [isEnrichmentActive, enrichStats.pending, isEnrichingManual, router]);
+
+  // Automatically poll and refresh dashboard every 4s while any scraper job is active
   useEffect(() => {
     if (runningJobs.length === 0) return;
 
@@ -93,12 +139,18 @@ export default function ScraperDashboardClient({
   }, [runningJobs.length, router]);
 
   const handleEnrich = () => {
+    setIsEnrichingManual(true);
     startTransition(async () => {
       const res = await triggerEnrichmentAction();
       if (res.success) {
         toast.success('AI Data Enrichment pipeline started successfully.');
-        router.refresh();
+        // Immediate poll
+        const progressRes = await getEnrichmentProgressAction();
+        if (progressRes.success && progressRes.stats) {
+          setEnrichStats(progressRes.stats);
+        }
       } else {
+        setIsEnrichingManual(false);
         toast.error(`Failed to start enrichment: ${res.error}`);
       }
     });
@@ -107,10 +159,18 @@ export default function ScraperDashboardClient({
   const handleRefresh = async () => {
     setIsRefreshing(true);
     router.refresh();
+    try {
+      const progressRes = await getEnrichmentProgressAction();
+      if (progressRes.success && progressRes.stats) {
+        setEnrichStats(progressRes.stats);
+      }
+    } catch {
+      // Ignore
+    }
     setTimeout(() => {
       setIsRefreshing(false);
       toast.success('Dashboard data refreshed');
-    }, 800);
+    }, 600);
   };
 
   const handleTrigger = (provider: string) => {
@@ -138,6 +198,15 @@ export default function ScraperDashboardClient({
   };
 
   const isScrapingActive = runningJobs.length > 0;
+
+  // Calculate enrichment progress percentage
+  const totalEnrich = enrichStats.total || 0;
+  const completedEnrich = enrichStats.completed || 0;
+  const pendingEnrich = enrichStats.pending || 0;
+  const runningEnrich = enrichStats.running || 0;
+  const failedEnrich = enrichStats.failed || 0;
+  const progressPercent =
+    totalEnrich > 0 ? Math.min(100, Math.round((completedEnrich / totalEnrich) * 100)) : 100;
 
   return (
     <div className="space-y-6">
@@ -203,7 +272,7 @@ export default function ScraperDashboardClient({
           >
             <div className="space-y-1">
               <p className="text-xs font-bold text-zinc-200">Greenhouse Sync</p>
-              <p className="text-[10px] text-zinc-500">Seed targets: Stripe</p>
+              <p className="text-[10px] text-zinc-500">{boardCounts.greenhouse} Indian Greenhouse boards</p>
             </div>
             {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Play className="w-3.5 h-3.5 text-zinc-400" />}
           </button>
@@ -215,7 +284,7 @@ export default function ScraperDashboardClient({
           >
             <div className="space-y-1">
               <p className="text-xs font-bold text-zinc-200">Lever Sync</p>
-              <p className="text-[10px] text-zinc-500">Seed targets: Spotify</p>
+              <p className="text-[10px] text-zinc-500">{boardCounts.lever} Indian Lever boards</p>
             </div>
             {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Play className="w-3.5 h-3.5 text-zinc-400" />}
           </button>
@@ -227,7 +296,19 @@ export default function ScraperDashboardClient({
           >
             <div className="space-y-1">
               <p className="text-xs font-bold text-zinc-200">Ashby Sync</p>
-              <p className="text-[10px] text-zinc-500">Seed targets: Linear</p>
+              <p className="text-[10px] text-zinc-500">{boardCounts.ashby} Indian Ashby boards</p>
+            </div>
+            {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Play className="w-3.5 h-3.5 text-zinc-400" />}
+          </button>
+
+          <button
+            onClick={() => handleTrigger('jobvetta')}
+            disabled={isPending}
+            className="flex items-center justify-between p-3.5 rounded-lg border border-zinc-800/80 bg-zinc-950 hover:border-primary/40 hover:bg-zinc-900/20 text-left transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+          >
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-zinc-200">JobVetta Sync</p>
+              <p className="text-[10px] text-zinc-500">India internship index (API)</p>
             </div>
             {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Play className="w-3.5 h-3.5 text-zinc-400" />}
           </button>
@@ -239,7 +320,7 @@ export default function ScraperDashboardClient({
           >
             <div className="space-y-1">
               <p className="text-xs font-bold text-primary">Full Platform Sync</p>
-              <p className="text-[10px] text-zinc-400">Sync all 3 sequentially</p>
+              <p className="text-[10px] text-zinc-400">All {catalogBoardCount} ATS boards + JobVetta</p>
             </div>
             {isPending ? <RefreshCw className="w-3.5 h-3.5 text-primary animate-spin" /> : <Shuffle className="w-3.5 h-3.5 text-primary" />}
           </button>
@@ -302,41 +383,151 @@ export default function ScraperDashboardClient({
         </div>
       </div>
 
-      {/* AI Career Intelligence Enrichment Monitor & Controls */}
+      {/* AI Career Intelligence Enrichment Monitor, Progress Bar & Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Stats and Distribution */}
+        {/* Left 2 Cols: Stats, Progress Bar and Distribution */}
         <div className="lg:col-span-2 bg-[#111113] border border-zinc-800/80 rounded-xl p-5 shadow-sm space-y-5">
-          <div className="flex items-center justify-between border-b border-zinc-900 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-900 pb-3">
             <div>
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white">AI Opportunity Enrichment</h3>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-white">AI Opportunity Enrichment</h3>
+                {/* Live Enrichment Status Indicator */}
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                    isEnrichmentActive
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 animate-pulse'
+                      : completedEnrich === totalEnrich && totalEnrich > 0
+                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                      : 'bg-zinc-800/60 border-zinc-700/60 text-zinc-400'
+                  }`}
+                >
+                  <span className="relative flex h-1.5 w-1.5">
+                    {isEnrichmentActive ? (
+                      <>
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      </>
+                    ) : (
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-zinc-500"></span>
+                    )}
+                  </span>
+                  <span>
+                    {isEnrichmentActive
+                      ? 'Enrichment Running'
+                      : completedEnrich === totalEnrich && totalEnrich > 0
+                      ? '100% Enriched'
+                      : 'Enrichment Idle'}
+                  </span>
+                </span>
+              </div>
               <p className="text-[10px] text-zinc-500 mt-0.5">Enrich raw listings with skills, tech stacks, salaries, and classifications.</p>
             </div>
-            <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded font-bold uppercase">
+            <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded font-bold uppercase self-start sm:self-auto">
               Model: {activeAIProvider.name} ({activeAIProvider.model})
             </span>
+          </div>
+
+          {/* AI Enrichment Overall Progress Bar Card */}
+          <div className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Cpu className={`w-4 h-4 ${isEnrichmentActive ? 'text-emerald-400 animate-spin' : 'text-primary'}`} />
+                  <span className="text-xs font-bold text-zinc-200">
+                    Enrichment Progress: {progressPercent}%
+                  </span>
+                  <span className="text-[10px] font-mono text-zinc-500">
+                    ({completedEnrich} of {totalEnrich} opportunities processed)
+                  </span>
+                </div>
+                {isEnrichmentActive && enrichStats.activeItemTitle && (
+                  <p className="text-[11px] text-emerald-400 font-medium animate-pulse flex items-center gap-1.5 pl-6">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span>Currently enriching: &ldquo;{enrichStats.activeItemTitle}&rdquo; {enrichStats.activeItemCompany ? `@ ${enrichStats.activeItemCompany}` : ''}</span>
+                  </p>
+                )}
+              </div>
+
+              <span className="text-xs font-mono font-extrabold text-foreground px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 self-start sm:self-auto">
+                {completedEnrich} / {totalEnrich}
+              </span>
+            </div>
+
+            {/* Glowing Interactive Progress Track */}
+            <div className="w-full bg-zinc-900/90 rounded-full h-3 overflow-hidden border border-zinc-800/80 p-0.5 relative">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ease-out relative ${
+                  isEnrichmentActive
+                    ? 'bg-gradient-to-r from-primary via-emerald-400 to-teal-300 shadow-sm shadow-emerald-500/20'
+                    : progressPercent === 100
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+                    : 'bg-gradient-to-r from-primary to-emerald-500'
+                }`}
+                style={{ width: `${Math.max(progressPercent, totalEnrich === 0 ? 0 : 2)}%` }}
+              >
+                {/* Animated shimmer overlay during active processing */}
+                {isEnrichmentActive && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[shimmer_1.5s_infinite] -skew-x-12" />
+                )}
+              </div>
+            </div>
+
+            {/* Subtext Stats Line */}
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-zinc-400 font-mono pt-0.5">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  Completed: <strong className="text-zinc-200">{completedEnrich}</strong>
+                </span>
+                {runningEnrich > 0 && (
+                  <span className="inline-flex items-center gap-1 text-cyan-400 font-semibold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    Running: <strong className="text-cyan-300">{runningEnrich}</strong>
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                  Pending: <strong className="text-zinc-200">{pendingEnrich}</strong>
+                </span>
+                {failedEnrich > 0 && (
+                  <span className="inline-flex items-center gap-1 text-red-400">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+                    Failed: <strong className="text-red-300">{failedEnrich}</strong>
+                  </span>
+                )}
+              </div>
+
+              <span>
+                {isEnrichmentActive
+                  ? '⚡ Auto-syncing live progress...'
+                  : pendingEnrich > 0
+                  ? `${pendingEnrich} listings waiting for AI classification`
+                  : '✓ All database listings fully enriched'}
+              </span>
+            </div>
           </div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-zinc-950 p-3.5 rounded-lg border border-zinc-900 space-y-1">
               <span className="text-[9px] uppercase font-bold text-zinc-500">Enriched Count</span>
-              <p className="text-lg font-extrabold text-emerald-400">{enrichmentStats.completed} / {enrichmentStats.total}</p>
+              <p className="text-lg font-extrabold text-emerald-400">{completedEnrich} / {totalEnrich}</p>
             </div>
 
             <div className="bg-zinc-950 p-3.5 rounded-lg border border-zinc-900 space-y-1">
               <span className="text-[9px] uppercase font-bold text-zinc-500">Pending Enrichment</span>
-              <p className="text-lg font-extrabold text-amber-500">{enrichmentStats.pending}</p>
+              <p className="text-lg font-extrabold text-amber-500">{pendingEnrich}</p>
             </div>
 
             <div className="bg-zinc-950 p-3.5 rounded-lg border border-zinc-900 space-y-1">
               <span className="text-[9px] uppercase font-bold text-zinc-500">Failed Enrichment</span>
-              <p className="text-lg font-extrabold text-red-500">{enrichmentStats.failed}</p>
+              <p className="text-lg font-extrabold text-red-500">{failedEnrich}</p>
             </div>
 
             <div className="bg-zinc-950 p-3.5 rounded-lg border border-zinc-900 space-y-1">
               <span className="text-[9px] uppercase font-bold text-zinc-500">Avg Enrichment Time</span>
               <p className="text-lg font-extrabold text-zinc-200">
-                {enrichmentStats.avgLatencyMs ? `${(enrichmentStats.avgLatencyMs / 1000).toFixed(1)}s` : '---'}
+                {enrichStats.avgLatencyMs ? `${(enrichStats.avgLatencyMs / 1000).toFixed(1)}s` : '---'}
               </p>
             </div>
           </div>
@@ -345,15 +536,15 @@ export default function ScraperDashboardClient({
           <div className="grid grid-cols-3 gap-4 pt-1">
             <div className="text-center">
               <span className="text-[8px] uppercase font-bold text-zinc-500 block">Total Tokens Used</span>
-              <span className="text-xs font-semibold text-zinc-300 font-mono">{enrichmentStats.totalTokens.toLocaleString()}</span>
+              <span className="text-xs font-semibold text-zinc-300 font-mono">{enrichStats.totalTokens.toLocaleString()}</span>
             </div>
             <div className="text-center border-x border-zinc-900">
               <span className="text-[8px] uppercase font-bold text-zinc-500 block">Estimated AI Cost</span>
-              <span className="text-xs font-bold text-emerald-400 font-mono">${enrichmentStats.totalCost.toFixed(4)}</span>
+              <span className="text-xs font-bold text-emerald-400 font-mono">${enrichStats.totalCost.toFixed(4)}</span>
             </div>
             <div className="text-center">
               <span className="text-[8px] uppercase font-bold text-zinc-500 block">Avg Confidence</span>
-              <span className="text-xs font-bold text-zinc-300 font-mono">{(enrichmentStats.avgConfidence * 100).toFixed(1)}%</span>
+              <span className="text-xs font-bold text-zinc-300 font-mono">{(enrichStats.avgConfidence * 100).toFixed(1)}%</span>
             </div>
           </div>
         </div>
@@ -388,18 +579,38 @@ export default function ScraperDashboardClient({
           </div>
 
           {/* Trigger Enrichment controls */}
-          <div className="pt-2">
+          <div className="pt-2 space-y-2">
             <button
               onClick={handleEnrich}
-              disabled={isPending || enrichmentStats.pending === 0}
-              className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs font-bold text-primary transition-all disabled:opacity-50 hover:cursor-pointer"
+              disabled={isPending || isEnrichmentActive || pendingEnrich === 0}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg border border-primary/30 bg-primary/10 hover:bg-primary/20 text-xs font-bold text-primary transition-all disabled:opacity-50 hover:cursor-pointer disabled:cursor-not-allowed shadow-xs shadow-primary/10"
             >
-              <Cpu className="w-3.5 h-3.5" />
-              <span>Run AI Enrichment Pipeline ({enrichmentStats.pending} pending)</span>
+              {isEnrichmentActive ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                  <span className="text-emerald-400">Processing AI Pipeline ({pendingEnrich} queued)...</span>
+                </>
+              ) : (
+                <>
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>
+                    {pendingEnrich === 0
+                      ? '✓ All Opportunities Enriched'
+                      : `Run AI Enrichment Pipeline (${pendingEnrich} pending)`}
+                  </span>
+                </>
+              )}
             </button>
+
+            {isEnrichmentActive && (
+              <p className="text-[10px] text-center text-zinc-400 font-mono">
+                Throttling at ~13 req/min to respect Gemini AI rate limits.
+              </p>
+            )}
           </div>
         </div>
       </div>
+
 
 
       {/* Running/Active Tasks */}

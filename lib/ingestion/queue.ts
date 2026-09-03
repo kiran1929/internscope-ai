@@ -14,6 +14,9 @@ import { ScrapeProvider } from './company-catalog';
 import { isScrapingEnabled, SCRAPING_DISABLED_MESSAGE } from './scraper-config';
 
 import { acquireDistributedLock } from './distributed-lock';
+import { buildProviderRollups } from './scraper-metrics';
+import type { IngestionRunMetrics } from './scraper-metrics-types';
+import type { BoardScrapeMetric } from './scraper-metrics-types';
 
 // Concurrency locks
 const activeJobs = new Set<string>();
@@ -88,6 +91,7 @@ export class IngestionQueue {
       };
 
       try {
+        const catalogSyncStarted = Date.now();
         appendLog('[Catalog] Syncing scrape company catalog to database...');
         const catalogSync = await syncCatalogToDatabase();
         appendLog(`[Catalog] Upserted ${catalogSync.upserted} companies from catalog.`);
@@ -96,6 +100,7 @@ export class IngestionQueue {
         if (purged > 0) {
           appendLog(`[Cleanup] Removed ${purged} expired-deadline opportunities.`);
         }
+        const catalogSyncMs = Date.now() - catalogSyncStarted;
 
         const runPipeline = async (connector: Connector) =>
           runWithRetry(() => runPipelineForConnector(connector));
@@ -103,25 +108,80 @@ export class IngestionQueue {
         let summary: IngestionSummary;
         let boardsSucceeded = 0;
         let boardsFailed = 0;
+        let boardMetrics: BoardScrapeMetric[] = [];
 
         if (provider === 'all') {
-          appendLog('[All Sync] Running full catalog across Greenhouse, Lever, and Ashby');
+          appendLog('[All Sync] Running internship catalog (India + global) across SmartRecruiters, Workday, Greenhouse, Lever, Ashby, and JobVetta');
           const result = await runAllCatalogBoards(runPipeline, appendLog);
           summary = result.summary;
           boardsSucceeded = result.boardsSucceeded;
           boardsFailed = result.boardsFailed;
+          boardMetrics = result.boardMetrics;
           result.boardErrors.forEach(({ board, error }) => {
             appendLog(`[Board Error] ${board}: ${error}`);
           });
-        } else if (provider === 'greenhouse' || provider === 'lever' || provider === 'ashby') {
+        } else if (
+          provider === 'greenhouse' ||
+          provider === 'lever' ||
+          provider === 'ashby' ||
+          provider === 'smartrecruiters' ||
+          provider === 'workday'
+        ) {
           appendLog(`[${provider}] Running catalog boards for provider`);
           const result = await runBoardsForProvider(provider as ScrapeProvider, runPipeline, appendLog);
           summary = result.summary;
           boardsSucceeded = result.boardsSucceeded;
           boardsFailed = result.boardsFailed;
+          boardMetrics = result.boardMetrics;
           result.boardErrors.forEach(({ board, error }) => {
             appendLog(`[Board Error] ${board}: ${error}`);
           });
+        } else if (provider === 'jobvetta') {
+          appendLog('[JobVetta] Running JobVetta India internship connector');
+          const { JobVettaConnector } = await import('./connectors/jobvetta');
+          const connector = new JobVettaConnector();
+          if (!connector.isConfigured()) {
+            throw new Error('JOBVETTA_API_KEY is not set. Add it to your environment to enable JobVetta.');
+          }
+          const boardStarted = Date.now();
+          summary = await runPipeline(connector);
+          boardsSucceeded = 1;
+          const durationMsBoard = Date.now() - boardStarted;
+          boardMetrics = [
+            {
+              board: 'JobVetta India',
+              provider: 'jobvetta',
+              boardToken: 'jobvetta',
+              durationMs: durationMsBoard,
+              fetched: summary.totalFetched,
+              persisted: summary.totalPersisted,
+              duplicates: summary.totalDuplicates,
+              failed: summary.totalFailed,
+              msPerJob:
+                summary.totalFetched > 0
+                  ? Math.round(durationMsBoard / summary.totalFetched)
+                  : 0,
+              success: true,
+            },
+          ];
+          appendLog(
+            `[JobVetta] Used ${connector.getRequestCount()} API requests; fetched ${summary.totalFetched}, persisted ${summary.totalPersisted}`
+          );
+        } else if (provider === 'unstop') {
+          appendLog('[Unstop] Running Unstop India Campus Connector');
+          const { UnstopConnector } = await import('./connectors/unstop');
+          summary = await runPipeline(new UnstopConnector());
+          boardsSucceeded = 1;
+        } else if (provider === 'devfolio') {
+          appendLog('[Devfolio] Running Devfolio India Hackathon Connector');
+          const { DevfolioConnector } = await import('./connectors/devfolio');
+          summary = await runPipeline(new DevfolioConnector());
+          boardsSucceeded = 1;
+        } else if (provider === 'indian-tech') {
+          appendLog('[Indian Tech] Running Indian Tech Unicorns & Research Ecosystem Connector');
+          const { IndianTechConnector } = await import('./connectors/indian-tech');
+          summary = await runPipeline(new IndianTechConnector());
+          boardsSucceeded = 1;
         } else {
           throw new Error(`Unsupported provider: "${provider}"`);
         }
@@ -137,6 +197,16 @@ export class IngestionQueue {
 
         executionLogs.push(`[Completed] Job completed in ${durationMs}ms. Memory usage change: ${memoryUsedMb}MB`);
 
+        const runMetrics: IngestionRunMetrics = {
+          version: 1,
+          boardsSucceeded,
+          boardsFailed,
+          catalogSyncMs,
+          purgeExpiredCount: purged,
+          boardMetrics,
+          providerRollups: buildProviderRollups(boardMetrics),
+        };
+
         await JobRepository.update(dbJob.id, {
           status: JobStatus.COMPLETED,
           finishedAt: new Date(),
@@ -145,6 +215,7 @@ export class IngestionQueue {
           importedCount: summary.totalPersisted,
           duplicateCount: summary.totalDuplicates,
           failedCount: summary.totalFailed + boardsFailed,
+          metrics: runMetrics as unknown as Prisma.InputJsonValue,
           validationErrors: summary.records
             .filter((r) => r.validation && !r.validation.isValid)
             .map((r) => ({

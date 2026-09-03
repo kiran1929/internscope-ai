@@ -41,6 +41,22 @@ export async function getEffectiveScrapeBoards(): Promise<ScrapeBoard[]> {
         } else if (url.includes('ashbyhq.com/')) {
           provider = 'ashby';
           token = url.split('ashbyhq.com/')[1]?.split(/[\/?#]/)[0] || '';
+        } else if (url.includes('myworkdayjobs.com/')) {
+          const hostMatch = url.match(/https?:\/\/([^.]+)\.(wd\d+)\.myworkdayjobs\.com/);
+          const siteMatch = url.match(/myworkdayjobs\.com\/(?:en-US\/)?([^/?#]+)/);
+          if (hostMatch && siteMatch) {
+            dynamicBoards.push({
+              name: comp.name,
+              provider: 'workday',
+              boardToken: siteMatch[1],
+              tenant: hostMatch[1],
+              wdServer: hostMatch[2],
+              websiteUrl: comp.websiteUrl ?? undefined,
+              industry: comp.industry ?? 'Technology',
+              enabled: true,
+            });
+            continue;
+          }
         }
 
         if (provider && token) {

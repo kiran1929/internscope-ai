@@ -1,4 +1,5 @@
 import { Prisma } from '../generated/prisma/client';
+import { OpportunityType } from '../generated/prisma/enums';
 
 /** Midnight local time — compare calendar dates only. */
 export function startOfToday(): Date {
@@ -14,13 +15,14 @@ export function isDeadlineExpired(deadline: Date | string | null | undefined): b
   return date < startOfToday();
 }
 
-/** Prisma filter: active listings that are not past deadline. */
+/** Prisma filter: open, active listings that are internships only. */
 export function openOpportunityWhere(
   extra?: Prisma.OpportunityWhereInput
 ): Prisma.OpportunityWhereInput {
   const today = startOfToday();
   return {
     ...extra,
+    type: OpportunityType.INTERNSHIP,
     isArchived: extra?.isArchived ?? false,
     isActive: extra?.isActive ?? true,
     OR: [{ deadline: null }, { deadline: { gte: today } }],

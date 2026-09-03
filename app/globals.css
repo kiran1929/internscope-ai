@@ -265,22 +265,12 @@ html.light .btn-ghost:hover {
   color: var(--foreground) !important;
 }
 
-/* Clerk theme overrides */
-html.light .cl-rootBox span,
-html.light .cl-rootBox p,
-html.light .cl-rootBox div:not(.cl-formFieldInputGroup):not(.cl-socialButtons):not(.cl-socialButtonsBlockButton),
-html.light .cl-rootBox label,
-html.light .cl-card span,
-html.light .cl-card p,
-html.light .cl-card div:not(.cl-formFieldInputGroup):not(.cl-socialButtons):not(.cl-socialButtonsBlockButton),
-html.light .cl-card label {
-  color: #334155 !important;
-}
-
-html.light .cl-formFieldInput {
+/* Clerk theme overrides — scoped by app theme */
+html.light .cl-formFieldInput,
+html.light .cl-input {
   background-color: #FFFFFF !important;
-  color: var(--foreground) !important;
-  border-color: var(--border-subtle) !important;
+  color: #0F172A !important;
+  border: 1px solid #CBD5E1 !important;
 }
 
 html.light .cl-rootBox svg,
@@ -291,7 +281,7 @@ html.light .cl-card img {
 }
 
 html.light .cl-dividerLine {
-  background-color: var(--border-subtle) !important;
+  background-color: #E2E8F0 !important;
 }
 
 /* Marketing pages keep their dark palette when the app theme is light */
@@ -512,37 +502,166 @@ html.light .preserve-dark-theme .landing-cta-card {
   transform: translateY(-1px);
 }
 
-/* Clerk Dark Theme Legibility Overrides */
-.cl-rootBox span,
-.cl-rootBox p,
-.cl-rootBox div:not(.cl-formFieldInputGroup):not(.cl-socialButtons):not(.cl-socialButtonsBlockButton),
-.cl-rootBox label,
-.cl-card span,
-.cl-card p,
-.cl-card div:not(.cl-formFieldInputGroup):not(.cl-socialButtons):not(.cl-socialButtonsBlockButton),
-.cl-card label {
-  color: #E4E4E7 !important; /* text-zinc-200 */
-}
-.cl-rootBox a,
-.cl-card a {
-  color: #2563EB !important; /* Force action links to remain primary blue */
-}
-.cl-rootBox a:hover,
-.cl-card a:hover {
-  color: #60A5FA !important; /* Light blue on hover */
-}
-.cl-rootBox svg,
-.cl-card svg,
-.cl-rootBox img,
-.cl-card img {
-  filter: invert(0.9) brightness(1.8) !important; /* Make Clerk branding logo bright and visible */
-}
-.cl-dividerLine {
-  background-color: #27272A !important; /* border-zinc-800 */
-}
-.cl-formFieldInput {
+/* Clerk Dark Theme Legibility Overrides (app shell — not auth pages) */
+html.dark .cl-formFieldInput,
+html.dark .cl-input {
   background-color: #09090B !important;
   color: #FAFAFA !important;
+  border: 1px solid #27272A !important;
+}
+
+html.dark .cl-dividerLine {
+  background-color: #27272A !important;
+}
+
+html.dark .cl-footerActionLink,
+html.dark .cl-formHeaderTitle + a,
+html.dark .cl-identityPreviewEditButton {
+  color: #60A5FA !important;
+}
+
+/* Force light Clerk UI on dedicated auth pages regardless of html.dark */
+.auth-clerk .cl-rootBox,
+.auth-clerk .cl-card,
+.auth-clerk .cl-footer {
+  color: #0F172A !important;
+}
+
+.auth-clerk .cl-headerTitle,
+.auth-clerk .cl-formHeaderTitle,
+.auth-clerk .cl-identityPreviewText {
+  color: #0F172A !important;
+}
+
+.auth-clerk .cl-headerSubtitle,
+.auth-clerk .cl-formHeaderSubtitle,
+.auth-clerk .cl-footerActionText,
+.auth-clerk .cl-dividerText,
+.auth-clerk .cl-formFieldLabel,
+.auth-clerk .cl-formFieldHintText,
+.auth-clerk .cl-lastAuthenticationStrategyBadge {
+  color: #64748B !important;
+}
+
+.auth-clerk .cl-footerActionLink,
+.auth-clerk .cl-identityPreviewEditButton {
+  color: #2563EB !important;
+}
+
+.auth-clerk .cl-formFieldInput,
+.auth-clerk .cl-input,
+.auth-clerk input[type='email'],
+.auth-clerk input[type='text'],
+.auth-clerk input[type='password'],
+.auth-clerk input:not([type='hidden']):not([type='checkbox']):not([type='radio']) {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 0.75rem !important;
+  min-height: 2.75rem !important;
+  padding: 0.7rem 0.875rem !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04) !important;
+  caret-color: #0F172A !important;
+}
+
+.auth-clerk .cl-formFieldInput:focus,
+.auth-clerk .cl-input:focus,
+.auth-clerk input:not([type='hidden']):focus {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+  outline: none !important;
+}
+
+.auth-clerk .cl-socialButtonsBlockButton {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #334155 !important;
+}
+
+.auth-clerk .cl-socialButtonsBlockButtonText {
+  color: #334155 !important;
+}
+
+.auth-clerk .cl-formButtonPrimary {
+  background-color: #2563EB !important;
+  color: #FFFFFF !important;
+}
+
+.auth-clerk .cl-dividerLine {
+  background-color: #E2E8F0 !important;
+}
+
+.auth-clerk .cl-rootBox svg,
+.auth-clerk .cl-card svg,
+.auth-clerk .cl-rootBox img,
+.auth-clerk .cl-card img {
+  filter: none !important;
+}
+
+/* Card + footer stacking: stop Development mode / Secured by Clerk overlap */
+.auth-clerk .cl-cardBox {
+  overflow: visible !important;
+}
+
+.auth-clerk .cl-footer {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.65rem !important;
+  padding: 1rem 1.5rem 1.15rem !important;
+  margin: 0 !important;
+  position: relative !important;
+  background-color: #F8FAFC !important;
+  border-top: 1px solid #F1F5F9 !important;
+}
+
+.auth-clerk .cl-footerAction {
+  margin: 0 !important;
+  padding: 0 !important;
+  position: static !important;
+}
+
+.auth-clerk .cl-footerPages {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  position: static !important;
+}
+
+.auth-clerk .cl-footerPagesLink,
+.auth-clerk a[href*='clerk.com'] {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.35rem !important;
+  margin: 0 !important;
+  line-height: 1.3 !important;
+}
+
+/* Hide Clerk development-mode badge on auth pages (causes footer overlap in local) */
+.auth-clerk [data-localization-key='footer.developmentMode'] {
+  display: none !important;
+}
+
+.auth-clerk .cl-socialButtonsBlockButton {
+  position: relative !important;
+  margin-top: 0.5rem !important;
+}
+
+.auth-clerk .cl-lastAuthenticationStrategyBadge {
+  position: absolute !important;
+  top: -0.55rem !important;
+  right: 0.75rem !important;
+  z-index: 2 !important;
+  background-color: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #64748B !important;
 }
 
 /* ── App shell: sidebar & navbar ── */

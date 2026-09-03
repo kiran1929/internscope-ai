@@ -6,6 +6,7 @@ import { AIParserService } from '../lib/resume/ai-parser-service';
 import { QualityService } from '../lib/resume/quality-service';
 import { MatchEngine } from '../lib/resume/match-engine';
 import { withBoundedRetry, isRetryableProviderError } from '../lib/security/processing';
+import { openOpportunityWhere } from '../lib/opportunities/deadline-utils';
 import { careerAnalysisPipeline, runCareerAnalysisPipeline } from './career';
 
 export interface ResumePipelinePayload {
@@ -81,10 +82,7 @@ export async function runResumeParsePipeline(payload: ResumePipelinePayload) {
 
     // 7. Job Matching: Compare the parsed resume against all active opportunities
     const opportunities = await prisma.opportunity.findMany({
-      where: {
-        isActive: true,
-        isArchived: false,
-      },
+      where: openOpportunityWhere(),
       include: {
         company: true,
         enrichment: true,

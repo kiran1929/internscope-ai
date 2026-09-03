@@ -1,6 +1,7 @@
 import { OpportunityType, RemoteType } from '../generated/prisma/enums';
 import { ParsedOpportunity, NormalizedOpportunity } from './types';
 import { resolveOpportunityDeadline } from '../opportunities/deadline-utils';
+import { sanitizeApplicationUrl } from '../opportunities/application-url';
 
 export class Normalizer {
   static normalize(parsed: ParsedOpportunity): NormalizedOpportunity {
@@ -10,7 +11,7 @@ export class Normalizer {
     const remoteType = this.normalizeRemoteType(parsed.remoteType, parsed.location);
     const type = this.normalizeEmploymentType(parsed.type, title);
     const salaryRange = this.normalizeSalaryRange(parsed.salaryRange);
-    const applicationUrl = this.normalizeUrl(parsed.applicationUrl);
+    const applicationUrl = sanitizeApplicationUrl(this.normalizeUrl(parsed.applicationUrl));
     const deadline =
       resolveOpportunityDeadline({
         explicit: parsed.deadline,
@@ -74,23 +75,81 @@ export class Normalizer {
   static normalizeEmploymentType(type?: string, title?: string): OpportunityType {
     const text = `${type || ''} ${title || ''}`.toLowerCase();
 
-    if (text.includes('new grad') || text.includes('newgrad') || text.includes('entry level') || text.includes('entrylevel')) {
-      return OpportunityType.NEW_GRAD;
-    }
-    if (text.includes('scholarship')) {
-      return OpportunityType.SCHOLARSHIP;
-    }
-    if (text.includes('fellowship') || text.includes('fellow')) {
-      return OpportunityType.FELLOWSHIP;
-    }
-    if (text.includes('hackathon')) {
+    if (
+      text.includes('hackathon') ||
+      text.includes('codefest') ||
+      text.includes('buildathon') ||
+      text.includes('datathon') ||
+      text.includes('hack-a-thon') ||
+      /\bhack\b/i.test(text)
+    ) {
       return OpportunityType.HACKATHON;
     }
-    if (text.includes('research') || text.includes('lab') || text.includes('phd')) {
+
+    if (
+      text.includes('fellowship') ||
+      text.includes('fellow') ||
+      text.includes('mentorship') ||
+      text.includes('lfx')
+    ) {
+      return OpportunityType.FELLOWSHIP;
+    }
+
+    if (text.includes('scholarship') || text.includes('scholar')) {
+      return OpportunityType.SCHOLARSHIP;
+    }
+
+    if (
+      text.includes('research') ||
+      text.includes('phd') ||
+      text.includes('postdoc') ||
+      text.includes('scientist intern') ||
+      text.includes('lab')
+    ) {
       return OpportunityType.RESEARCH;
     }
-    // Default to internship as it is the core focus of InternScope AI
+
+    if (
+      text.includes('new grad') ||
+      text.includes('newgrad') ||
+      text.includes('entry level') ||
+      text.includes('entrylevel') ||
+      text.includes('graduate program') ||
+      text.includes('campus hire')
+    ) {
+      return OpportunityType.NEW_GRAD;
+    }
+
+    // Default to internship
     return OpportunityType.INTERNSHIP;
+  }
+
+  static isStudentOrInternshipRole(title: string, type?: string): boolean {
+    const text = `${title} ${type || ''}`.toLowerCase();
+    return (
+      text.includes('intern') ||
+      text.includes('fellow') ||
+      text.includes('hackathon') ||
+      text.includes('codefest') ||
+      text.includes('buildathon') ||
+      text.includes('datathon') ||
+      text.includes('scholar') ||
+      text.includes('student') ||
+      text.includes('co-op') ||
+      text.includes('coop') ||
+      text.includes('trainee') ||
+      text.includes('apprentice') ||
+      text.includes('campus') ||
+      text.includes('new grad') ||
+      text.includes('newgrad') ||
+      text.includes('entry level') ||
+      text.includes('entrylevel') ||
+      text.includes('graduate program') ||
+      text.includes('graduate trainee') ||
+      text.includes('early career') ||
+      text.includes('lfx') ||
+      text.includes('gsoc')
+    );
   }
 
   static normalizeSalaryRange(salary?: string): string | null {

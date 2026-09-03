@@ -1,6 +1,7 @@
 import React from 'react';
 import { getAuthenticatedUser } from '@/app/actions/candidate';
 import { prisma } from '@/lib/db';
+import { openOpportunityWhere } from '@/lib/opportunities/deadline-utils';
 import { DashboardAnalytics } from '@/components/DashboardAnalytics';
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,7 @@ export default async function AnalyticsPage() {
       select: { overallScore: true }
     }),
     prisma.opportunity.findMany({
-      where: { isArchived: false, isActive: true },
+      where: openOpportunityWhere(),
       select: {
         company: {
           select: { industry: true }

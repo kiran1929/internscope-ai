@@ -208,6 +208,7 @@ model IngestionJob {
   duplicateCount   Int       @default(0)
   failedCount      Int       @default(0)
   validationErrors Json?
+  metrics          Json?
   error            String?
   logs             Json?
   createdAt        DateTime  @default(now())

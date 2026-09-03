@@ -14,6 +14,8 @@ export interface ScraperSettings {
   greenhouse: ScraperProviderConfig;
   lever: ScraperProviderConfig;
   ashby: ScraperProviderConfig;
+  smartrecruiters: ScraperProviderConfig;
+  workday: ScraperProviderConfig;
 }
 
 export const defaultScraperSettings: ScraperSettings = {
@@ -49,5 +51,28 @@ export const defaultScraperSettings: ScraperSettings = {
     },
     boardToken: 'linear',
     rateLimitMs: 1000,
+  },
+  smartrecruiters: {
+    enabled: true,
+    baseUrl: 'https://api.smartrecruiters.com/v1/companies',
+    timeout: 25000,
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'InternScope-Ingestion-Engine/1.0',
+    },
+    boardToken: 'BoschGroup',
+    rateLimitMs: 1000,
+  },
+  workday: {
+    enabled: true,
+    baseUrl: 'https://nvidia.wd5.myworkdayjobs.com/wday/cxs',
+    timeout: 30000,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'InternScope-Ingestion-Engine/1.0',
+    },
+    boardToken: 'NVIDIAExternalCareerSite',
+    rateLimitMs: 2000,
   },
 };

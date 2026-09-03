@@ -3,7 +3,7 @@ import { OpportunityType, RemoteType } from '../generated/prisma/enums';
 export interface ScrapeSourceMetadata {
   id: string;
   name: string;
-  type: 'greenhouse' | 'lever' | 'ashby' | 'rss' | 'api' | 'custom';
+  type: 'greenhouse' | 'lever' | 'ashby' | 'smartrecruiters' | 'workday' | 'jobvetta' | 'unstop' | 'devfolio' | 'indian-tech' | 'rss' | 'api' | 'custom';
   enabled: boolean;
   url?: string;
 }

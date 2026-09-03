@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db';
 import { isRealClerkUser } from '@/lib/auth/clerk-user';
 import { scoreUserAgainstOpportunity } from '@/lib/search/opportunity-matcher';
 import { OpportunityNotificationService } from './opportunity-notification-service';
+import { openOpportunityWhere } from '../opportunities/deadline-utils';
 
 export interface DailyDigestDispatchResult {
   eligibleUsers: number;
@@ -19,16 +20,8 @@ export class DailyDigestDispatcher {
     console.info('[DailyDigestDispatcher] Starting 9 AM / 9 PM IST Digest batch dispatch...');
 
     // 1. Fetch active, non-archived opportunities
-    const now = new Date();
     const opportunities = await prisma.opportunity.findMany({
-      where: {
-        isActive: true,
-        isArchived: false,
-        OR: [
-          { deadline: null },
-          { deadline: { gte: now } },
-        ],
-      },
+      where: openOpportunityWhere(),
       include: {
         company: true,
         enrichment: true,

@@ -20,7 +20,13 @@ export async function syncCatalogToDatabase(): Promise<{ upserted: number }> {
         industry: board.industry ?? 'Technology',
         isVerified: true,
         hiringStatus: 'HIRING',
-        tags: [board.provider, 'scraper-catalog'],
+        tags: [
+          board.provider,
+          'scraper-catalog',
+          'india',
+          'internship',
+          ...(board.region === 'india' ? ['india-ats'] : []),
+        ],
       },
       update: {
         websiteUrl: board.websiteUrl ?? null,
@@ -28,6 +34,13 @@ export async function syncCatalogToDatabase(): Promise<{ upserted: number }> {
         industry: board.industry ?? 'Technology',
         isVerified: true,
         hiringStatus: 'HIRING',
+        tags: [
+          board.provider,
+          'scraper-catalog',
+          'india',
+          'internship',
+          ...(board.region === 'india' ? ['india-ats'] : []),
+        ],
       },
     });
     upserted += 1;

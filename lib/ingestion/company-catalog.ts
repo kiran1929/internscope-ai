@@ -1,154 +1,33 @@
-export type ScrapeProvider = 'greenhouse' | 'lever' | 'ashby';
+import { getIndianAtsBoards } from './indian-ats-catalog';
+import { getIndianSmartRecruitersBoards } from './indian-smartrecruiters-catalog';
+import { getIndianWorkdayBoards } from './indian-workday-catalog';
+
+export type ScrapeProvider =
+  | 'greenhouse'
+  | 'lever'
+  | 'ashby'
+  | 'smartrecruiters'
+  | 'workday';
 
 export interface ScrapeBoard {
   name: string;
   provider: ScrapeProvider;
   boardToken: string;
+  /** Workday tenant slug (e.g. nvidia). */
+  tenant?: string;
+  /** Workday datacenter host segment (e.g. wd5). */
+  wdServer?: string;
   websiteUrl?: string;
   industry?: string;
+  region?: 'india' | 'global';
   enabled?: boolean;
 }
 
-function gh(name: string, boardToken: string, websiteUrl?: string): ScrapeBoard {
-  return {
-    name,
-    provider: 'greenhouse',
-    boardToken,
-    websiteUrl: websiteUrl ?? `https://${boardToken}.com`,
-    industry: 'Technology',
-    enabled: true,
-  };
-}
-
-function lever(name: string, boardToken: string, websiteUrl?: string): ScrapeBoard {
-  return {
-    name,
-    provider: 'lever',
-    boardToken,
-    websiteUrl: websiteUrl ?? `https://${boardToken}.com`,
-    industry: 'Technology',
-    enabled: true,
-  };
-}
-
-function ashby(name: string, boardToken: string, websiteUrl?: string): ScrapeBoard {
-  return {
-    name,
-    provider: 'ashby',
-    boardToken,
-    websiteUrl: websiteUrl ?? `https://${boardToken}.com`,
-    industry: 'Technology',
-    enabled: true,
-  };
-}
-
-/** Curated list of public Greenhouse / Lever / Ashby job boards for tech internships. */
+/** India-focused ATS catalog: SmartRecruiters + Workday GCCs + GH/Lever/Ashby startups. */
 export const SCRAPE_COMPANY_CATALOG: ScrapeBoard[] = [
-  // Greenhouse (70)
-  gh('Stripe', 'stripe', 'https://stripe.com'),
-  gh('Airbnb', 'airbnb', 'https://airbnb.com'),
-  gh('Discord', 'discord', 'https://discord.com'),
-  gh('Figma', 'figma', 'https://figma.com'),
-  gh('Coinbase', 'coinbase', 'https://coinbase.com'),
-  gh('Databricks', 'databricks', 'https://databricks.com'),
-  gh('Dropbox', 'dropbox', 'https://dropbox.com'),
-  gh('Reddit', 'reddit', 'https://reddit.com'),
-  gh('Roblox', 'roblox', 'https://roblox.com'),
-  gh('Snap', 'snap', 'https://snap.com'),
-  gh('Twilio', 'twilio', 'https://twilio.com'),
-  gh('Unity', 'unity', 'https://unity.com'),
-  gh('Zendesk', 'zendesk', 'https://zendesk.com'),
-  gh('Brex', 'brex', 'https://brex.com'),
-  gh('Chime', 'chime', 'https://chime.com'),
-  gh('DoorDash', 'doordash', 'https://doordash.com'),
-  gh('Gusto', 'gusto', 'https://gusto.com'),
-  gh('HubSpot', 'hubspot', 'https://hubspot.com'),
-  gh('Instacart', 'instacart', 'https://instacart.com'),
-  gh('Lyft', 'lyft', 'https://lyft.com'),
-  gh('MongoDB', 'mongodb', 'https://mongodb.com'),
-  gh('Okta', 'okta', 'https://okta.com'),
-  gh('Pinterest', 'pinterest', 'https://pinterest.com'),
-  gh('Plaid', 'plaid', 'https://plaid.com'),
-  gh('Rippling', 'rippling', 'https://rippling.com'),
-  gh('Robinhood', 'robinhood', 'https://robinhood.com'),
-  gh('Shopify', 'shopify', 'https://shopify.com'),
-  gh('SoFi', 'sofi', 'https://sofi.com'),
-  gh('Squarespace', 'squarespace', 'https://squarespace.com'),
-  gh('Toast', 'toast', 'https://toasttab.com'),
-  gh('Twitch', 'twitch', 'https://twitch.tv'),
-  gh('Uber', 'uber', 'https://uber.com'),
-  gh('Zillow', 'zillow', 'https://zillow.com'),
-  gh('Asana', 'asana', 'https://asana.com'),
-  gh('Benchling', 'benchling', 'https://benchling.com'),
-  gh('Checkr', 'checkr', 'https://checkr.com'),
-  gh('Cloudflare', 'cloudflare', 'https://cloudflare.com'),
-  gh('Coursera', 'coursera', 'https://coursera.org'),
-  gh('Datadog', 'datadog', 'https://datadoghq.com'),
-  gh('Duolingo', 'duolingo', 'https://duolingo.com'),
-  gh('Elastic', 'elastic', 'https://elastic.co'),
-  gh('Grammarly', 'grammarly', 'https://grammarly.com'),
-  gh('HashiCorp', 'hashicorp', 'https://hashicorp.com'),
-  gh('Intercom', 'intercom', 'https://intercom.com'),
-  gh('Klaviyo', 'klaviyo', 'https://klaviyo.com'),
-  gh('Lucid', 'lucid', 'https://lucid.co'),
-  gh('Marqeta', 'marqeta', 'https://marqeta.com'),
-  gh('Mercury', 'mercury', 'https://mercury.com'),
-  gh('Miro', 'miro', 'https://miro.com'),
-  gh('Niantic', 'niantic', 'https://nianticlabs.com'),
-  gh('OpenAI', 'openai', 'https://openai.com'),
-  gh('PagerDuty', 'pagerduty', 'https://pagerduty.com'),
-  gh('Postman', 'postman', 'https://postman.com'),
-  gh('Qualtrics', 'qualtrics', 'https://qualtrics.com'),
-  gh('Retool', 'retool', 'https://retool.com'),
-  gh('Sentry', 'sentry', 'https://sentry.io'),
-  gh('Smartsheet', 'smartsheet', 'https://smartsheet.com'),
-  gh('Snowflake', 'snowflake', 'https://snowflake.com'),
-  gh('Tinder', 'tinder', 'https://tinder.com'),
-  gh('Vercel', 'vercel', 'https://vercel.com'),
-  gh('Wayfair', 'wayfair', 'https://wayfair.com'),
-  gh('Webflow', 'webflow', 'https://webflow.com'),
-  gh('Zapier', 'zapier', 'https://zapier.com'),
-  gh('Zscaler', 'zscaler', 'https://zscaler.com'),
-  gh('AMD', 'amd', 'https://amd.com'),
-  gh('Atlassian', 'atlassian', 'https://atlassian.com'),
-  gh('Autodesk', 'autodesk', 'https://autodesk.com'),
-  gh('Box', 'box', 'https://box.com'),
-  gh('Calendly', 'calendly', 'https://calendly.com'),
-  gh('Canva', 'canva', 'https://canva.com'),
-
-  // Lever (15)
-  lever('Spotify', 'spotify', 'https://spotify.com'),
-  lever('Netflix', 'netflix', 'https://netflix.com'),
-  lever('Affirm', 'affirm', 'https://affirm.com'),
-  lever('Binance', 'binance', 'https://binance.com'),
-  lever('Curology', 'curology', 'https://curology.com'),
-  lever('Flexport', 'flexport', 'https://flexport.com'),
-  lever('Netlify', 'netlify', 'https://netlify.com'),
-  lever('Quora', 'quora', 'https://quora.com'),
-  lever('Thumbtack', 'thumbtack', 'https://thumbtack.com'),
-  lever('Yelp', 'yelp', 'https://yelp.com'),
-  lever('Scale AI', 'scale', 'https://scale.com'),
-  lever('TripActions', 'tripactions', 'https://tripactions.com'),
-  lever('Gopuff', 'gopuff', 'https://gopuff.com'),
-  lever('Hopper', 'hopper', 'https://hopper.com'),
-  lever('Riot Games', 'riotgames', 'https://riotgames.com'),
-
-  // Ashby (15)
-  ashby('Linear', 'linear', 'https://linear.app'),
-  ashby('Notion', 'notion', 'https://notion.so'),
-  ashby('Ramp', 'ramp', 'https://ramp.com'),
-  ashby('Anthropic', 'anthropic', 'https://anthropic.com'),
-  ashby('Deel', 'deel', 'https://deel.com'),
-  ashby('Merge', 'merge', 'https://merge.dev'),
-  ashby('Modern Treasury', 'moderntreasury', 'https://moderntreasury.com'),
-  ashby('Oyster', 'oyster', 'https://oysterhr.com'),
-  ashby('Persona', 'persona', 'https://withpersona.com'),
-  ashby('Render', 'render', 'https://render.com'),
-  ashby('Semgrep', 'semgrep', 'https://semgrep.com'),
-  ashby('Vanta', 'vanta', 'https://vanta.com'),
-  ashby('Watershed', 'watershed', 'https://watershed.com'),
-  ashby('Zip', 'zip', 'https://ziphq.com'),
-  ashby('Ashby', 'ashby', 'https://ashbyhq.com'),
+  ...getIndianSmartRecruitersBoards(),
+  ...getIndianWorkdayBoards(),
+  ...getIndianAtsBoards(),
 ];
 
 export function getEnabledCatalogBoards(): ScrapeBoard[] {
@@ -171,5 +50,9 @@ export function buildCareerPageUrl(board: ScrapeBoard): string {
       return `https://jobs.lever.co/${board.boardToken}`;
     case 'ashby':
       return `https://jobs.ashbyhq.com/${board.boardToken}`;
+    case 'smartrecruiters':
+      return `https://jobs.smartrecruiters.com/${board.boardToken}`;
+    case 'workday':
+      return `https://${board.tenant}.${board.wdServer}.myworkdayjobs.com/en-US/${board.boardToken}`;
   }
 }

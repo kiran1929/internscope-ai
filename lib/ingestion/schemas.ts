@@ -13,8 +13,8 @@ export const greenhouseJobSchema = z.object({
   ]).optional().nullable(),
   absolute_url: z.string().optional().nullable(),
   content: z.string().optional().nullable(),
-  departments: z.array(z.object({ id: z.union([z.number(), z.string()]).optional(), name: z.string().optional() })).optional().nullable(),
-  offices: z.array(z.object({ id: z.union([z.number(), z.string()]).optional(), name: z.string().optional(), location: z.string().optional() })).optional().nullable(),
+  departments: z.array(z.object({ id: z.union([z.number(), z.string()]).optional().nullable(), name: z.string().optional().nullable() })).optional().nullable(),
+  offices: z.array(z.object({ id: z.union([z.number(), z.string()]).optional().nullable(), name: z.string().optional().nullable(), location: z.string().optional().nullable() })).optional().nullable(),
 }).passthrough();
 
 export const greenhouseResponseSchema = z.object({
