@@ -1,6 +1,4 @@
-export const ADMIN_EMAILS = [
-  'gudepukirandeep@gmail.com',
-] as const;
+export { getAdminEmails, isAllowedAdminEmail as isInterviewRateLimitExempt } from '@/lib/auth/admin-emails';
 
 export const INTERVIEW_LIMITS = {
   maxQuestions: 10,
@@ -19,9 +17,4 @@ export const INTERVIEW_LIMITS = {
     summaryGenerationOutput: 600,
   },
 } as const;
-
-export function isInterviewRateLimitExempt(email?: string | null): boolean {
-  if (!email) return false;
-  return ADMIN_EMAILS.some((adminEmail) => adminEmail.toLowerCase() === email.toLowerCase().trim());
-}
 

@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { SidebarStateProvider } from '@/providers/SidebarStateProvider';
 import { AdminLayoutContent } from './AdminLayoutContent';
 import { Role } from '@/lib/generated/prisma/enums';
+import { isAllowedAdminEmail } from '@/lib/auth/admin-emails';
 
 export default async function AdminLayout({
   children,
@@ -40,14 +41,12 @@ export default async function AdminLayout({
     }
   }
 
-  const userEmail = (clerkUser.emailAddresses[0]?.emailAddress || '').toLowerCase();
-  const allowedAdminEmails = ['gudepukirandeep@gmail.com', 'admin@internscope.ai'];
+  const userEmail = clerkUser.emailAddresses[0]?.emailAddress || '';
 
-  // Authorize: Only permit authorized admin emails with ADMIN role access to CMS
+  // Authorize: ADMIN/SUPER_ADMIN role + env allowlisted email (ADMIN_EMAILS)
   const hasAdminRole = dbUser && (dbUser.role === Role.ADMIN || dbUser.role === Role.SUPER_ADMIN);
-  const isAllowedEmail = allowedAdminEmails.includes(userEmail);
 
-  if (!hasAdminRole || !isAllowedEmail) {
+  if (!hasAdminRole || !isAllowedAdminEmail(userEmail)) {
     redirect('/403');
   }
 

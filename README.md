@@ -123,11 +123,14 @@ Copy from `.env.example`. **Never commit real secrets.** Required for a working 
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` / `CLERK_SECRET_KEY` | Auth |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `SIGN_UP_URL` | Auth routes (`/sign-in`, `/sign-up`) |
 | `NEXT_PUBLIC_APP_URL` | Canonical app URL (local or production) |
+| `ADMIN_EMAILS` / `NEXT_PUBLIC_ADMIN_EMAILS` | Admin allowlist (must match DB `ADMIN` role users) |
+| `CLERK_WEBHOOK_SIGNING_SECRET` | Clerk user sync webhook |
 | `GEMINI_API_KEY` | Resume / copilot / enrichment |
 | `GROQ_API_KEY` | Fast interview LLM (optional fallback) |
 | `SMTP_*` | Transactional email |
 | `SCRAPING_ENABLED` | `true` / `false` — master scraper switch |
 | `JOBVETTA_API_KEY` | JobVetta connector (optional) |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` / `RAZORPAY_WEBHOOK_SECRET` | Billing (optional) |
 | `OPPORTUNITY_EMAIL_THRESHOLD` | Min match % for email alerts (default `80`) |
 
 Clerk redirect URLs and `NEXT_PUBLIC_APP_URL` must match your deployment domain in production.
@@ -151,12 +154,14 @@ Protected routes are enforced in Clerk middleware (`/dashboard`, `/applications`
 - **Production URL:** [https://internscope.ai](https://internscope.ai)
 - Hosted on **Vercel**; database on **Neon**; auth via **Clerk**
 - Production checklist before going public:
-  1. Rotate any credentials that were ever committed or shared
-  2. Set Clerk production keys + allowed origins / redirect URLs
+  1. Set `ADMIN_EMAILS` and `NEXT_PUBLIC_ADMIN_EMAILS` on Vercel (your admin account emails)
+  2. Use **Clerk production** keys + webhook signing secret; lock redirect URLs to `https://internscope.ai`
   3. Set `NEXT_PUBLIC_APP_URL=https://internscope.ai`
-  4. Run `prisma migrate deploy` against production DB
-  5. Confirm `SCRAPING_ENABLED` and SMTP settings for the intended environment
-  6. Verify `/privacy`, `/terms`, and email sender domain (SPF/DKIM)
+  4. Run `npx prisma migrate deploy` (includes payment tables)
+  5. Confirm SMTP, Gemini/Groq, and (if billing) Razorpay live keys + webhook secret
+  6. Keep `SCRAPING_ENABLED` intentional for the environment
+  7. Rotate any credentials that were ever shared outside the team
+  8. Verify `/privacy` and `/terms` before launch
 
 ---
 
