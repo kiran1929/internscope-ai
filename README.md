@@ -1,6 +1,6 @@
 # InternScope AI
 
-**Live:** [https://internscope.ai](https://internscope.ai)  
+**Live:** [https://internscope.ai](https://internscope-ai.vercel.app/)  
 **Repository:** [github.com/kiran1929/internscope-ai](https://github.com/kiran1929/internscope-ai)
 
 AI-powered internship discovery and career intelligence for student developers. InternScope aggregates internship openings from major ATS boards, matches them to your profile, and helps you prepare, apply, and track every stage of the funnel.
