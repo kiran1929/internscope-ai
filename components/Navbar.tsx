@@ -380,8 +380,12 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuToggle, title }) => {
                   >
                     Platform Settings
                   </button>
-                  {user?.primaryEmailAddress?.emailAddress && 
-                   ['gudepukirandeep@gmail.com', 'admin@internscope.ai'].includes(user.primaryEmailAddress.emailAddress.toLowerCase()) && (
+                  {user?.primaryEmailAddress?.emailAddress &&
+                   (process.env.NEXT_PUBLIC_ADMIN_EMAILS || 'admin@internscope.ai')
+                     .split(',')
+                     .map((e) => e.trim().toLowerCase())
+                     .filter(Boolean)
+                     .includes(user.primaryEmailAddress.emailAddress.toLowerCase()) && (
                     <button
                       onClick={() => {
                         setShowProfile(false);

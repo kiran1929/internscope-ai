@@ -16,6 +16,7 @@ interface OpportunityItem {
   type: string;
   applicationUrl: string;
   createdAt: Date;
+  description?: string | null;
   company: {
     id: string;
     name: string;
@@ -28,6 +29,21 @@ interface OpportunityItem {
     experienceLevel: string | null;
     salaryMin: number | null;
   } | null;
+}
+
+function toPlainExcerpt(raw?: string | null, maxLen = 180): string {
+  if (!raw?.trim()) return '';
+  let text = raw
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&amp;/gi, '&')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (text.length <= maxLen) return text;
+  return `${text.slice(0, maxLen).trim()}…`;
 }
 
 interface CandidateSearchClientProps {
@@ -53,7 +69,7 @@ export default function CandidateSearchClient({
   const initialUrlQuery = searchParams.get('query') || searchParams.get('q') || '';
   const [query, setQuery] = useState(initialUrlQuery);
   const [remoteType, setRemoteType] = useState('');
-  const [employmentType, setEmploymentType] = useState('');
+  const [employmentType] = useState('internship');
   const [experienceLevel, setExperienceLevel] = useState('');
   const [salaryMin, setSalaryMin] = useState<number>(0);
   
@@ -196,17 +212,6 @@ export default function CandidateSearchClient({
             <option value="onsite">🏢 On-site Only</option>
           </select>
 
-          {/* Job Category Dropdown */}
-          <select
-            value={employmentType}
-            onChange={(e) => setEmploymentType(e.target.value)}
-            className="h-9 bg-surface-muted/40 border border-border-subtle hover:border-border-hover rounded-lg px-2.5 text-xs font-medium text-foreground outline-none focus:border-primary/50 cursor-pointer shrink-0"
-          >
-            <option value="">Category: All Types</option>
-            <option value="internship">💼 Internships</option>
-            <option value="new_grad">🎓 New Grad & Full-time</option>
-          </select>
-
           {/* Experience Level Dropdown */}
           <select
             value={experienceLevel}
@@ -237,13 +242,12 @@ export default function CandidateSearchClient({
           </select>
 
           {/* Reset Filters Action */}
-          {(query || remoteType || employmentType || experienceLevel || salaryMin > 0) && (
+          {(query || remoteType || experienceLevel || salaryMin > 0) && (
             <button
               type="button"
               onClick={() => {
                 setQuery('');
                 setRemoteType('');
-                setEmploymentType('');
                 setExperienceLevel('');
                 setSalaryMin(0);
               }}
@@ -344,6 +348,12 @@ export default function CandidateSearchClient({
                       >
                         {role.title}
                       </Link>
+
+                      {toPlainExcerpt(role.description) && (
+                        <p className="text-xs text-text-muted leading-relaxed line-clamp-2 max-w-2xl">
+                          {toPlainExcerpt(role.description)}
+                        </p>
+                      )}
 
                       {/* Concrete Spec Badges (Location, Mode, Salary, Level) */}
                       <div className="flex flex-wrap items-center gap-2 text-xs">

@@ -25,6 +25,19 @@ export interface IngestionLogEntry {
 }
 
 export class IngestionLogger {
+  private static minLevel(): LogLevel {
+    const raw = (process.env.INGESTION_LOG_LEVEL || 'INFO').toUpperCase();
+    if (raw === 'DEBUG' || raw === 'INFO' || raw === 'WARN' || raw === 'ERROR') {
+      return raw;
+    }
+    return 'INFO';
+  }
+
+  private static shouldLog(level: LogLevel): boolean {
+    const order: LogLevel[] = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
+    return order.indexOf(level) >= order.indexOf(this.minLevel());
+  }
+
   private static log(
     level: LogLevel,
     stage: LogStage | 'Pipeline',
@@ -34,6 +47,8 @@ export class IngestionLogger {
     data?: Record<string, unknown>,
     error?: Error
   ) {
+    if (!this.shouldLog(level)) return;
+
     const logEntry: IngestionLogEntry = {
       timestamp: new Date().toISOString(),
       level,

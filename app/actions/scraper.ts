@@ -6,6 +6,8 @@ import { JobRepository } from '@/lib/repositories/job';
 import { revalidatePath } from 'next/cache';
 import { EnrichmentEngine } from '@/lib/ai/enrichment-engine';
 import { sanitizeError } from '@/lib/security/error-handler';
+import { EnrichmentRepository } from '@/lib/repositories/enrichment';
+import { buildScraperMetricsDashboard } from '@/lib/ingestion/scraper-metrics';
 
 export async function triggerSyncAction(provider: string) {
   try {
@@ -52,6 +54,23 @@ export async function getSyncHistoryAction() {
   }
 }
 
+export async function getScraperMetricsAction() {
+  try {
+    await requireAdmin();
+    const [jobs, enrichmentStats] = await Promise.all([
+      JobRepository.getMetricsHistory(50),
+      EnrichmentRepository.getEnrichmentStats(),
+    ]);
+    const metrics = buildScraperMetricsDashboard(jobs, enrichmentStats.avgLatencyMs);
+    return { success: true, metrics };
+  } catch (error) {
+    return {
+      success: false,
+      error: sanitizeError(error, 'Failed to fetch scraper metrics.'),
+    };
+  }
+}
+
 export async function triggerEnrichmentAction() {
   try {
     await requireAdmin();
@@ -71,3 +90,28 @@ export async function triggerEnrichmentAction() {
     };
   }
 }
+
+export async function getEnrichmentProgressAction() {
+  try {
+    await requireAdmin();
+    const stats = await EnrichmentRepository.getEnrichmentStats();
+    const isRunning = stats.running > 0;
+    const total = stats.total || 0;
+    const completed = stats.completed || 0;
+    const progressPercent =
+      total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 100;
+
+    return {
+      success: true,
+      isRunning,
+      stats,
+      progressPercent,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: sanitizeError(error, 'Failed to fetch enrichment progress.'),
+    };
+  }
+}
+

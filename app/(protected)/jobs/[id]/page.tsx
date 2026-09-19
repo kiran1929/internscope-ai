@@ -2,7 +2,9 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import { getAuthenticatedUser } from '@/app/actions/candidate';
 import { prisma } from '@/lib/db';
+import { OpportunityType } from '@/lib/generated/prisma/enums';
 import JobDetailClient from '@/components/JobDetailClient';
+import { openOpportunityWhere } from '@/lib/opportunities/deadline-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +25,7 @@ export default async function JobDetailPage({ params }: PageProps) {
     },
   });
 
-  if (!job || job.isArchived) {
+  if (!job || job.isArchived || job.type !== OpportunityType.INTERNSHIP) {
     notFound();
   }
 
@@ -50,9 +52,8 @@ export default async function JobDetailPage({ params }: PageProps) {
   // 4. Fetch related jobs (other openings in the same company)
   const relatedJobs = await prisma.opportunity.findMany({
     where: {
+      ...openOpportunityWhere(),
       companyId: job.companyId,
-      isActive: true,
-      isArchived: false,
       NOT: { id },
     },
     take: 3,

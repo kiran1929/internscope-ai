@@ -136,11 +136,7 @@ export const OpportunitiesFilters: React.FC<OpportunitiesFiltersProps> = ({ comp
           className="bg-zinc-950 border border-zinc-800 text-xs text-white rounded-lg p-2 focus:border-primary/60 outline-none transition-all cursor-pointer"
         >
           <option value="">All Types</option>
-          {Object.values(OpportunityType).map((t) => (
-            <option key={t} value={t}>
-              {t.replace('_', ' ')}
-            </option>
-          ))}
+          <option value={OpportunityType.INTERNSHIP}>INTERNSHIP</option>
         </select>
 
         {/* Remote Type */}

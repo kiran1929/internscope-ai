@@ -68,6 +68,16 @@ export class JobRepository {
     });
   }
 
+  static async getMetricsHistory(limit = 50): Promise<IngestionJob[]> {
+    return prisma.ingestionJob.findMany({
+      where: {
+        status: { in: [JobStatus.COMPLETED, JobStatus.FAILED] },
+      },
+      orderBy: { startedAt: 'desc' },
+      take: limit,
+    });
+  }
+
   static async getLastSuccessfulSync(provider: string): Promise<IngestionJob | null> {
     return prisma.ingestionJob.findFirst({
       where: {

@@ -50,11 +50,10 @@ export class SearchService {
       else if (typeStr === 'ONSITE') whereConditions.remoteType = RemoteType.ONSITE;
     }
 
-    // Employment Type mapping
+    // Employment Type mapping (internships only on the public site)
     if (options.employmentType) {
       const typeStr = options.employmentType.toUpperCase();
       if (typeStr === 'INTERNSHIP') whereConditions.type = OpportunityType.INTERNSHIP;
-      else if (typeStr === 'NEW_GRAD') whereConditions.type = OpportunityType.NEW_GRAD;
     }
 
     // Experience Level and Skills filters inside the joined Enrichment table

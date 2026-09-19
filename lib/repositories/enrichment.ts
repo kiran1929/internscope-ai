@@ -66,7 +66,15 @@ export class EnrichmentRepository {
   }
 
   static async getEnrichmentStats() {
-    const [totalOpportunityCount, pendingCount, runningCount, completedCount, failedCount, statsAgg] = await Promise.all([
+    const [
+      totalOpportunityCount,
+      pendingCount,
+      runningCount,
+      completedCount,
+      failedCount,
+      statsAgg,
+      currentlyRunning,
+    ] = await Promise.all([
       prisma.opportunity.count({ where: { isArchived: false } }),
       prisma.opportunity.count({
         where: {
@@ -91,6 +99,17 @@ export class EnrichmentRepository {
           estimatedCost: true,
         },
       }),
+      prisma.opportunityEnrichment.findFirst({
+        where: { status: EnrichmentStatus.RUNNING },
+        include: {
+          opportunity: {
+            select: {
+              title: true,
+              company: { select: { name: true } },
+            },
+          },
+        },
+      }),
     ]);
 
     return {
@@ -103,6 +122,8 @@ export class EnrichmentRepository {
       avgConfidence: statsAgg._avg.qualityScore || 0,
       totalTokens: statsAgg._sum.tokensUsed || 0,
       totalCost: statsAgg._sum.estimatedCost || 0,
+      activeItemTitle: currentlyRunning?.opportunity?.title || null,
+      activeItemCompany: currentlyRunning?.opportunity?.company?.name || null,
     };
   }
 

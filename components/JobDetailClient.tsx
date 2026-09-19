@@ -378,15 +378,21 @@ export default function JobDetailClient({
           </div>
 
           {/* Description */}
-          <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white border-b border-zinc-900 pb-2">Opportunity Description</h3>
-            <RichDescription content={job.description} />
+          <div className="bg-card-bg border border-border-subtle rounded-xl p-5 sm:p-6 space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border-subtle pb-2">
+              Opportunity Description
+            </h3>
+            <div className="max-h-[min(70vh,42rem)] overflow-y-auto pr-1">
+              <RichDescription content={job.description} />
+            </div>
           </div>
 
           {/* Requirements */}
           {job.requirements && (
-            <div className="bg-[#111113] border border-zinc-850 rounded-xl p-5 space-y-4">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-white border-b border-zinc-900 pb-2">Requirements</h3>
+            <div className="bg-card-bg border border-border-subtle rounded-xl p-5 sm:p-6 space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-foreground border-b border-border-subtle pb-2">
+                Requirements
+              </h3>
               <RichDescription content={job.requirements} />
             </div>
           )}

@@ -251,8 +251,8 @@ export const FEATURES = [
     icon: 'Mail'
   },
   {
-    title: '100+ Top Tech Companies',
-    description: 'Deep coverage of MAANG, unicorn startups, and quantitative trading firms with updates fetched every 6 hours.',
+    title: '85+ Indian Companies — Internships Only',
+    description: 'SmartRecruiters, Workday, Greenhouse, Lever, and Ashby boards for Indian startups and GCCs. Every listing is an internship.',
     icon: 'Buildings'
   },
   {

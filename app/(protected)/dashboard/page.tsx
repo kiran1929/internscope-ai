@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { getAuthenticatedUser } from '@/app/actions/candidate';
 import { prisma } from '@/lib/db';
+import { openOpportunityWhere } from '@/lib/opportunities/deadline-utils';
 import CandidateDashboardClient from '@/components/CandidateDashboardClient';
 import {
   DashboardRecommendations,
@@ -45,14 +46,12 @@ export default async function DashboardPage() {
     }),
     // Upcoming deadlines in the next 14 days
     prisma.opportunity.findMany({
-      where: {
-        isArchived: false,
-        isActive: true,
+      where: openOpportunityWhere({
         deadline: {
           gte: new Date(),
-          lte: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // Next 14 days
+          lte: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
         },
-      },
+      }),
       take: 4,
       orderBy: { deadline: 'asc' },
       select: {

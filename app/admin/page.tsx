@@ -9,9 +9,13 @@ import {
   Briefcase,
   Activity,
   Calendar,
-  Sparkles
+  Sparkles,
+  Cpu,
+  ArrowRight,
 } from 'lucide-react';
+import Link from 'next/link';
 import { ApplicationStatus } from '@/lib/generated/prisma/enums';
+import { EnrichmentRepository } from '@/lib/repositories/enrichment';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +33,8 @@ export default async function AdminDashboardPage() {
     upcomingDeadlines,
     scraperTotal,
     scraperSuccess,
-    feedbackStats
+    feedbackStats,
+    enrichmentStats,
   ] = await Promise.all([
     prisma.opportunity.count(),
     prisma.company.count(),
@@ -80,7 +85,8 @@ export default async function AdminDashboardPage() {
     prisma.userFeedback.aggregate({
       _avg: { rating: true },
       where: { type: 'AI_RATING' }
-    })
+    }),
+    EnrichmentRepository.getEnrichmentStats(),
   ]);
 
   const dbLatency = Date.now() - latencyStart;
@@ -88,6 +94,13 @@ export default async function AdminDashboardPage() {
   const matchAccuracy = feedbackStats._avg.rating 
     ? ((feedbackStats._avg.rating / 5) * 100).toFixed(1)
     : '94.0';
+
+  const enrichTotal = enrichmentStats.total || 0;
+  const enrichCompleted = enrichmentStats.completed || 0;
+  const enrichPending = enrichmentStats.pending || 0;
+  const enrichRunning = enrichmentStats.running || 0;
+  const enrichProgress = enrichTotal > 0 ? Math.min(100, Math.round((enrichCompleted / enrichTotal) * 100)) : 100;
+  const isEnrichRunning = enrichRunning > 0;
 
   // Stat Cards Config
   const stats = [
@@ -206,7 +219,7 @@ export default async function AdminDashboardPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 my-4">
+          <div className="grid grid-cols-3 gap-4 my-3">
             <div className="text-center bg-zinc-900/30 p-3 rounded-lg border border-zinc-900">
               <p className="text-[10px] text-text-muted uppercase">Scrape Success</p>
               <p className="text-lg font-bold text-emerald-400 mt-1">{scrapeSuccessRate}%</p>
@@ -218,6 +231,54 @@ export default async function AdminDashboardPage() {
             <div className="text-center bg-zinc-900/30 p-3 rounded-lg border border-zinc-900">
               <p className="text-[10px] text-text-muted uppercase">Match Accuracy</p>
               <p className="text-lg font-bold text-primary mt-1">{matchAccuracy}%</p>
+            </div>
+          </div>
+
+          {/* AI Opportunity Enrichment Progress Bar Widget */}
+          <div className="my-2 p-3 rounded-lg bg-zinc-950/60 border border-zinc-900/80 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <Cpu className={`w-3.5 h-3.5 ${isEnrichRunning ? 'text-emerald-400 animate-spin' : 'text-primary'}`} />
+                <span className="font-semibold text-zinc-200">AI Data Enrichment</span>
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                    isEnrichRunning
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 animate-pulse'
+                      : enrichProgress === 100
+                      ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                      : 'bg-zinc-800 border-zinc-700 text-zinc-400'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${isEnrichRunning ? 'bg-emerald-400 animate-ping' : enrichProgress === 100 ? 'bg-emerald-400' : 'bg-zinc-500'}`} />
+                  {isEnrichRunning ? 'Running' : enrichProgress === 100 ? '100% Enriched' : 'Idle'}
+                </span>
+              </div>
+              <Link
+                href="/admin/scraper"
+                className="text-[11px] font-semibold text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
+              >
+                <span>Pipeline Console</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="h-2 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800/80">
+              <div
+                className={`h-full rounded-full transition-all duration-500 ${
+                  isEnrichRunning
+                    ? 'bg-gradient-to-r from-primary via-emerald-400 to-teal-300'
+                    : enrichProgress === 100
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+                    : 'bg-gradient-to-r from-primary to-emerald-500'
+                }`}
+                style={{ width: `${Math.max(enrichProgress, enrichTotal === 0 ? 0 : 2)}%` }}
+              />
+            </div>
+
+            <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono">
+              <span>{enrichCompleted} of {enrichTotal} listings enriched ({enrichProgress}%)</span>
+              <span>{enrichPending} queued • {enrichRunning} active</span>
             </div>
           </div>
 

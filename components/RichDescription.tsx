@@ -7,109 +7,158 @@ interface RichDescriptionProps {
   className?: string;
 }
 
-/**
- * Unescapes common HTML entities that come from job board APIs (e.g. &lt;h2&gt; -> <h2>).
- */
-function unescapeHtml(htmlStr: string): string {
-  let result = htmlStr;
-  
-  // Repeatedly unescape in case of double-encoding
-  for (let i = 0; i < 2; i++) {
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function unescapeHtml(str: string): string {
+  let result = str;
+  for (let i = 0; i < 3; i++) {
     if (!/&[a-zA-Z0-9#]+;/.test(result)) break;
     result = result
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&quot;/gi, '"')
       .replace(/&#39;/g, "'")
-      .replace(/&apos;/g, "'")
-      .replace(/&nbsp;/g, ' ')
+      .replace(/&apos;/gi, "'")
       .replace(/&#x2F;/gi, '/')
       .replace(/&#x27;/gi, "'")
-      .replace(/&#x3D;/gi, '=');
+      .replace(/&#x3D;/gi, '=')
+      .replace(/&#(\d+);/g, (_: string, code: string) => String.fromCharCode(Number(code)))
+      .replace(/&amp;/gi, '&');
   }
-
   return result;
 }
 
-/**
- * Sanitizes HTML by stripping dangerous tags and inline javascript event handlers.
- */
-function sanitizeHtml(rawHtml: string): string {
-  // Strip script, iframe, object, embed, form, link, style tags and their contents
-  let clean = rawHtml.replace(/<(script|iframe|object|embed|form|link|style)\b[^<]*(?:(?!<\/\1>)<[^<]*)*<\/\1>/gi, '');
-  
-  // Strip self-closing or lone forbidden tags
-  clean = clean.replace(/<\/?(script|iframe|object|embed|form|link|style|meta|base)\b[^>]*>/gi, '');
-
-  // Strip on* event attributes (e.g. onload, onclick, onerror)
-  clean = clean.replace(/\son\w+\s*=\s*(['"]).*?\1/gi, '');
-  clean = clean.replace(/\son\w+\s*=\s*[^>\s]+/gi, '');
-
-  // Strip javascript: URLs in href
-  clean = clean.replace(/href\s*=\s*(['"])javascript:.*?\1/gi, 'href="#"');
-
-  return clean;
+/** Strip all HTML tags and collapse whitespace to plain text. */
+function htmlToPlain(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/?(p|div|section|article|header|footer|li|ul|ol|h[1-6])\b[^>]*>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
+
+/** Section heading keywords that we promote to labels in bullet view. */
+const SECTION_HEADING_RE =
+  /^(about|who we are|what you('?ll| will) do|responsibilities|requirements|qualifications|preferred|nice to have|benefits|what we offer|about the role|the role|your role|minimum qualifications|preferred qualifications|what you bring)\b/i;
+
+const ALLCAPS_HEADING_RE = /^[A-Z][A-Z0-9\s&/''\-]{3,}$/;
+
+/** True for short lines that look like a section header. */
+function isHeading(line: string): boolean {
+  if (line.length > 90 || line.endsWith('.') || line.endsWith(',')) return false;
+  return SECTION_HEADING_RE.test(line) || ALLCAPS_HEADING_RE.test(line);
+}
+
+/** True for lines that are explicit bullet markers. */
+function isBulletLine(line: string): boolean {
+  return /^[-*•●▪◦‣►▸→]\s+/.test(line);
+}
+
+function stripBulletMarker(line: string): string {
+  return line.replace(/^[-*•●▪◦‣►▸→]\s+/, '').trim();
+}
+
+// ─── Core: plain text → structured sections ──────────────────────────────────
+
+interface Section {
+  heading: string | null;
+  bullets: string[];
+}
+
+function parseSections(plain: string): Section[] {
+  const lines = plain.split('\n').map((l) => l.trim()).filter(Boolean);
+  const sections: Section[] = [];
+  let current: Section = { heading: null, bullets: [] };
+
+  for (const line of lines) {
+    if (isHeading(line)) {
+      // Flush current section if it has content
+      if (current.bullets.length > 0 || current.heading) {
+        sections.push(current);
+      }
+      current = { heading: line, bullets: [] };
+      continue;
+    }
+
+    if (isBulletLine(line)) {
+      current.bullets.push(stripBulletMarker(line));
+      continue;
+    }
+
+    // Non-heading prose line → treat as a bullet-style sentence
+    // Short lines (≤ 120 chars) become bullets; longer paragraphs get split by sentence
+    if (line.length <= 120) {
+      current.bullets.push(line);
+    } else {
+      // Split on '. ' boundaries to create multiple short bullets
+      const sentences = line
+        .split(/(?<=\.)\s+(?=[A-Z])/)
+        .map((s) => s.trim())
+        .filter(Boolean);
+      current.bullets.push(...sentences);
+    }
+  }
+
+  if (current.bullets.length > 0 || current.heading) {
+    sections.push(current);
+  }
+
+  // If nothing structured was found, wrap all content as one section
+  if (sections.length === 0 && lines.length > 0) {
+    sections.push({ heading: null, bullets: lines });
+  }
+
+  return sections;
+}
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export const RichDescription: React.FC<RichDescriptionProps> = ({
   content,
   className = '',
 }) => {
-  const formattedHtml = useMemo(() => {
-    if (!content || !content.trim()) return null;
+  const sections = useMemo((): Section[] => {
+    if (!content?.trim()) return [];
 
     const unescaped = unescapeHtml(content.trim());
-    const isHtml = /<[a-z][\s\S]*>/i.test(unescaped);
+    const looksLikeHtml =
+      /&lt;[a-z]/i.test(content) || /<[a-z][\s\S]*>/i.test(unescaped);
 
-    if (isHtml) {
-      return sanitizeHtml(unescaped);
-    }
-
-    // Convert plain text into clean HTML paragraphs and lists
-    const paragraphs = unescaped.split(/\n\s*\n/);
-    return paragraphs
-      .map((p) => {
-        const trimmed = p.trim();
-        if (!trimmed) return '';
-        // If line starts with bullet
-        if (/^[-*•]\s+/m.test(trimmed)) {
-          const items = trimmed
-            .split(/\n/)
-            .map((line) => line.replace(/^[-*•]\s+/, '').trim())
-            .filter(Boolean)
-            .map((item) => `<li>${item}</li>`)
-            .join('');
-          return `<ul>${items}</ul>`;
-        }
-        return `<p>${trimmed.replace(/\n/g, '<br/>')}</p>`;
-      })
-      .filter(Boolean)
-      .join('');
+    const plain = looksLikeHtml ? htmlToPlain(unescaped) : unescaped;
+    return parseSections(plain);
   }, [content]);
 
-  if (!formattedHtml) {
-    return <p className="text-xs text-zinc-500 italic">No description provided.</p>;
+  if (sections.length === 0) {
+    return (
+      <p className="text-xs text-text-muted italic">
+        No description provided for this opportunity yet.
+      </p>
+    );
   }
 
   return (
-    <div
-      className={`rich-description text-xs text-zinc-300 leading-relaxed space-y-3 font-sans 
-        [&_h1]:text-sm [&_h1]:font-bold [&_h1]:text-white [&_h1]:mt-4 [&_h1]:mb-2 [&_h1]:border-b [&_h1]:border-zinc-800 [&_h1]:pb-1
-        [&_h2]:text-xs [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wider [&_h2]:text-white [&_h2]:mt-4 [&_h2]:mb-1.5 [&_h2]:border-b [&_h2]:border-zinc-850/60 [&_h2]:pb-1
-        [&_h3]:text-xs [&_h3]:font-bold [&_h3]:text-zinc-100 [&_h3]:mt-3 [&_h3]:mb-1
-        [&_h4]:text-xs [&_h4]:font-semibold [&_h4]:text-zinc-200 [&_h4]:mt-2
-        [&_p]:leading-relaxed [&_p]:text-zinc-300
-        [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:space-y-1.5 [&_ul]:my-2
-        [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:space-y-1.5 [&_ol]:my-2
-        [&_li]:text-zinc-300 [&_li]:leading-relaxed
-        [&_strong]:text-white [&_strong]:font-semibold
-        [&_b]:text-white [&_b]:font-semibold
-        [&_em]:text-zinc-200 [&_em]:italic
-        [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:hover:text-primary-light
-        [&_blockquote]:border-l-2 [&_blockquote]:border-primary/40 [&_blockquote]:pl-3 [&_blockquote]:text-zinc-400 [&_blockquote]:italic
-        ${className}`}
-      dangerouslySetInnerHTML={{ __html: formattedHtml }}
-    />
+    <div className={`space-y-4 ${className}`}>
+      {sections.map((section, si) => (
+        <div key={si} className="space-y-2">
+          {section.heading && (
+            <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted border-b border-border-subtle pb-1">
+              {section.heading}
+            </p>
+          )}
+          <ul className="space-y-1.5">
+            {section.bullets.map((bullet, bi) => (
+              <li key={bi} className="flex items-start gap-2">
+                <span className="mt-[5px] shrink-0 w-1.5 h-1.5 rounded-full bg-primary/60" />
+                <span className="text-xs text-foreground/85 leading-relaxed">{bullet}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
   );
 };

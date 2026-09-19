@@ -1,5 +1,6 @@
 import { NormalizedOpportunity, ValidationResult } from './types';
 import { isDeadlineExpired } from '../opportunities/deadline-utils';
+import { isAcceptableApplicationUrl } from '../opportunities/application-url';
 
 export class OpportunityValidator {
   static validate(normalized: NormalizedOpportunity): ValidationResult {
@@ -21,6 +22,11 @@ export class OpportunityValidator {
     } else {
       const urlError = this.validateUrl(normalized.applicationUrl, 'Application URL');
       if (urlError) errors.push(urlError);
+      else if (!isAcceptableApplicationUrl(normalized.applicationUrl)) {
+        errors.push(
+          'Application URL must be a direct public job posting link (not an API endpoint or generic careers page).'
+        );
+      }
     }
 
     // 4. Check Company Website URL (if provided)

@@ -17,6 +17,9 @@ import {
 } from './types';
 import { ParseError, ValidationError, PersistenceError } from './errors';
 import { DeadLetterQueue } from './dead-letter-queue';
+import { isIndiaLocation } from '../location-utils';
+import { OpportunityType } from '../generated/prisma/enums';
+import { isInternshipRole, enforceInternshipType } from './internship-filter';
 
 export class IngestionPipeline {
   constructor(private readonly connector: Connector) {}
@@ -85,6 +88,37 @@ export class IngestionPipeline {
         record.normalized = normalized;
         summary.totalNormalized++;
         IngestionLogger.debug('Normalized', `Normalized opportunity fields for: ${normalized.title}`, source.id, raw.externalJobId);
+
+        // Internship-only filtering (India + global locations both allowed)
+        const isInternship = isInternshipRole(
+          normalized.title,
+          parsed.type,
+          parsed.description ?? normalized.description ?? undefined
+        );
+
+        if (!isInternship) {
+          record.status = 'skipped';
+          IngestionLogger.debug(
+            'Skipped',
+            `Skipped non-internship opening: "${normalized.title}"`,
+            source.id,
+            raw.externalJobId
+          );
+          summary.records.push(record);
+          continue;
+        }
+
+        normalized.type = enforceInternshipType(normalized.type);
+
+        const regionTag = isIndiaLocation(normalized.location) || isIndiaLocation(parsed.location)
+          ? 'india'
+          : 'global';
+        if (!normalized.tags.includes(regionTag)) {
+          normalized.tags = [...normalized.tags, regionTag];
+        }
+        if (!normalized.tags.includes('internship')) {
+          normalized.tags = [...normalized.tags, 'internship'];
+        }
 
         // 3. Company Matching Stage
         const matchResult = await CompanyMatcher.match(normalized);

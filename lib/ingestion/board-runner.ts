@@ -1,6 +1,8 @@
 import { GreenhouseConnector } from './connectors/greenhouse';
 import { LeverConnector } from './connectors/lever';
 import { AshbyConnector } from './connectors/ashby';
+import { SmartRecruitersConnector } from './connectors/smartrecruiters';
+import { WorkdayConnector } from './connectors/workday';
 import { Connector } from './connector';
 import { IngestionPipeline } from './pipeline';
 import { defaultScraperSettings } from './config';
@@ -11,6 +13,8 @@ import {
 } from './company-catalog';
 import { getEffectiveBoardsByProvider } from './dynamic-catalog';
 import { IngestionSummary } from './types';
+import type { BoardScrapeMetric } from './scraper-metrics-types';
+import { JobVettaConnector } from './connectors/jobvetta';
 
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,6 +35,20 @@ function createConnector(board: ScrapeBoard): Connector {
       return new LeverConnector(shared);
     case 'ashby':
       return new AshbyConnector(shared);
+    case 'smartrecruiters':
+      return new SmartRecruitersConnector(shared);
+    case 'workday':
+      if (!board.tenant || !board.wdServer) {
+        throw new Error(`Workday board "${board.name}" is missing tenant or wdServer`);
+      }
+      return new WorkdayConnector({
+        tenant: board.tenant,
+        wdServer: board.wdServer,
+        site: board.boardToken,
+        companyName: board.name,
+        websiteUrl: board.websiteUrl,
+        careerPageUrl: buildCareerPageUrl(board),
+      });
   }
 }
 
@@ -68,6 +86,7 @@ export interface BoardRunResult {
   boardsSucceeded: number;
   boardsFailed: number;
   boardErrors: Array<{ board: string; error: string }>;
+  boardMetrics: BoardScrapeMetric[];
 }
 
 export async function runBoardsForProvider(
@@ -78,57 +97,70 @@ export async function runBoardsForProvider(
   const boards = await getEffectiveBoardsByProvider(provider);
   const summaries: IngestionSummary[] = [];
   const boardErrors: Array<{ board: string; error: string }> = [];
+  const boardMetrics: BoardScrapeMetric[] = [];
   let boardsSucceeded = 0;
   let boardsFailed = 0;
 
-  const rateLimitMs = defaultScraperSettings[provider].rateLimitMs;
+  onLog?.(`[${provider}] Starting run across ${boards.length} configured boards.`);
 
-  for (const board of boards) {
+  for (let i = 0; i < boards.length; i++) {
+    const board = boards[i];
     onLog?.(`[${provider}] Scraping ${board.name} (${board.boardToken})`);
-    
-    let attempts = 0;
-    let success = false;
-    let lastErr: unknown = null;
 
-    // Per-board exponential backoff retry (HIGH-001)
-    while (attempts < 3 && !success) {
-      attempts += 1;
-      try {
-        const connector = createConnector(board);
-        const summary = await runPipeline(connector);
-        summaries.push(summary);
-        boardsSucceeded += 1;
-        success = true;
-        onLog?.(
-          `[${provider}] ${board.name}: fetched ${summary.totalFetched}, persisted ${summary.totalPersisted}`
-        );
-      } catch (error) {
-        lastErr = error;
-        if (attempts < 3) {
-          const backoffMs = Math.pow(2, attempts) * 1000;
-          onLog?.(`[${provider}] ${board.name} encountered transient error, retrying in ${backoffMs / 1000}s (attempt ${attempts}/3)...`);
-          await sleep(backoffMs);
-        }
-      }
+    const boardStarted = Date.now();
+
+    try {
+      const connector = createConnector(board);
+      const summary = await runPipeline(connector);
+      summaries.push(summary);
+      boardsSucceeded++;
+      const durationMs = Date.now() - boardStarted;
+      const fetched = summary.totalFetched;
+      boardMetrics.push({
+        board: board.name,
+        provider,
+        boardToken: board.boardToken,
+        durationMs,
+        fetched,
+        persisted: summary.totalPersisted,
+        duplicates: summary.totalDuplicates,
+        failed: summary.totalFailed,
+        msPerJob: fetched > 0 ? Math.round(durationMs / fetched) : 0,
+        success: true,
+      });
+      onLog?.(`[${provider}] ${board.name}: fetched ${summary.totalFetched}, persisted ${summary.totalPersisted} (${durationMs}ms)`);
+    } catch (error) {
+      boardsFailed++;
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      boardErrors.push({ board: board.name, error: errorMsg });
+      boardMetrics.push({
+        board: board.name,
+        provider,
+        boardToken: board.boardToken,
+        durationMs: Date.now() - boardStarted,
+        fetched: 0,
+        persisted: 0,
+        duplicates: 0,
+        failed: 1,
+        msPerJob: 0,
+        success: false,
+        error: errorMsg,
+      });
+      onLog?.(`[${provider}] ${board.name} failed: ${errorMsg}`);
     }
 
-    if (!success) {
-      boardsFailed += 1;
-      const message = lastErr instanceof Error ? lastErr.message : String(lastErr);
-      boardErrors.push({ board: board.name, error: message });
-      onLog?.(`[${provider}] ${board.name} failed permanently after 3 attempts: ${message}`);
-    }
-
-    if (rateLimitMs > 0) {
-      await sleep(rateLimitMs);
+    if (i < boards.length - 1) {
+      const rateLimit =
+        defaultScraperSettings[provider as keyof typeof defaultScraperSettings]?.rateLimitMs ?? 1000;
+      await sleep(rateLimit);
     }
   }
 
   const summary =
     summaries.length > 0
-      ? mergeIngestionSummaries(summaries, provider)
+      ? mergeIngestionSummaries(summaries, `all_${provider}`)
       : {
-          sourceId: provider,
+          sourceId: `all_${provider}`,
           startTime: new Date(),
           endTime: new Date(),
           totalFetched: 0,
@@ -142,25 +174,83 @@ export async function runBoardsForProvider(
           records: [],
         };
 
-  return { summary, boardsSucceeded, boardsFailed, boardErrors };
+  return { summary, boardsSucceeded, boardsFailed, boardErrors, boardMetrics };
 }
 
 export async function runAllCatalogBoards(
   runPipeline: (connector: Connector) => Promise<IngestionSummary>,
   onLog?: (message: string) => void
 ): Promise<BoardRunResult> {
-  const providers: ScrapeProvider[] = ['greenhouse', 'lever', 'ashby'];
+  const providers: ScrapeProvider[] = [
+    'smartrecruiters',
+    'workday',
+    'greenhouse',
+    'lever',
+    'ashby',
+  ];
   const summaries: IngestionSummary[] = [];
   let boardsSucceeded = 0;
   let boardsFailed = 0;
   const boardErrors: Array<{ board: string; error: string }> = [];
+  const boardMetrics: BoardScrapeMetric[] = [];
 
+  // 1. Run ATS Provider Job Boards (SmartRecruiters, Workday, Greenhouse, Lever, Ashby)
   for (const provider of providers) {
     const result = await runBoardsForProvider(provider, runPipeline, onLog);
     summaries.push(result.summary);
     boardsSucceeded += result.boardsSucceeded;
     boardsFailed += result.boardsFailed;
     boardErrors.push(...result.boardErrors);
+    boardMetrics.push(...result.boardMetrics);
+  }
+
+  // 2. JobVetta India internship index (API-key gated, rate-limited)
+  onLog?.('[jobvetta] Running JobVetta India internship connector...');
+  const jobvettaStarted = Date.now();
+  try {
+    const connector = new JobVettaConnector();
+    if (!connector.isConfigured()) {
+      onLog?.('[jobvetta] Skipped — set JOBVETTA_API_KEY to enable');
+    } else {
+      const summary = await runPipeline(connector);
+      summaries.push(summary);
+      boardsSucceeded += 1;
+      const durationMs = Date.now() - jobvettaStarted;
+      boardMetrics.push({
+        board: 'JobVetta India',
+        provider: 'jobvetta',
+        boardToken: 'jobvetta',
+        durationMs,
+        fetched: summary.totalFetched,
+        persisted: summary.totalPersisted,
+        duplicates: summary.totalDuplicates,
+        failed: summary.totalFailed,
+        msPerJob:
+          summary.totalFetched > 0 ? Math.round(durationMs / summary.totalFetched) : 0,
+        success: true,
+      });
+      onLog?.(
+        `[jobvetta] Done: fetched ${summary.totalFetched}, persisted ${summary.totalPersisted}, requests used ${connector.getRequestCount()} (${durationMs}ms)`
+      );
+    }
+  } catch (error) {
+    boardsFailed += 1;
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    boardErrors.push({ board: 'JobVetta India', error: errorMsg });
+    boardMetrics.push({
+      board: 'JobVetta India',
+      provider: 'jobvetta',
+      boardToken: 'jobvetta',
+      durationMs: Date.now() - jobvettaStarted,
+      fetched: 0,
+      persisted: 0,
+      duplicates: 0,
+      failed: 1,
+      msPerJob: 0,
+      success: false,
+      error: errorMsg,
+    });
+    onLog?.(`[jobvetta] Failed: ${errorMsg}`);
   }
 
   const summary =
@@ -181,5 +271,5 @@ export async function runAllCatalogBoards(
           records: [],
         };
 
-  return { summary, boardsSucceeded, boardsFailed, boardErrors };
+  return { summary, boardsSucceeded, boardsFailed, boardErrors, boardMetrics };
 }
