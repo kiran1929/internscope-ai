@@ -63,7 +63,7 @@ export default function Home() {
         <section className="relative pt-36 pb-16 sm:pt-44 sm:pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
 
           <motion.h1
-            initial={{ opacity: 0, y: 16 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.12 }}
             className="text-4xl sm:text-6xl lg:text-7xl font-extrabold font-display tracking-tight text-white leading-[1.05]"
@@ -76,7 +76,7 @@ export default function Home() {
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 16 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.24 }}
             className="text-sm sm:text-lg text-text-muted max-w-2xl mx-auto leading-relaxed"
@@ -85,7 +85,7 @@ export default function Home() {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.36 }}
             className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 max-w-sm mx-auto sm:max-w-none"
@@ -109,7 +109,7 @@ export default function Home() {
         {/* STATISTICS SECTION */}
         <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 sm:pb-28">
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.45 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-6 p-6 sm:p-8 rounded-2xl bg-[#111113]/40 border border-zinc-850 backdrop-blur-md relative overflow-hidden text-center shadow-2xl"
@@ -139,7 +139,7 @@ export default function Home() {
 
         {/* DASHBOARD PREVIEW SCREENSHOT */}
         <motion.section
-          initial={{ opacity: 0, y: 40 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.8 }}
@@ -251,7 +251,7 @@ export default function Home() {
 
         {/* TARGET COMPANIES SCROLLER - Dual Direction High Performance Freeform Marquee */}
         <motion.section
-          initial={{ opacity: 0 }}
+          initial={false}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
@@ -337,7 +337,7 @@ export default function Home() {
 
         {/* FEATURES SECTION */}
         <motion.section
-          initial={{ opacity: 0, y: 40 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7 }}
@@ -394,7 +394,7 @@ export default function Home() {
 
         {/* HOW IT WORKS SECTION */}
         <motion.section
-          initial={{ opacity: 0, y: 40 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7 }}
@@ -454,7 +454,7 @@ export default function Home() {
 
         {/* TESTIMONIALS */}
         <motion.section
-          initial={{ opacity: 0, y: 40 }}
+          initial={false}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.7 }}
@@ -526,7 +526,7 @@ export default function Home() {
 
         {/* FAQ SECTION */}
         <motion.section
-          initial={{ opacity: 0 }}
+          initial={false}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.8 }}
@@ -580,7 +580,7 @@ export default function Home() {
 
         {/* PRICING (COMING SOON) CALL-TO-ACTION */}
         <motion.section
-          initial={{ opacity: 0, scale: 0.98 }}
+          initial={false}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}

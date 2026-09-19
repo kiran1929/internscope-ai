@@ -30,6 +30,7 @@ import {
   archiveOpportunityAction,
   deleteOpportunityAction,
 } from '@/app/actions/opportunities';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 interface Company {
   id: string;
@@ -72,17 +73,7 @@ export const OpportunitiesTable: React.FC<OpportunitiesTableProps> = ({ data }) 
           const name = info.row.original.company.name;
           return (
             <div className="flex items-center justify-center shrink-0">
-              {logo ? (
-                <img
-                  src={logo}
-                  alt={name}
-                  className="w-7 h-7 rounded-md border border-zinc-800 bg-white object-contain p-0.5"
-                />
-              ) : (
-                <div className="w-7 h-7 rounded-md bg-zinc-850 border border-zinc-800 flex items-center justify-center text-[10px] text-zinc-400 font-bold font-display uppercase">
-                  {name.charAt(0)}
-                </div>
-              )}
+              <CompanyLogo logoUrl={logo} name={name} size="sm" />
             </div>
           );
         },

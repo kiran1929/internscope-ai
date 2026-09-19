@@ -20,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { ApplicationStatus } from '@/lib/generated/prisma/enums';
 import { updateApplicationStatusAction } from '@/app/actions/applications';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 export interface TableApplication {
   id: string;
@@ -140,17 +141,7 @@ export const ApplicationsTable: React.FC<ApplicationsTableProps> = ({ data }) =>
 
           return (
             <div className="flex items-center gap-2">
-              {logo ? (
-                <img
-                  src={logo}
-                  alt={name}
-                  className="w-6 h-6 rounded border border-zinc-800 bg-white object-contain p-0.5 shrink-0"
-                />
-              ) : (
-                <div className="w-6 h-6 rounded bg-zinc-850 border border-zinc-800 flex items-center justify-center text-[10px] text-zinc-400 font-bold uppercase shrink-0">
-                  {name.charAt(0)}
-                </div>
-              )}
+              <CompanyLogo logoUrl={logo} name={name} size="sm" />
               <span className="text-xs text-zinc-300 truncate max-w-[120px]">{name}</span>
             </div>
           );

@@ -32,6 +32,7 @@ import {
   duplicateCompanyAction,
   verifyCompanyAction,
 } from '@/app/actions/companies';
+import { CompanyLogo } from '@/components/CompanyLogo';
 
 export interface TableCompany {
   id: string;
@@ -127,17 +128,7 @@ export const CompaniesTable: React.FC<CompaniesTableProps> = ({ data }) => {
           const isVerified = row.original.isVerified;
           return (
             <div className="flex items-center gap-3">
-              {logo ? (
-                <img
-                  src={logo}
-                  alt={name}
-                  className="w-8 h-8 rounded-lg border border-zinc-800 bg-white object-contain p-0.5 shrink-0"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-lg bg-zinc-850 border border-zinc-800 flex items-center justify-center text-xs text-zinc-400 font-bold uppercase shrink-0">
-                  {name.charAt(0)}
-                </div>
-              )}
+              <CompanyLogo logoUrl={logo} websiteUrl={row.original.websiteUrl} name={name} size="sm" />
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className="font-semibold text-white truncate text-xs">{name}</span>

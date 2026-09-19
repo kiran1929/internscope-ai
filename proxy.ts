@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
@@ -26,7 +27,7 @@ export default clerkMiddleware(async (auth, req) => {
   // If user is authenticated and visits the root landing page '/', redirect to '/dashboard'
   if (userId && req.nextUrl.pathname === '/') {
     const dashboardUrl = new URL('/dashboard', req.url);
-    return Response.redirect(dashboardUrl);
+    return NextResponse.redirect(dashboardUrl);
   }
 
   if (isProtectedRoute(req)) {
