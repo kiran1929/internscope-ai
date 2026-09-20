@@ -40,7 +40,7 @@ export default async function PricingPage() {
 
   return (
     <div className="preserve-dark-theme flex-1 flex flex-col min-h-screen bg-[#09090B] text-white">
-      <Header onViewDemo={() => {}} />
+      <Header />
 
       <main className="flex-1 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-24 space-y-16 text-xs leading-relaxed font-sans">
         

@@ -1,15 +1,25 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Compass, Menu, X, ArrowRight } from 'lucide-react';
 
 interface HeaderProps {
-  onViewDemo: () => void;
+  onViewDemo?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onViewDemo }) => {
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+
+  const handleAction = () => {
+    if (onViewDemo) {
+      onViewDemo();
+    } else {
+      router.push('/dashboard');
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,13 +73,13 @@ export const Header: React.FC<HeaderProps> = ({ onViewDemo }) => {
           {/* Action Buttons */}
           <div className="hidden md:flex items-center gap-4">
             <button
-              onClick={onViewDemo}
+              onClick={handleAction}
               className="btn-ghost focus-ring"
             >
               View Demo
             </button>
             <button
-              onClick={onViewDemo}
+              onClick={handleAction}
               className="btn-primary focus-ring"
             >
               <span>Get Started</span>
@@ -112,7 +122,7 @@ export const Header: React.FC<HeaderProps> = ({ onViewDemo }) => {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  onViewDemo();
+                  handleAction();
                 }}
                 className="w-full btn-secondary focus-ring py-2.5 text-sm"
               >
@@ -121,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({ onViewDemo }) => {
               <button
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  onViewDemo();
+                  handleAction();
                 }}
                 className="w-full btn-primary focus-ring py-2.5 text-sm flex items-center justify-center gap-1.5"
               >
